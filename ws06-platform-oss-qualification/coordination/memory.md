@@ -69,3 +69,9 @@ P0-06A, P0-06B, P0-07D, P0-10B, P0-10C, P0-10D, P0-10E, P0-10F, P0-10G, P0-10H: 
 - Global scheduling: max3 active A2 tasks, max1 per lane, max1 active build until Docker about4GiB verified; compiler jobs2, cache5G; stop dispatch below20GiB free. Shared cap covers all six lanes together.
 - Scoped PRESTART signed by Omkar (master) via explicit chat approval. Unchecked access/manual/knowledge and future-resource items retain per-task/phase prerequisites. Lane A1 completes mandatory reads on launch.
 - G2 NOT_PASSED; G3 none; all claims NOT_RUN; production NOT_AUTHORIZED.
+
+## First implementation dispatch — 2026-10-12T18:13:11Z
+- W06-T000-ROOT-HARDENING r0 DISPATCHED; fresh A2 session not launched by startup A1. Worktree /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W06-T000-ROOT-HARDENING-r0; branch ws06/w06-t000-root-hardening-r0; base 58b6ab38b0a514d94d8851679ad66ef9bf696c9e; initial tree aac9179014e2b2981a4efeb95e44ab5450bdd547.
+- Dispatch: DISPATCHES/W06-T000-ROOT-HARDENING-r0-DISPATCH.md. RETURN: RETURNS/W06-T000-ROOT-HARDENING-r0-A2_RETURN.md. No implementation SHA, acceptance, merge or claim result exists.
+- Shared one-build slot: /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/run_single_build.py. Three prepared A2 tasks globally (W01/W05/W06), one per lane.
+- Current in-flight board in task.md supersedes the earlier startup snapshot saying all tasks NOT_STARTED.
