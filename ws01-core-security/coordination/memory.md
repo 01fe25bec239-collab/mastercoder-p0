@@ -4,9 +4,9 @@ Durable workstream memory. Facts only; no secrets; no chat logs. Only the A1 wri
 
 ## Environment
 - ARCH_ID: MASTERCODER_CONVERGENCE_ARCHITECTURE_SOL_V2_1 · REGISTRY_SHA256: b516004c690dd86860c263334d9f32f79a6c935ac82f2b801d3117223ed8d787
-- ARCH_IMPORT_COMMIT: __RECORD_AT_G0__
-- G0 recorded: NO · G1 signed: NO (file SHA-256: —) · G2: NOT_PASSED · G3 families: none
-- Tool versions: __RECORD__
+- ARCH_IMPORT_COMMIT: 58b6ab38b0a514d94d8851679ad66ef9bf696c9e
+- G0 recorded: NO (startup infrastructure complete; PRESTART/remaining configuration unresolved) · G1 signed: YES (owner typed signature; file SHA-256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712) · G2: NOT_PASSED · G3 families: none
+- Tool versions: git git version 2.54.0 (Apple Git-157); gh gh version 2.96.0 (2026-07-02); python3 Python 3.14.6; rustc rustc 1.97.1 (8bab26f4f 2026-07-14); cargo cargo 1.97.1 (c980f4866 2026-06-30); docker Docker version 29.7.2, build a7dcaa6; gitleaks gitleaks version 8.30.1; sccache sccache 0.18.0; node v24.18.0; pnpm 11.22.0
 
 ## Accepted architecture interpretation
 - Precedence 00D > SCHEMAS > 49–57 > 01–48 > ADRs; BASELINE_HISTORY non-normative.
@@ -47,7 +47,18 @@ P0-06C, P0-06D, P0-07B, P0-08A, P0-09B, P0-09C, P0-09D, P0-09F, P0-09G, P0-09H, 
 - (none yet)
 
 ## Current blockers
-- G0/G1 not recorded.
+- G0 not recorded: PRESTART remains unsigned and setup reports unresolved resource configuration. See NOTICES/STARTUP_2026-10-12.md. G1 is recorded separately.
 
 ## Pending contract change requests
 - CCR-W01-001 (DRAFT, audit F-23: P0-09G parent state STARTED → RUNNING) — triage first; P0-09G RUN blocked until resolved
+
+## Startup verification — 2026-10-12
+- Private GitHub repository: https://github.com/01fe25bec239-collab/mastercoder-p0; protected main, 8 required checks pinned to GitHub Actions app 15368, 0 approvals, merge commits only, auto-merge enabled.
+- Shared clone/worktree and .env.local symlink verified. ARCH_IMPORT_COMMIT: 58b6ab38b0a514d94d8851679ad66ef9bf696c9e.
+- G1_SIGNED_AT: 2026-10-12T14:19:53Z; G1_FILE_SHA256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712. Build only: 1,000,000 API tokens / 5 USD total; cloud 0 USD; security keys 0 USD.
+- Architecture: 235 files, 0 mismatches; specification check only, p0_executed:false. Seven main bootstrap workflows passed; PR-only write-set-guard was tested locally, not reported as a main CI run.
+- Guard smoke tests: invalid scratch scope, valid-task cross-lane path, direct-main push all rejected; no test commit or branch remains.
+- GitHub secret scanning unavailable for this private repository (HTTP 422); local gitleaks hook installed. Two baseline full-history scan findings are contract type-name lists at W01 task.md INPUT CONTRACTS, not secrets; no blanket exclusion was added.
+- Free disk ~41 GiB, below 100 GB checklist; shared compile-cache cap reduced to 5G, no personal files deleted. Docker reports ~8 GB memory allocation; 4 GB tuning remains open.
+- Staging databases, object-lock evidence storage, provider Apps/keys and lab hosts are unprovisioned; tasks own their creation. Do not fabricate values or sign PRESTART to clear the blanket setup check. G0 phase reconciliation remains open.
+- All BUILD tasks NOT_STARTED, all 55 claims NOT_RUN; G2 NOT_PASSED, no G3, no production grant.

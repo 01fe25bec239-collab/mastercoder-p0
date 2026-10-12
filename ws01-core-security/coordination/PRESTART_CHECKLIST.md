@@ -13,16 +13,16 @@ Everything for this program runs **inside WSL2 Ubuntu**, not in native Windows (
 
 ## A. Accounts and access
 - [ ] GitHub account with 2FA; SSH key added; **SSH commit signing** configured (`git config --global gpg.format ssh; git config --global user.signingkey ~/.ssh/id_ed25519.pub; git config --global commit.gpgsign true`).
-- [ ] You own the private repo `mastercoder-p0` (your personal account with GitHub Pro); you are the sole CODEOWNER.
-- [ ] `gh auth login` done; `gh repo view <org>/mastercoder-p0` works.
+- [x] You own the private repo `mastercoder-p0` (your personal account with GitHub Pro); you are the sole CODEOWNER.
+- [x] `gh auth login` done; `gh repo view <org>/mastercoder-p0` works.
 - [ ] Password manager entry "mastercoder-staging-lane01" for this lane's staging secrets.
 - [ ] Access to the private evidence store (created by the W06 lane, W06-T010).
 
 ## B. Tools (record versions in memory.md "Environment")
-- [ ] git ≥ 2.40, gh CLI
-- [ ] rustup with the toolchain pinned in `/rust-toolchain.toml`; `cargo fmt`, `clippy`; `cargo install cargo-deny gitleaks sccache` (or brew gitleaks sccache). `sccache` lets 15 parallel worktrees share compiled crates (`RUSTC_WRAPPER=sccache` in the lane `.env`).
-- [ ] Docker / Docker Compose (local PostgreSQL)
-- [ ] Python ≥ 3.10 (architecture checker), `jq`, `psql` client
+- [x] git ≥ 2.40, gh CLI
+- [x] rustup with the toolchain pinned in `/rust-toolchain.toml`; `cargo fmt`, `clippy`; `cargo install cargo-deny gitleaks sccache` (or brew gitleaks sccache). `sccache` lets 15 parallel worktrees share compiled crates (`RUSTC_WRAPPER=sccache` in the lane `.env`).
+- [x] Docker / Docker Compose (local PostgreSQL)
+- [x] Python ≥ 3.10 (architecture checker), `jq`, `psql` client
 - [ ] A coding-agent tool you will use for A1/A2/A3 sessions (e.g. Claude Code or Codex CLI), able to read/write files and run shell commands in the worktree, and a plan/rate limit that allows ~15 A2 + 6 A1 + A3 sessions at once
 - [ ] Machine: a MacBook Pro M4 Pro with 24 GB RAM runs 5 parallel A2s comfortably. A full wave of 15 works with `CARGO_BUILD_JOBS=2` (in every lane `.env`), `sccache` and Docker Desktop limited to about 4 GB, because the A2s rarely all compile at the same moment. If macOS starts swapping heavily (Activity Monitor → Memory Pressure red), lower the lane caps. Keep ≥100 GB free disk; the A1 removes finished worktrees and their `target/` (AGENTS.md §3b)
 
@@ -51,8 +51,8 @@ python3 ../COMMON/verify_architecture.py ARCHITECTURE_READONLY/MASTERCODER_CONVE
 (cd repo && git log --oneline -1)                                         # note ARCH_IMPORT_COMMIT
 ```
 - [ ] All commands succeeded; ARCH_IMPORT_COMMIT written into `../WORKSPACE/worktrees/COORD-ws01/ws01-core-security/coordination/memory.md` §Environment.
-- [ ] The COORDINATION worktree exists on branch `ws01/coordination`. From now on its `ws01-core-security/coordination/` copy is authoritative.
-- [ ] Hooks active: `git -C repo config core.hooksPath` prints `.githooks`.
+- [x] The COORDINATION worktree exists on branch `ws01/coordination`. From now on its `ws01-core-security/coordination/` copy is authoritative.
+- [x] Hooks active: `git -C repo config core.hooksPath` prints `.githooks`.
 - [ ] Agent tool guardrails set (AGENT_TOOLING/README.md → Guardrails) and tested: starting a session in the COORDINATION worktree makes the agent cite the WORK LOCATION rule.
 
 ## E. Knowledge (read before the first session)
@@ -66,10 +66,15 @@ python3 ../COMMON/verify_architecture.py ARCHITECTURE_READONLY/MASTERCODER_CONVE
 
 ## F. Gates
 - [ ] G0 recorded (repo exists, protection on) — date: ____
-- [ ] G1 signed by master — G1 file SHA-256: ____ (A1 records it in memory.md)
+- [x] G1 signed by master — G1 file SHA-256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712 (owner typed chat signature; recorded in memory.md)
 - [ ] I understand G2/G3 are needed before any claim RUN.
 
 ## Open items
+- Startup check 2026-10-12: see `NOTICES/STARTUP_2026-10-12.md`. G0 and PRESTART sign-off remain open.
+- Signing key registered by owner and local SSH signing verified; account 2FA status not independently checked.
+- Only ~41 GiB free, below the 100 GB checklist; Docker memory tuning to about 4 GB remains open.
+- Future-task resources remain unprovisioned; setup reports placeholders. No fabricated accounts, credentials, host access or evidence-store readiness.
+- Complete the lane-specific knowledge/read and manual-access checks before signing PRESTART.
 -
 
 Signed: master ______  Date (UTC): ______
