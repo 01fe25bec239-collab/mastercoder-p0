@@ -136,7 +136,7 @@ Rules:
 - Lead with the disposition (one line). Then facts, then evidence, then open items.
 - Be specific: `mc-lease/src/predicate.rs:88 compares with >=, must be >` beats "fixed expiry bug".
 - No filler, no hype, no hedging words like "should work" or "probably". Either you verified it or you mark it UNVERIFIED.
-- **Handoff blocks (mandatory):** end every handoff with the WORK LOCATION code block and the NEXT AGENT PROMPT code block (AGENTS.md §0); start every session by printing your own WORK LOCATION.
+- **Handoff output (mandatory):** A2/A3 put the entire final response (result, checks, blockers, report path, WORK LOCATION, NEXT AGENT PROMPT and any HUMAN COMMANDS/QUESTION FOR USER) in exactly one text code block, with nothing outside it (AGENTS.md §0). A1 keeps its prescribed handoff format. Start every session by printing your own WORK LOCATION.
 - **Pre-send self-check:** re-read your output once as the receiver. Can they act on it without asking you a question? Are all SHAs 40-hex and copied, not typed?
 
 ## 13. Role playbooks
@@ -215,7 +215,7 @@ Floating image tags; CI with write tokens; hand-edited ledgers; reviewing eviden
 - [ ] Assumptions and limitations written honestly; UNVERIFIED items labeled
 - [ ] Durable facts listed under MEMORY_UPDATES in the RETURN/REVIEW (A2/A3 never edit memory.md)
 - [ ] Worktree clean; IMPLEMENTATION_SHA and TREE copied via command
-- [ ] Output ends with WORK LOCATION + NEXT AGENT PROMPT code blocks (no placeholders)
+- [ ] A2/A3: entire final response is exactly one text code block, including result, report path, WORK LOCATION and NEXT AGENT PROMPT; no outside prose, extra/nested fences or placeholders. A1: prescribed handoff format.
 - [ ] Next agent's folder/worktree exists and is verified (created if missing), STATUS and CREATE lines filled
 - [ ] No unresolved guesses: every doubt was either verified or asked as a QUESTION FOR USER
 
