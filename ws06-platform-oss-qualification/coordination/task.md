@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W06-T000-ROOT-HARDENING | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W06-T000-ROOT-HARDENING-r0 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | task EXACT WRITE SCOPE; see dispatch | 2026-10-12T18:13:11Z | fresh A2 launch / RETURN |
+| W06-T000-ROOT-HARDENING | r1 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W06-T000-ROOT-HARDENING-r1 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | original nine-path T000 scope; recovered r0 bytes documented | 2026-10-12T19:04:51Z | fresh r1 A2 launch / RETURN; r0 inactive preserved |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -25,7 +25,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W06-T000-ROOT-HARDENING | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | A2 launch prepared; see DISPATCHES/W06-T000-ROOT-HARDENING-r0-DISPATCH.md |
+| W06-T000-ROOT-HARDENING | BUILD | REPAIR | r1 | NONE | NONE | NONE | r0 RETURNED incomplete/no commit; preserved eight dirty paths. Fresh r1 remainder prepared; see r0 DISPOSITION and r1 DISPATCH. |
 | W06-T001-WS06-WORKSPACE-SCAFFOLD | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W06-T002-TESTDB-I14 | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W06-T003-EVIDENCE-SCHEMAS | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
@@ -1077,3 +1077,8 @@ States: NOT_STARTED · DISPATCHED · RETURNED · IN_REVIEW · REPAIR · ACCEPTED
 - **OUT-OF-SCOPE:** Any untested variant or other cell (no PASS inheritance); other claims; production implementation; capability enablement in production.
 - **BLOCKERS:** G2 (external audit), G3 (execution authorization), IM-7; external: YES — two independent storage domains (cloud).
 - **A3 REVIEW FOCUS:** Evidence lenses: DS lens → fresh evidence-A3 session using the W04 lane playbook, CC lens → fresh evidence-A3 session using the W02 lane playbook. Fail condition: Any injected case violates the stated observation/threshold, or positive control fails. Missing/inaccessible evidence, unpinned participating component, unobservable required outcome or non-independent review yields INCONCLUSIVE, which disables the cell like FAIL.
+
+## Attempt history — W06-T000
+
+- r0: RETURNED NOT_READY: INCOMPLETE_R0_RETURN_REQUESTED_BY_OWNER, 2026-10-12T18:54:29Z. No implementation SHA/tree. Eight scoped dirty files and index preserved; no final A3 target. See RETURNS/W06-T000-ROOT-HARDENING-r0-A2_RETURN.md and DISPOSITIONS/W06-T000-ROOT-HARDENING-r0-DISPOSITION.md.
+- r1: fresh bounded remainder prepared 2026-10-12T19:04:51Z at import base; exact r0 bytes recovered without editing/committing r0. Requires fixture-cwd repair, missing runbook and complete local verification. Not launched by A1; no implementation/acceptance/merge yet.

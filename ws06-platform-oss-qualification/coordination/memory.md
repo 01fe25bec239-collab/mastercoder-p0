@@ -41,7 +41,7 @@ P0-06A, P0-06B, P0-07D, P0-10B, P0-10C, P0-10D, P0-10E, P0-10F, P0-10G, P0-10H: 
 - Unknown fields/enums/revisions reject; no extension bags (INV-18).
 
 ## Failed approaches
-- (none yet)
+- W06-T000 r0 guard self-test setup failed twice at scratch commit-tree128 before assertions. Synthetic-only signing disable did not fix it. A1 temporary-isolation diagnosis proved a stale Python default cwd; see KI-001 and the preservation diagnosis. Never run the flawed full self-test again against a task root.
 
 ## Prototype evidence pointers
 - (none yet)
@@ -83,3 +83,13 @@ P0-06A, P0-06B, P0-07D, P0-10B, P0-10C, P0-10D, P0-10E, P0-10F, P0-10G, P0-10H: 
 - Owner agreed to normal PR→CI→final independent review→merge ordering; see `NOTICES/INSTRUCTION_AUDIT_2026-10-13.md` and the absolute decision path there. Remote CI stays mandatory; separate outward authorization still required.
 - Rechecked GitHub bootstrap: seven successful runs at import/main, eight required checks. Six lane placeholders await scaffold implementations; no product qualification inferred. Three prepared A2 task worktrees remain at the import base; no implementation, acceptance or integration was added by this audit.
 - Active caps remain three A2 total/one per lane/one executing build, not packaged fifteen-A2 defaults. G2/G3/RUN and deferred per-task prerequisites remain unchanged.
+
+## W06-T000 incomplete r0 processed; bounded r1 prepared — 2026-10-13 IST
+
+- Owner requested immediate incomplete r0 return; A1 verified unchanged import HEAD/tree, zero implementation commits and eight exact scoped dirty paths. Action-pin file contains separate staged/unstaged versions, both preserved. RETURN disposition NOT_READY; not locally complete, no A3/accepted/merged SHA.
+- Snapshot: /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/STARTUP_CHECKS/W06-T000-ROOT-HARDENING-r0-preservation/manifest.json; SHA256 adf48402086006be5227744c8428b8fca6fc12655fcbaeea03fdfb556cef9bfb. Includes file-byte copies, base/staged/unstaged patches, index entries and return. r0 remains untouched/inactive; no reset/stash/discard/commit.
+- Complex read-only helper gpt-6.1-sol/high proved `git(*args,cwd=trusted)` captures source cwd at definition. Changing global trusted during self-test leaves scratch uninitialized; commit-tree stderr is `fatal: not a git repository ... .git`. Explicit scratch cwd control succeeds. Routine gpt-6-luna/high helper corroborated scope/state. Neither authored repair or acted as A3.
+- A1 personally ran recovered architecture verifier positive through the shared wrapper: exit0,235 files,3 pins,mismatches[],p0_executed:false. This is one spot check, not full completion, scans or remote CI.
+- Fresh r1 worktree /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W06-T000-ROOT-HARDENING-r1 created clean, then recovered eight expected file bytes with the index at base; recovery hash/status manifest saved. Branch ws06/w06-t000-root-hardening-r1; base 58b6ab38b0a514d94d8851679ad66ef9bf696c9e. No previous implementation/review SHA exists to stack upon.
+- r1 dispatch: DISPATCHES/W06-T000-ROOT-HARDENING-r1-DISPATCH.md. Remainder: isolate scratch Git cwd, regression against original-index mutation, safe stderr, missing branch-protection runbook, all local parent reruns/scans and signed scoped commit. Only then may pending remote CI enter preliminary review.
+- r1 replaces r0 in the one W06 slot. W01/W05 remain dispatched; globalmax3/onebuild/diskfloor20GiB. No r1 agent launched, push/PR/merge or product acceptance by A1.
