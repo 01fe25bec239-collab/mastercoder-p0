@@ -55,7 +55,7 @@ P0-06C, P0-06D, P0-07B, P0-08A, P0-09B, P0-09C, P0-09D, P0-09F, P0-09G, P0-09H, 
 ## Startup verification — 2026-10-12
 - Private GitHub repository: https://github.com/01fe25bec239-collab/mastercoder-p0; protected main, 8 required checks pinned to GitHub Actions app 15368, 0 approvals, merge commits only, auto-merge enabled.
 - Shared clone/worktree and .env.local symlink verified. ARCH_IMPORT_COMMIT: 58b6ab38b0a514d94d8851679ad66ef9bf696c9e.
-- G1_SIGNED_AT: 2026-10-12T14:19:53Z; G1_FILE_SHA256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712. Build only: 1,000,000 API tokens / 5 USD total; cloud 0 USD; security keys 0 USD.
+- G1_SIGNED_AT: 2026-10-12T14:19:54Z; G1_FILE_SHA256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712. Build only: 1,000,000 API tokens / 5 USD total; cloud 0 USD; security keys 0 USD.
 - Architecture: 235 files, 0 mismatches; specification check only, p0_executed:false. Seven main bootstrap workflows passed; PR-only write-set-guard was tested locally, not reported as a main CI run.
 - Guard smoke tests: invalid scratch scope, valid-task cross-lane path, direct-main push all rejected; no test commit or branch remains.
 - GitHub secret scanning unavailable for this private repository (HTTP 422); local gitleaks hook installed. Two baseline full-history scan findings are contract type-name lists at W01 task.md INPUT CONTRACTS, not secrets; no blanket exclusion was added.
