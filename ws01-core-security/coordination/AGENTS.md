@@ -6,6 +6,8 @@ Operator: **master** (one human runs all six lanes). Lane folder: `LANE_01_CORE_
 
 ## 0. MANDATORY HANDOFF OUTPUT RULE (read first, applies to every role)
 
+**Owner rule — A2/A3 single code box (2026-10-13):** An A2 or A3 (including evidence A3) must put its **entire final chat response in exactly one fenced `text` code block**. Put the result/verdict, concise changes and check results, remaining blockers, absolute RETURN/REVIEW file path, WORK LOCATION and complete NEXT AGENT PROMPT inside that same block. Include HUMAN COMMANDS or QUESTION FOR USER there when required. No prose or links outside the block, and no additional or nested code fences. The human must be able to copy the whole response with one copy button. Write the full RETURN/REVIEW file first using its existing template; the chat block points to that file rather than replacing it. This rule also covers stopped, incomplete and blocked final responses. Progress commentary and the initial session-location check are separate from the final response. For A2/A3, this rule overrides any older instruction or example asking for separate handoff code blocks. A1's output format, required fields, scope, checks, gates and review independence remain unchanged.
+
 Whenever you hand work to the next agent (A1 → A2, A2 → A1, A1 → A3, A3 → A1, A1 → successor A1, A1 → evidence A3) or to the human operator (master), the **end of your chat output** must contain, in this order:
 
 1. A code block **WORK LOCATION**: the absolute folder/worktree the *next* agent works in, plus branch, BASE/HEAD/TREE SHAs, the absolute path of the message file you just wrote, and a ready `cd` line.
@@ -43,7 +45,7 @@ Open and follow exactly: /Users/master/mastercoder/MASTERCODER_6_WORKSTREAM_PROG
 Obey coordination/AGENTS.md and apply coordination/SKILLS.md (§13.2 A2 playbook, §15 checklist). Stay inside the AUTHORIZED WRITE SET.
 Do not self-approve, push, or open PRs. When done or stopped, write
 /Users/master/mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/COORD-ws01/ws01-core-security/coordination/RETURNS/W01-T004-CONTRACT-TYPES-CODEGEN-r0-A2_RETURN.md,
-then end with the WORK LOCATION + NEXT AGENT PROMPT (A1 resume) code blocks and stop.
+then put your entire final response, including the result, report path, WORK LOCATION and NEXT AGENT PROMPT (A1 resume), in exactly one text code block and stop.
 ```
 
 Resume prompts for A1 (used by A2 and A3 in their Block 2):
@@ -277,6 +279,8 @@ After G0, all coordination files live in the **COORDINATION worktree** `<WORKSPA
 Agent identity strings: `W02-A1#3` (the 3rd A1 of workstream 02), `W02-A2[W02-T030-r1]`, `W02-A3[W02-T030-r1-a]`. A2 and A3 are ephemeral and identified only by the task they serve.
 
 ## 0.5 MANDATORY handoff output rule (code blocks)
+
+**Owner rule — A2/A3 single code box (2026-10-13):** An A2 or A3 (including evidence A3) must put its **entire final chat response in exactly one fenced `text` code block**. Put the result/verdict, concise changes and check results, remaining blockers, absolute RETURN/REVIEW file path, WORK LOCATION and complete NEXT AGENT PROMPT inside that same block. Include HUMAN COMMANDS or QUESTION FOR USER there when required. No prose or links outside the block, and no additional or nested code fences. The human must be able to copy the whole response with one copy button. Write the full RETURN/REVIEW file first using its existing template; the chat block points to that file rather than replacing it. This rule also covers stopped, incomplete and blocked final responses. Progress commentary and the initial session-location check are separate from the final response. For A2/A3, this rule overrides any older instruction or example asking for separate handoff code blocks. A1's output format, required fields, scope, checks, gates and review independence remain unchanged.
 
 Every time an agent passes work on (A1→A2, A2→A1, A1→A3, A3→A1, A1→successor A1, A1→evidence A3, A1→human), its **final chat output must end with these blocks, in this order**. The human copies them; nothing is retyped.
 
@@ -642,7 +646,7 @@ Open and follow exactly: <ABS>/mastercoder-p0/ws01-core-security/coordination/DI
 Obey coordination/AGENTS.md and apply coordination/SKILLS.md (§13.2 A2 playbook, §15 checklist). Work only in the worktree named in LOCATION. Stay inside the AUTHORIZED WRITE SET.
 Do not self-approve, push, or open PRs. First print your WORK LOCATION code block.
 If you get stuck (same failure twice, three failed fixes, would have to guess), do not loop: ask me with the QUESTION FOR USER code block (AGENTS.md §0.1) and wait.
-When done or stopped, write the RETURN file named in the dispatch, then end with the WORK LOCATION + NEXT AGENT PROMPT (A1 resume) code blocks (AGENTS.md §0) and stop.
+When done or stopped, write the RETURN file named in the dispatch, then put your entire final response, including the result, report path, WORK LOCATION and NEXT AGENT PROMPT (A1 resume), in exactly one text code block (AGENTS.md §0) and stop.
 ```
 
 **A3:**
@@ -651,7 +655,7 @@ You are A3 (independent reviewer) for WORKSTREAM-01-CORE-SECURITY-AUTHORITY. You
 Open and follow: <ABS>/mastercoder-p0/ws01-core-security/coordination/REVIEWS/<TASK_ID>-<ATTEMPT>-A3_REQUEST.md
 Apply coordination/SKILLS.md (§13.3 A3 playbook, §17 rubric). Create your own worktree at the exact IMPLEMENTATION_SHA (git worktree add --detach <path> <SHA>). Verify HEAD and TREE before and after.
 Do not modify product code. First print your WORK LOCATION code block.
-Write the A3_REVIEW file using COMMON/A3_REVIEW_TEMPLATE.md, then end with the WORK LOCATION + NEXT AGENT PROMPT (A1 resume) code blocks (AGENTS.md §0) and stop.
+Write the A3_REVIEW file using COMMON/A3_REVIEW_TEMPLATE.md, then put your entire final response, including the result, report path, WORK LOCATION and NEXT AGENT PROMPT (A1 resume), in exactly one text code block (AGENTS.md §0) and stop.
 ```
 
 **Successor A1:** see `COMMON/A1_SUCCESSION_PROTOCOL.md` (prompt in §8 of the protocol above).
