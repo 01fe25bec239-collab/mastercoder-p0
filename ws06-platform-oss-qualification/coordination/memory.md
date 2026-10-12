@@ -5,7 +5,7 @@ Durable workstream memory. Facts only; no secrets; no chat logs. Only the A1 wri
 ## Environment
 - ARCH_ID: MASTERCODER_CONVERGENCE_ARCHITECTURE_SOL_V2_1 · REGISTRY_SHA256: b516004c690dd86860c263334d9f32f79a6c935ac82f2b801d3117223ed8d787
 - ARCH_IMPORT_COMMIT: 58b6ab38b0a514d94d8851679ad66ef9bf696c9e
-- G0 recorded: NO (startup infrastructure complete; PRESTART/remaining configuration unresolved) · G1 signed: YES (owner typed signature; file SHA-256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712) · G2: NOT_PASSED · G3 families: none
+- G0 recorded: YES (2026-10-12T14:48:06Z; PHASED_BUILD_STARTUP; owner-approved scoped PRESTART) · G1 signed: YES (owner typed signature; file SHA-256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712) · G2: NOT_PASSED · G3 families: none
 - Tool versions: git git version 2.54.0 (Apple Git-157); gh gh version 2.96.0 (2026-07-02); python3 Python 3.14.6; rustc rustc 1.97.1 (8bab26f4f 2026-07-14); cargo cargo 1.97.1 (c980f4866 2026-06-30); docker Docker version 29.7.2, build a7dcaa6; gitleaks gitleaks version 8.30.1; sccache sccache 0.18.0; node v24.18.0; pnpm 11.22.0
 
 ## Accepted architecture interpretation
@@ -47,7 +47,7 @@ P0-06A, P0-06B, P0-07D, P0-10B, P0-10C, P0-10D, P0-10E, P0-10F, P0-10G, P0-10H: 
 - (none yet)
 
 ## Current blockers
-- G0 not recorded: PRESTART remains unsigned and setup reports unresolved resource configuration. See NOTICES/STARTUP_2026-10-12.md. G1 is recorded separately.
+- No construction-startup blocker. Deferred resources and task dependencies remain mandatory before the owning tasks; see NOTICES/STARTUP_2026-10-12.md.
 
 ## Pending contract change requests
 - (none)
@@ -59,6 +59,13 @@ P0-06A, P0-06B, P0-07D, P0-10B, P0-10C, P0-10D, P0-10E, P0-10F, P0-10G, P0-10H: 
 - Architecture: 235 files, 0 mismatches; specification check only, p0_executed:false. Seven main bootstrap workflows passed; PR-only write-set-guard was tested locally, not reported as a main CI run.
 - Guard smoke tests: invalid scratch scope, valid-task cross-lane path, direct-main push all rejected; no test commit or branch remains.
 - GitHub secret scanning unavailable for this private repository (HTTP 422); local gitleaks hook installed. Two baseline full-history scan findings are contract type-name lists at W01 task.md INPUT CONTRACTS, not secrets; no blanket exclusion was added.
-- Free disk ~41 GiB, below 100 GB checklist; shared compile-cache cap reduced to 5G, no personal files deleted. Docker reports ~8 GB memory allocation; 4 GB tuning remains open.
-- Staging databases, object-lock evidence storage, provider Apps/keys and lab hosts are unprovisioned; tasks own their creation. Do not fabricate values or sign PRESTART to clear the blanket setup check. G0 phase reconciliation remains open.
+- Free disk ~41 GiB, below 100 GB checklist; shared compile-cache cap reduced to 5G, no personal files deleted. Docker reports ~8 GB memory allocation; one active A2 build maximum until 4 GB tuning is verified.
+- Staging databases, object-lock evidence storage, provider Apps/keys and lab hosts are unprovisioned; tasks own their creation. Do not fabricate values or sign PRESTART to clear the blanket setup check. Master explicitly approved phased G0/scoped PRESTART; future resources remain deferred prerequisites, not provisioned values.
 - All BUILD tasks NOT_STARTED, all 55 claims NOT_RUN; G2 NOT_PASSED, no G3, no production grant.
+
+## Active phased G0 — 2026-10-12T14:48:06Z
+- Owner explicitly approved phased G0 and scoped PRESTART; G0_PHASE_RECORD_SHA256: 079c1584dca8f51d45cfd10127ff308749736ecc92961765e274f6789b7508cf. See NOTICES/G0_PHASED_BUILD_AUTHORIZATION.json and NOTICES/G0_PHASE_DECISION.md.
+- Construction checker PASS: six lanes, zero errors, 39.57 GiB free; live GitHub identity/protection/signatures/freshness/CI, architecture/pins, paths/symlinks/hooks and caps verified. Negative tests PASS; fresh independent GPT-6.1 Sol high review accepted the scoped construction checks.
+- Global scheduling: max3 active A2 tasks, max1 per lane, max1 active build until Docker about4GiB verified; compiler jobs2, cache5G; stop dispatch below20GiB free. Shared cap covers all six lanes together.
+- Scoped PRESTART signed by Omkar (master) via explicit chat approval. Unchecked access/manual/knowledge and future-resource items retain per-task/phase prerequisites. Lane A1 completes mandatory reads on launch.
+- G2 NOT_PASSED; G3 none; all claims NOT_RUN; production NOT_AUTHORIZED.
