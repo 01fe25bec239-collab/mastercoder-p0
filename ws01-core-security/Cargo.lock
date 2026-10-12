@@ -3693,7 +3693,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wire-vector-table-double"
+name = "wire-vector-table"
 version = "0.1.0"
 dependencies = [
  "async-trait",

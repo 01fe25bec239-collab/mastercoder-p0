@@ -31,7 +31,7 @@ Sources: authoritative coordination/task.md W01-T000 steps 1–10; every W01 BUI
 | crates/mc-test-support | mc-test-support | T008 |
 | crates/mc-webauthn-verify | mc-webauthn-verify | T009 |
 | crates/mc-wire | mc-wire | T012 |
-| doubles/wire-vector-table/v1 | wire-vector-table-double | T006 |
+| doubles/wire-vector-table/v1 | wire-vector-table | T006 (library: `wire_vector_table`) |
 | doubles/lease/v1 | lease-double | T015 |
 | doubles/effects-journal/v1 | effects-journal-double | T018 |
 | doubles/gate-authority/v1 | gate-authority-double | T020 |

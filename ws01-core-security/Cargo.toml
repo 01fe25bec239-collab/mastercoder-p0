@@ -64,7 +64,7 @@ mc-runner-control = { path = "crates/mc-runner-control" }
 mc-test-support = { path = "crates/mc-test-support" }
 mc-webauthn-verify = { path = "crates/mc-webauthn-verify" }
 mc-wire = { path = "crates/mc-wire" }
-wire-vector-table-double = { path = "doubles/wire-vector-table/v1" }
+wire-vector-table = { path = "doubles/wire-vector-table/v1" }
 lease-double = { path = "doubles/lease/v1" }
 effects-journal-double = { path = "doubles/effects-journal/v1" }
 gate-authority-double = { path = "doubles/gate-authority/v1" }

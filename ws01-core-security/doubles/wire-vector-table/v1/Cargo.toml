@@ -1,6 +1,6 @@
 # PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
 [package]
-name = "wire-vector-table-double"
+name = "wire-vector-table"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
