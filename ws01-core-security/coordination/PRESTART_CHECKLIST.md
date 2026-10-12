@@ -1,6 +1,6 @@
 # PRESTART CHECKLIST — WORKSTREAM-01-CORE-SECURITY-AUTHORITY (lane 01, operator: master)
 
-Complete every box before the first A1 session. Anything you cannot complete: write it under "Open items" — the lane's A1 will treat it as a recorded blocker instead of stalling silently. Machine-wide items (tools, GitHub, accounts) are done once; tick them in every lane.
+Owner-approved phased construction scope (2026-10-12): the construction checker must pass before A1/A2 construction. Unchecked future-resource/manual items remain required at their owning task/phase; they are not waived or represented as complete. Complete the lane A1 mandatory reads on launch. Anything you cannot complete: write it under "Open items" — the lane's A1 will treat it as a recorded blocker instead of stalling silently. Machine-wide items (tools, GitHub, accounts) are done once; tick them in every lane.
 
 ## A0. If your laptop runs Windows (do this first)
 Everything for this program runs **inside WSL2 Ubuntu**, not in native Windows (the hooks are bash, the tooling is Linux, symlinks must work).
@@ -65,16 +65,18 @@ python3 ../COMMON/verify_architecture.py ARCHITECTURE_READONLY/MASTERCODER_CONVE
 - [ ] The "MUST READ" rows of `ARCHITECTURE_MAP.md`
 
 ## F. Gates
-- [ ] G0 recorded (repo exists, protection on) — date: ____
+- [x] G0 recorded — 2026-10-12T14:48:06Z — owner-approved PHASED_BUILD_STARTUP; construction checker PASS
 - [x] G1 signed by master — G1 file SHA-256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712 (owner typed chat signature; recorded in memory.md)
 - [ ] I understand G2/G3 are needed before any claim RUN.
 
 ## Open items
-- Startup check 2026-10-12: see `NOTICES/STARTUP_2026-10-12.md`. G0 and PRESTART sign-off remain open.
+- Startup check 2026-10-12: see `NOTICES/STARTUP_2026-10-12.md`. Phased G0 and scoped PRESTART are recorded; later-task access/manual prerequisites remain open.
 - Signing key registered by owner and local SSH signing verified; account 2FA status not independently checked.
 - Only ~41 GiB free, below the 100 GB checklist; Docker memory tuning to about 4 GB remains open.
 - Future-task resources remain unprovisioned; setup reports placeholders. No fabricated accounts, credentials, host access or evidence-store readiness.
 - Complete the lane-specific knowledge/read and manual-access checks before signing PRESTART.
 -
 
-Signed: master ______  Date (UTC): ______
+Signed: Omkar (master; explicit owner approval of scoped PRESTART)  Recorded (UTC): 2026-10-12T14:48:06Z
+Scope: verified construction startup only; unchecked manual/access/knowledge/resource boxes are not claimed complete.
+G0_PHASE_RECORD_SHA256: 079c1584dca8f51d45cfd10127ff308749736ecc92961765e274f6789b7508cf
