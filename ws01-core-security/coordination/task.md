@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W01-T000-WORKSPACE-SCAFFOLD | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r0 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | task EXACT WRITE SCOPE; see dispatch | 2026-10-12T18:13:11Z | fresh A2 launch / RETURN |
+| W01-T000-WORKSPACE-SCAFFOLD | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r0 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | task EXACT WRITE SCOPE; see dispatch | 2026-10-12T18:13:11Z | fresh preliminary A3 review; actual PR CI pending |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -29,7 +29,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W01-T000-WORKSPACE-SCAFFOLD | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | A2 launch prepared; see DISPATCHES/W01-T000-WORKSPACE-SCAFFOLD-r0-DISPATCH.md |
+| W01-T000-WORKSPACE-SCAFFOLD | BUILD | IN_REVIEW | r0 | 30f4813838fa779ec55af45cb2892f417e4205b4 | NONE | NONE | RETURN verified; owner approved baseline grep clarification; preliminary A3 request prepared, final PR CI pending |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
@@ -1564,3 +1564,9 @@ States: NOT_STARTED · DISPATCHED · RETURNED · IN_REVIEW · REPAIR · ACCEPTED
 - **OUT-OF-SCOPE:** Any untested variant or other cell (no PASS inheritance); other claims; production implementation; capability enablement in production.
 - **BLOCKERS:** G2 (external audit), G3 (execution authorization), —; external: NO.
 - **A3 REVIEW FOCUS:** Evidence lenses: DS lens → fresh evidence-A3 session using the W03 lane playbook, CC lens → fresh evidence-A3 session using the W06 lane playbook. Fail condition: Any injected case violates the stated observation/threshold, or positive control fails. Missing/inaccessible evidence, unpinned participating component, unobservable required outcome or non-independent review yields INCONCLUSIVE, which disables the cell like FAIL.
+
+## W01-T000 r0 return processing — 2026-10-13 IST
+
+- Original A2 return NOT_READY:REMOTE_CI_PENDING_AND_BASELINE_NEGATIVE_CHECK_MISMATCH retained verbatim. Candidate 30f4813838fa779ec55af45cb2892f417e4205b4, tree cc6722e79d5219c3f804ba4d75be1f9e7b176442, sole parent 58b6ab38b0a514d94d8851679ad66ef9bf696c9e; signed and clean verified by A1.
+- Master explicitly approved the grep clarification; NOTICES/W01-T000-PASSWORD-CHECK-CLARIFICATION.md preserves the actual three unchanged recursive matches and requires one product placeholder/no literal compose secret. Task fields remain unchanged.
+- Fresh preliminary review worktree /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r0-review-a at exact candidate. Request REVIEWS/W01-T000-WORKSPACE-SCAFFOLD-r0-a-A3_REQUEST.md; not launched by A1. No final acceptance with remote CI missing; no dependency unlocked.
