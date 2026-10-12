@@ -1,69 +1,292 @@
 #!/usr/bin/env bash
-# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure). Owner: W06.
-# Single source of the write-set rule, used by:
-#   - .githooks/pre-commit                          (local convenience, staged files)
-#   - .github/workflows/common-write-set-guard.yml  (server side; runs THIS FILE FROM THE PROTECTED BASE REVISION,
-#                                                    never from the PR candidate — audit F-2)
-# Two rules must both hold (audit F-1):
-#   1. Broad ownership: the branch's workstream may write only its own paths (COMMON/WRITE_OWNERSHIP_MATRIX.md).
-#   2. Exact dispatch scope: a task branch ws0N/<task-id-lowercase>[-rN] may write only the EXACT WRITE SCOPE of that
-#      task, read from <ws dir>/coordination/WRITE_SCOPES.json of the revision this script was loaded from
-#      (generated from task.md; ad-hoc FIX/LOCKFILE_SYNC tasks are added to it by a reviewed coordination PR first).
-# Usage: <newline-separated file list on stdin> | check_write_set.sh <branch-name> [<candidate-rev>]
-#   <candidate-rev> = commit whose blob sizes are checked (CI: the PR head). Omitted = the git index (pre-commit).
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure).
+# Audit F-1/F-2: CI checks out protected main; scopes come from that HEAD, never the candidate.
+# Hook: newline-separated names | bash scripts/check_write_set.sh BRANCH [REV]
+# CI: bash scripts/check_write_set.sh --pr BASE_SHA HEAD_SHA BRANCH TITLE
+# Tests: bash scripts/check_write_set.sh --self-test
+# Safe setup probe: bash scripts/check_write_set.sh --isolation-test
 set -eu
-branch=${1:?usage: check_write_set.sh <branch> [<candidate-rev>] < files}
-rev=${2:-}
-TRUSTED=$(cd "$(dirname "$0")/.." && pwd)   # tree that supplied this script (= scopes source)
-python3 -c '
-import json, re, subprocess, sys
-from pathlib import Path
-branch, rev, trusted = sys.argv[1], sys.argv[2], Path(sys.argv[3])
-def fail(msg):
-    print("BLOCKED (write-set guard): " + msg, file=sys.stderr)
-    print("Fix the change, not the guard. See TROUBLESHOOTING.md (Git). Never use --no-verify.", file=sys.stderr)
+script_root=$(cd "$(dirname "$0")/.." && pwd)
+python3 - "$script_root" "$@" 3<&0 <<'PY'
+import ast
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+trusted = Path(sys.argv[1])
+args = sys.argv[2:]
+
+
+def git(*args, cwd=None, data=None):
+    # Resolve the fixture directory at call time, not at function definition.
+    return subprocess.run(["git", "--no-optional-locks", *args], cwd=trusted if cwd is None else cwd,
+                          input=data, capture_output=True, check=True).stdout
+
+
+def repository_snapshot(root):
+    index = Path(os.fsdecode(git("rev-parse", "--git-path", "index", cwd=root)).strip())
+    if not index.is_absolute():
+        index = root / index
+    return (git("rev-parse", "HEAD", cwd=root), git("ls-files", "--stage", "-z", cwd=root),
+            git("status", "--porcelain", "-z", cwd=root), index.read_bytes())
+
+
+def isolation_test():
+    # Compile the actual helper with a synthetic source: even a stale-default
+    # regression can only damage this disposable sentinel, never the task repo.
+    body = (trusted / "scripts/check_write_set.sh").read_text().split("<<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+    function = next(node for node in ast.parse(body).body
+                    if isinstance(node, ast.FunctionDef) and node.name == "git")
+    with tempfile.TemporaryDirectory(prefix="git-isolation-") as tmp:
+        sentinel, scratch = Path(tmp) / "sentinel", Path(tmp) / "scratch"
+        sentinel.mkdir()
+        scratch.mkdir()
+        git("init", "-q", "-b", "main", cwd=sentinel)
+        (sentinel / "sentinel.txt").write_bytes(b"sentinel\n")
+        git("add", ".", cwd=sentinel)
+        tree = git("write-tree", cwd=sentinel).decode().strip()
+        base = git("-c", "user.name=Synthetic", "-c", "user.email=fixture@example.test",
+                   "-c", "commit.gpgsign=false", "commit-tree", tree, data=b"sentinel\n", cwd=sentinel).decode().strip()
+        git("update-ref", "refs/heads/main", base, cwd=sentinel)
+        before = repository_snapshot(sentinel)
+        namespace = {"trusted": sentinel, "subprocess": subprocess}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), "<actual-git-helper>", "exec"), namespace)
+        namespace["trusted"] = scratch
+        fixture_git = namespace["git"]
+        fixture_git("init", "-q", "-b", "main")
+        assert Path(os.fsdecode(fixture_git("rev-parse", "--show-toplevel")).strip()) == scratch.resolve(), "scratch Git escaped its repository"
+        (scratch / "fixture.txt").write_bytes(b"fixture\n")
+        fixture_git("add", ".")
+        tree = fixture_git("write-tree").decode().strip()
+        head = fixture_git("-c", "user.name=Synthetic", "-c", "user.email=fixture@example.test",
+                           "-c", "commit.gpgsign=false", "commit-tree", tree, data=b"fixture\n").decode().strip()
+        fixture_git("update-ref", "refs/heads/main", head)
+        assert fixture_git("rev-parse", "HEAD").decode().strip() == head
+        assert repository_snapshot(sentinel) == before, "fixture changed sentinel HEAD/index/status"
+        assert (sentinel / "sentinel.txt").read_bytes() == b"sentinel\n"
+    print("PASS: scratch Git isolation sentinel (source HEAD/index/status/bytes unchanged)")
+
+
+def reject(message):
+    raise ValueError(message)
+
+
+def pattern(glob):
+    if not isinstance(glob, str) or not glob or glob.startswith("/") or ".." in glob.split("/"):
+        reject("invalid trusted scope glob")
+    return re.compile(re.escape(glob).replace(r"\*\*", ".*").replace(r"\*", "[^/]*") + r"\Z")
+
+
+def check(branch, revision, files, title=None):
+    match = re.fullmatch(r"ws(0[1-6])/([a-z0-9][a-z0-9-]*)", branch)
+    if not match:
+        reject("branch must be ws0N/<task-id-lowercase>[-rN] or ws0N/coordination")
+    lane, slug = match.groups()
+    roots = [p.decode() + "/" for p in git("ls-tree", "--name-only", "HEAD").splitlines()
+             if re.fullmatch(rb"ws" + lane.encode() + rb"-[a-z0-9-]+", p)]
+    if len(roots) != 1:
+        reject("cannot find exactly one trusted workstream directory")
+    root = roots[0]
+    task = re.sub(r"-r[0-9]+$", "", slug).upper()
+    architecture_import = lane == "06" and slug.startswith("arch-import-")
+    label = "coordination" if slug == "coordination" else "arch-import" if architecture_import else task
+    if title is not None:
+        tokens = re.findall(r"\[([^\[\]]+)\]", title)
+        if label.casefold() not in [t.casefold() for t in tokens]:
+            reject("PR title must contain [" + label + "]")
+        if any(re.match(r"W0[1-6]-", t, re.I) and t.casefold() != label.casefold() for t in tokens):
+            reject("PR title names another task")
+    if slug == "coordination":
+        allow, deny = [pattern(root + "coordination/**")], []
+    elif architecture_import:
+        allow, deny = [pattern("ARCHITECTURE/**")], []
+    else:
+        scopes = json.loads(git("show", "HEAD:" + root + "coordination/WRITE_SCOPES.json"))
+        record = scopes["tasks"].get(task)
+        if not record:
+            reject("no dispatch scope for task " + task)
+        allow = [pattern(p) for p in record["allow"]]
+        deny = [pattern(p) for p in record.get("deny", [])]
+        if not allow:
+            reject("empty trusted task scope")
+    # Query the complete tree/index once; deleted paths remain scope-checked.
+    entries = {}
+    raw = git("ls-tree", "-rz", revision) if revision else git("ls-files", "--stage", "-z")
+    for entry in raw.split(b"\0"):
+        if not entry:
+            continue
+        meta, name = entry.split(b"\t", 1)
+        fields = meta.split()
+        mode, oid = fields[0], fields[2] if revision else fields[1]
+        if not revision and fields[2] != b"0":
+            reject("unmerged index")
+        entries[name.decode("utf-8", "surrogateescape")] = (mode, oid)
+    for path in files:
+        if not path or any(ord(c) < 32 or ord(c) == 127 for c in path):
+            reject("control character in changed path")
+        if str(PurePosixPath(path)) != path or path.startswith("/") or ".." in path.split("/"):
+            reject("noncanonical changed path")
+        if path.startswith("ARCHITECTURE/"):
+            owned = architecture_import
+        elif path.startswith(root + "coordination/"):
+            owned = slug == "coordination"
+        elif path.startswith(root) or path.startswith(".github/workflows/ws" + lane + "-"):
+            owned = True
+        else:
+            owned = lane == "06" and not re.match(r"ws0[1-5]-|\.github/workflows/ws0[1-5]-", path)
+        if not owned or not any(p.fullmatch(path) for p in allow) or any(p.fullmatch(path) for p in deny):
+            reject("files outside the write set: " + repr(path))
+        if re.search(r"(^|/)(\.env(?:\..*)?|[^/]*\.(pem|key|p12|pfx)|id_rsa[^/]*|id_ed25519[^/]*)$", path) and not path.endswith("/.env.example"):
+            reject("secret-like path: " + repr(path))
+        if path in entries:
+            mode, oid = entries[path]
+            if mode not in (b"100644", b"100755"):
+                reject("nonregular changed file: " + repr(path))
+            # Retain bootstrap guard's 5 MiB committed-blob ceiling (WRITE_OWNERSHIP_MATRIX).
+            if int(git("cat-file", "-s", oid.decode())) > 5242880:
+                reject("changed blob exceeds 5 MiB: " + repr(path))
+
+
+def pr(base, head, branch, title):
+    for revision in (base, head):
+        if not re.fullmatch(r"[0-9a-f]{40}", revision):
+            reject("PR revisions must be full commit SHAs")
+        git("cat-file", "-e", revision + "^{commit}")
+    if git("rev-parse", "HEAD").decode().strip() != base:
+        reject("guard must run from checked-out protected base")
+    merge_base = git("merge-base", base, head).decode().strip()
+    names = git("diff", "--name-only", "-z", "--no-renames", merge_base, head).split(b"\0")
+    check(branch, head, [n.decode("utf-8", "surrogateescape") for n in names if n], title)
+
+
+def scratch_self_test():
+    global trusted
+    source = trusted
+    with tempfile.TemporaryDirectory(prefix="write-scope-test-") as tmp:
+        trusted = Path(tmp)
+        git("init", "-q", "-b", "main")
+        for path in source.glob("ws0[1-6]-*/coordination/WRITE_SCOPES.json"):
+            dest = trusted / path.relative_to(source)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, dest)
+        for directory in ("scripts", ".github/workflows", "ARCHITECTURE"):
+            shutil.copytree(source / directory, trusted / directory)
+        git("add", ".")
+        env = dict(os.environ, GIT_AUTHOR_NAME="Synthetic", GIT_AUTHOR_EMAIL="fixture@example.test",
+                   GIT_COMMITTER_NAME="Synthetic", GIT_COMMITTER_EMAIL="fixture@example.test")
+        def commit(parent=None):
+            tree = git("write-tree").decode().strip()
+            # Synthetic disposable objects are test inputs, not product commits.
+            command = ["git", "-c", "commit.gpgsign=false", "commit-tree", tree, "-m", "scratch fixture"]
+            if parent:
+                command += ["-p", parent]
+            return subprocess.run(command, cwd=trusted, env=env, capture_output=True, check=True).stdout.decode().strip()
+        base = commit()
+        git("update-ref", "refs/heads/main", base)
+        branch = "ws06/w06-t000-root-hardening-r0"
+        title = "[WS06][W06-T000-ROOT-HARDENING] scratch"
+        cases = [
+            ("valid task scope", branch, title, {".editorconfig": b"fixture\n"}, None),
+            ("neighbouring task file", branch, title, {"ws06-platform-oss-qualification/docs/staging-environment.md": b"x"}, "outside the write set"),
+            ("coordination/memory.md", branch, title, {"ws06-platform-oss-qualification/coordination/memory.md": b"x"}, "outside the write set"),
+            ("excluded harness/Cargo.toml", "ws06/w06-t016-p0-06a-harness-r0", "[W06-T016-P0-06A-HARNESS]", {"ws06-platform-oss-qualification/claims/P0-06A/harness/Cargo.toml": b"x"}, "outside the write set"),
+            ("task absent from WRITE_SCOPES.json", "ws06/w06-t999-absent-r0", "[W06-T999-ABSENT]", {".editorconfig": b"x"}, "no dispatch scope"),
+            ("PR title names another task", branch, "[W06-T001-WS06-WORKSPACE-SCAFFOLD]", {".editorconfig": b"x"}, "PR title must contain"),
+            ("PR title names two tasks", branch, title + " [W06-T002-TESTDB-I14]", {".editorconfig": b"x"}, "names another task"),
+            ("foreign workstream", branch, title, {"ws01-core-security/foreign.rs": b"x"}, "outside the write set"),
+            ("rename source escapes scope", branch, title, {"scripts/check_write_set.sh": None, "ws01-core-security/renamed.sh": b"x"}, "outside the write set"),
+            ("newline filename", branch, title, {".editorconfig\nforeign": b"x"}, "control character"),
+            ("oversized blob", branch, title, {".editorconfig": b"x" * 5242881}, "exceeds 5 MiB"),
+            ("candidate scope forgery", branch, title, {"ws06-platform-oss-qualification/coordination/WRITE_SCOPES.json": b'{"tasks":{}}'}, "outside the write set"),
+        ]
+        for name, ref, subject, changes, reason in cases:
+            git("read-tree", base)
+            for path, content in changes.items():
+                if content is None:
+                    git("update-index", "--force-remove", "--", path)
+                else:
+                    oid = git("hash-object", "-w", "--stdin", data=content).decode().strip()
+                    git("update-index", "--add", "--cacheinfo", "100644," + oid + "," + path)
+            head = commit(base)
+            try:
+                pr(base, head, ref, subject)
+            except ValueError as error:
+                assert reason and reason in str(error), (name, str(error))
+            else:
+                assert reason is None, name
+            print("PASS: " + name)
+        # One candidate replaces every guard, then alters architecture and foreign paths.
+        git("read-tree", base)
+        changes = {"scripts/check_write_set.sh": b"exit 0\n", "scripts/verify_architecture.py": b"raise SystemExit(0)\n",
+                   ".github/workflows/common-arch-check.yml": b"name: weakened\n",
+                   ".github/workflows/common-write-set-guard.yml": b"name: weakened\n",
+                   "ARCHITECTURE/V2_1/00F_TECHNOLOGY_STACK.md": b"tampered\n",
+                   "ws01-core-security/foreign.rs": b"x"}
+        for path, content in changes.items():
+            oid = git("hash-object", "-w", "--stdin", data=content).decode().strip()
+            git("update-index", "--add", "--cacheinfo", "100644," + oid + "," + path)
+        head = commit(base)
+        try:
+            pr(base, head, branch, title)
+        except ValueError as error:
+            assert "outside the write set" in str(error)
+        else:
+            raise AssertionError("self-weakened candidate passed write scope")
+        archive = subprocess.Popen(["git", "archive", "--worktree-attributes", head, "ARCHITECTURE"], cwd=trusted, stdout=subprocess.PIPE)
+        import tarfile
+        candidate = trusted / "candidate"
+        candidate.mkdir()
+        with tarfile.open(fileobj=archive.stdout, mode="r|") as tar:
+            tar.extractall(candidate, filter="data")
+        assert archive.wait() == 0
+        result = subprocess.run([sys.executable, str(source / "scripts/verify_architecture.py"), str(candidate / "ARCHITECTURE/V2_1")], capture_output=True, text=True)
+        assert result.returncode == 1 and "00F_TECHNOLOGY_STACK.md" in result.stdout, result.stdout + result.stderr
+        print("PASS: self-weakened candidate plus architecture/foreign path => both checks red")
+        print("PASS: temporary scratch repository removed on exit")
+
+
+def self_test():
+    global trusted
+    source = trusted
+    isolation_test()
+    before = repository_snapshot(source)
+    # Include untracked drafts as well as tracked files without reading ignored env.
+    paths = git("ls-files", "-z", "--cached", "--others", "--exclude-standard", cwd=source).split(b"\0")
+    contents = {path: hashlib.sha256((source / os.fsdecode(path)).read_bytes()).digest()
+                for path in paths if path and (source / os.fsdecode(path)).is_file()}
+    try:
+        scratch_self_test()
+    finally:
+        trusted = source
+        assert repository_snapshot(source) == before, "self-test changed original HEAD/index/status"
+        assert all(hashlib.sha256((source / os.fsdecode(path)).read_bytes()).digest() == digest
+                   for path, digest in contents.items()), "self-test changed original file bytes"
+    print("PASS: original task HEAD/index/status/file-byte sentinel unchanged")
+
+
+try:
+    if args == ["--self-test"]:
+        self_test()
+    elif args == ["--isolation-test"]:
+        isolation_test()
+    elif len(args) == 5 and args[0] == "--pr":
+        pr(*args[1:])
+        print("write-set guard: PASS")
+    elif len(args) in (1, 2) and not args[0].startswith("--"):
+        paths = os.fdopen(3, "rb").read().decode("utf-8", "surrogateescape").splitlines()
+        check(args[0], args[1] if len(args) == 2 else "", paths)
+    else:
+        reject("usage: check_write_set.sh BRANCH [REV] < names | --pr BASE HEAD BRANCH TITLE | --self-test | --isolation-test")
+except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
+    print("BLOCKED (write-set guard): " + str(error), file=sys.stderr)
+    if isinstance(error, subprocess.CalledProcessError) and error.stderr:
+        # Escape control characters and bound diagnostics; never emit raw blobs.
+        print("git stderr: " + repr(error.stderr.decode("utf-8", "replace")[:4096]), file=sys.stderr)
     sys.exit(1)
-m = re.fullmatch(r"ws(0[1-6])/([a-z0-9][a-z0-9-]*)", branch)
-if branch == "main": fail("no direct commits/PRs from main; use a ws0N/ branch")
-if branch == "DETACHED": fail("detached HEAD (A3 review worktrees never commit)")
-if not m: fail("branch %r must be ws0N/<task-id-lowercase>[-rN] or ws0N/coordination" % branch)
-n, rest = m.groups()
-wsdirs = [p.name + "/" for p in trusted.glob("ws%s-*" % n) if p.is_dir()]
-if len(wsdirs) != 1: fail("cannot find exactly one ws%s-*/ directory in the trusted tree" % n)
-wsdir = wsdirs[0]
-def rx(glob):  # "*" = one path segment, "**" = any depth; braces are pre-expanded by the generator
-    out, i = "", 0
-    while i < len(glob):
-        if glob.startswith("**", i): out += ".*"; i += 2
-        elif glob[i] == "*": out += "[^/]*"; i += 1
-        else: out += re.escape(glob[i]); i += 1
-    return re.compile(out + r"\Z")
-if rest == "coordination":
-    allow, deny, label = [rx(wsdir + "coordination/**")], [], "coordination records"
-elif n == "06" and rest.startswith("arch-import-"):
-    allow, deny, label = [rx("ARCHITECTURE/**")], [], "architecture import (adjudicated CCR release only)"
-else:
-    task = re.sub(r"-r[0-9]+$", "", rest).upper()
-    sf = trusted / wsdir / "coordination" / "WRITE_SCOPES.json"
-    if not sf.is_file(): fail("missing trusted %s" % sf.relative_to(trusted))
-    rec = json.loads(sf.read_text()).get("tasks", {}).get(task)
-    if not rec: fail("no dispatch scope for task %s in %s (A1 adds FIX/LOCKFILE_SYNC scopes via a reviewed coordination PR)" % (task, sf.relative_to(trusted)))
-    allow, deny, label = [rx(g) for g in rec["allow"]], [rx(g) for g in rec.get("deny", [])], "task " + task
-def owned(f):  # rule 1, broad ownership
-    if f.startswith("ARCHITECTURE/"): return n == "06" and rest.startswith("arch-import-")
-    if f.startswith(wsdir + "coordination/"): return rest == "coordination"
-    if f.startswith(wsdir) or f.startswith(".github/workflows/ws%s-" % n): return True
-    if n == "06": return not re.match(r"ws0[1-5]-|\.github/workflows/ws0[1-5]-", f)
-    return False
-def size(f):
-    try: return int(subprocess.run(["git", "cat-file", "-s", (rev + ":" if rev else ":") + f], capture_output=True, text=True, check=True).stdout)
-    except Exception: return 0   # deleted file
-bad = []
-for f in (l.strip() for l in sys.stdin):
-    if not f: continue
-    ok = owned(f) and any(a.match(f) for a in allow) and not any(d.match(f) for d in deny)
-    if re.search(r"(^|/)(\.env|\.env\.local|[^/]*\.pem|[^/]*\.key|[^/]*\.p12|[^/]*\.pfx|id_rsa[^/]*|id_ed25519[^/]*)$", f): ok = False
-    if ok and size(f) > 5242880: ok = False
-    if not ok: bad.append(f)
-if bad: fail("files outside the write set of %s on %r (or secret-like / >5 MB): %s" % (label, branch, " ".join(bad)))
-' "$branch" "$rev" "$TRUSTED"
+PY
