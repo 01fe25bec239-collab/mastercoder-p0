@@ -75,3 +75,11 @@ P0-06A, P0-06B, P0-07D, P0-10B, P0-10C, P0-10D, P0-10E, P0-10F, P0-10G, P0-10H: 
 - Dispatch: DISPATCHES/W06-T000-ROOT-HARDENING-r0-DISPATCH.md. RETURN: RETURNS/W06-T000-ROOT-HARDENING-r0-A2_RETURN.md. No implementation SHA, acceptance, merge or claim result exists.
 - Shared one-build slot: /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/run_single_build.py. Three prepared A2 tasks globally (W01/W05/W06), one per lane.
 - Current in-flight board in task.md supersedes the earlier startup snapshot saying all tasks NOT_STARTED.
+
+## 2026-10-13 IST — owner-requested Luna/high instruction audit
+
+- STARTUP-A1 recorded master’s A1→A2 routing, one-path-plus-prompt format and exact `gpt-6-luna/high` reread request. All six complete task plans/instructions were reread through bounded helper passes; coverage is in the shared instruction-audit report.
+- Root durable memory now exists at `/Users/omkar/Documents/A1_Mastercoder/MEMORY.md`; this lowercase lane memory remains authoritative and A1-owned.
+- Owner agreed to normal PR→CI→final independent review→merge ordering; see `NOTICES/INSTRUCTION_AUDIT_2026-10-13.md` and the absolute decision path there. Remote CI stays mandatory; separate outward authorization still required.
+- Rechecked GitHub bootstrap: seven successful runs at import/main, eight required checks. Six lane placeholders await scaffold implementations; no product qualification inferred. Three prepared A2 task worktrees remain at the import base; no implementation, acceptance or integration was added by this audit.
+- Active caps remain three A2 total/one per lane/one executing build, not packaged fifteen-A2 defaults. G2/G3/RUN and deferred per-task prerequisites remain unchanged.
