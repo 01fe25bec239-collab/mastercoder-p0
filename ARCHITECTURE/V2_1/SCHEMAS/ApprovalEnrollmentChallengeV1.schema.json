@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ApprovalEnrollmentChallengeV1.schema.json",
+  "title": "ApprovalEnrollmentChallengeV1",
+  "description": "WebAuthn registration challenge bytes D(ApprovalEnrollmentChallengeV1,challenge). Intent precedes credential generation. A successful create ceremony yields new key, after which final action and required authority signatures are collected; neither provisional intent nor ceremony alone grants approval scope.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ApprovalEnrollmentChallengeV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "authority_epoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "challenge_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "intent_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "user_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "rp_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9.-]+$"
+    },
+    "allowed_origin": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^https://[a-z0-9.-]+(:[0-9]+)?$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "issued_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "challenge_id",
+    "intent_digest",
+    "user_id",
+    "rp_id",
+    "allowed_origin",
+    "session_id",
+    "nonce",
+    "issued_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "challenge_id",
+    "intent_digest",
+    "user_id",
+    "rp_id",
+    "allowed_origin",
+    "session_id",
+    "nonce",
+    "issued_at",
+    "expires_at"
+  ]
+}

@@ -1,0 +1,5 @@
+# Pinned at bootstrap from the bootstrap machine (rustc 1.97.1). Owner: W06. Change only with 48 h notice to all A1s.
+[toolchain]
+channel = "1.97.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

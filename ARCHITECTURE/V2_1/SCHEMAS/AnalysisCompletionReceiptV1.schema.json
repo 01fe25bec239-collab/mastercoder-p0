@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AnalysisCompletionReceiptV1.schema.json",
+  "title": "AnalysisCompletionReceiptV1",
+  "description": "Producer signature verifies authenticated workload only; protected verifier validates manifest matching, coverage and live lease before acceptance. Zero findings is not proof of execution absent this receipt.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "AnalysisCompletionReceiptV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "manifest_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "unit_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "attempt_binding_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "actual_analyzer_bundle_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "actual_configuration_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "actual_scope_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "coverage_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifact_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "finding_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "outcome": {
+      "enum": [
+        "COMPLETED",
+        "FAILED",
+        "UNSUPPORTED",
+        "CANCELLED"
+      ],
+      "x-cbor-enum-codes": {
+        "COMPLETED": 0,
+        "FAILED": 1,
+        "UNSUPPORTED": 2,
+        "CANCELLED": 3
+      }
+    },
+    "producer_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "started_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "completed_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "lease_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "receipt_id",
+    "manifest_digest",
+    "unit_id",
+    "attempt_binding_digest",
+    "actual_analyzer_bundle_digest",
+    "actual_configuration_digest",
+    "actual_scope_digest",
+    "coverage_digest",
+    "artifact_digests",
+    "finding_count",
+    "outcome",
+    "producer_id",
+    "started_at",
+    "completed_at",
+    "lease_generation"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "receipt_id",
+    "manifest_digest",
+    "unit_id",
+    "attempt_binding_digest",
+    "actual_analyzer_bundle_digest",
+    "actual_configuration_digest",
+    "actual_scope_digest",
+    "coverage_digest",
+    "artifact_digests",
+    "finding_count",
+    "outcome",
+    "producer_id",
+    "started_at",
+    "completed_at",
+    "lease_generation"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "DescriptorEntryV1.schema.json",
+  "title": "DescriptorEntryV1",
+  "description": "Value is opaque exact configuration bytes interpreted only under a policy-approved analyzer configuration schema, not by the signer. Security meaning requires the policy-approved schema digest; no free-form override can disable mandatory units.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "DescriptorEntryV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "value": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "key",
+    "value"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "key",
+    "value"
+  ]
+}

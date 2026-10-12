@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ManualResolutionActionV1.schema.json",
+  "title": "ManualResolutionActionV1",
+  "description": "Pre-ceremony immutable proposed decision. Trusted resolution origin displays this exact action and evidence. No PASS choice. Policy/oracle changes create fresh evaluation, and terminal nonexecution requires exact provider proof.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ManualResolutionActionV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "resolution_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "case_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "subject_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "prior_state_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "actor_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "actor_scope_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "kind": {
+      "enum": [
+        "DISPUTED_FINDING",
+        "FALSE_POSITIVE",
+        "UNSUPPORTED_VERIFICATION",
+        "EXTERNAL_EFFECT_UNCERTAINTY",
+        "APPROVAL_RECOVERY",
+        "UNTRUSTED_ORACLE"
+      ],
+      "x-cbor-enum-codes": {
+        "DISPUTED_FINDING": 0,
+        "FALSE_POSITIVE": 1,
+        "UNSUPPORTED_VERIFICATION": 2,
+        "EXTERNAL_EFFECT_UNCERTAINTY": 3,
+        "APPROVAL_RECOVERY": 4,
+        "UNTRUSTED_ORACLE": 5
+      }
+    },
+    "decision": {
+      "enum": [
+        "REQUEST_FRESH_EVALUATION",
+        "PROVIDE_ORACLE",
+        "CONFIRM_EFFECT",
+        "PROVE_TERMINAL_NONEXECUTION",
+        "REMAIN_BLOCKED",
+        "REVOKE",
+        "ACCEPT_RISK",
+        "CLOSE_UNRESOLVED",
+        "CREATE_POLICY_EXCLUSION"
+      ],
+      "x-cbor-enum-codes": {
+        "REQUEST_FRESH_EVALUATION": 0,
+        "PROVIDE_ORACLE": 1,
+        "CONFIRM_EFFECT": 2,
+        "PROVE_TERMINAL_NONEXECUTION": 3,
+        "REMAIN_BLOCKED": 4,
+        "REVOKE": 5,
+        "ACCEPT_RISK": 6,
+        "CLOSE_UNRESOLVED": 7,
+        "CREATE_POLICY_EXCLUSION": 8
+      }
+    },
+    "reason_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "evidence_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "audit_record_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "resolution_id",
+    "case_id",
+    "subject_digest",
+    "prior_state_digest",
+    "actor_id",
+    "actor_scope_digest",
+    "kind",
+    "decision",
+    "reason_digest",
+    "evidence_digests",
+    "created_at",
+    "expires_at",
+    "audit_record_id"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "resolution_id",
+    "case_id",
+    "subject_digest",
+    "prior_state_digest",
+    "actor_id",
+    "actor_scope_digest",
+    "kind",
+    "decision",
+    "reason_digest",
+    "evidence_digests",
+    "created_at",
+    "expires_at",
+    "audit_record_id"
+  ]
+}

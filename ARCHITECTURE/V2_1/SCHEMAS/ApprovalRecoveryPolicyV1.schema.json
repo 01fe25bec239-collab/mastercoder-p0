@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ApprovalRecoveryPolicyV1.schema.json",
+  "title": "ApprovalRecoveryPolicyV1",
+  "description": "DUAL_ADMIN sets minimum_authorities>=2 for INITIAL_BOOTSTRAP, RECOVER and scope expansion; ordinary nonexpanding ADD/REPLACE use owner consent, INITIAL_REGISTRATION uses one currently registered administrator. INDIVIDUAL_OFFLINE substitutes pre-established offline signature and fresh provider-owner proof for bootstrap/recovery only; owner operations still require active owner UV. Exact operation quorum is52. Policy cannot lower minima; new independent bootstrap fences all old approval authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ApprovalRecoveryPolicyV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "policy_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "profile": {
+      "enum": [
+        "DUAL_ADMIN",
+        "INDIVIDUAL_OFFLINE"
+      ],
+      "x-cbor-enum-codes": {
+        "DUAL_ADMIN": 0,
+        "INDIVIDUAL_OFFLINE": 1
+      }
+    },
+    "registration_authority_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "minimum_authorities": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "offline_recovery_key_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "provider_ownership_evidence_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "policy_id",
+    "generation",
+    "profile",
+    "registration_authority_ids",
+    "minimum_authorities",
+    "offline_recovery_key_id",
+    "provider_ownership_evidence_digest",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "policy_id",
+    "generation",
+    "profile",
+    "registration_authority_ids",
+    "minimum_authorities",
+    "offline_recovery_key_id",
+    "provider_ownership_evidence_digest",
+    "expires_at"
+  ]
+}

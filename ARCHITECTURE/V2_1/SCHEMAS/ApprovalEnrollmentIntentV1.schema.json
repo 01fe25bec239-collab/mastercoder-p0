@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ApprovalEnrollmentIntentV1.schema.json",
+  "title": "ApprovalEnrollmentIntentV1",
+  "description": "Pre-registration intent has no not-yet-generated credential ID/key. Authority verifies existing privileges/ownership before issuing create challenge. Current epoch, scope and independent bootstrap policy mandatory.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ApprovalEnrollmentIntentV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "authority_epoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "intent_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "user_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "authorization_scope_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "operation": {
+      "enum": [
+        "INITIAL_BOOTSTRAP",
+        "ADD",
+        "REPLACE",
+        "REVOKE",
+        "RECOVER",
+        "CHANGE_BINDING",
+        "INITIAL_REGISTRATION",
+        "SUSPEND"
+      ],
+      "x-cbor-enum-codes": {
+        "INITIAL_BOOTSTRAP": 0,
+        "ADD": 1,
+        "REPLACE": 2,
+        "REVOKE": 3,
+        "RECOVER": 4,
+        "CHANGE_BINDING": 5,
+        "INITIAL_REGISTRATION": 6,
+        "SUSPEND": 7
+      }
+    },
+    "previous_binding_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "recovery_policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "intent_id",
+    "user_id",
+    "authorization_scope_digest",
+    "operation",
+    "previous_binding_digest",
+    "recovery_policy_digest",
+    "session_id",
+    "nonce",
+    "created_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "intent_id",
+    "user_id",
+    "authorization_scope_digest",
+    "operation",
+    "previous_binding_digest",
+    "recovery_policy_digest",
+    "session_id",
+    "nonce",
+    "created_at",
+    "expires_at"
+  ]
+}

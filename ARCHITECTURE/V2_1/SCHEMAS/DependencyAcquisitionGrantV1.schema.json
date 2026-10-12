@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "DependencyAcquisitionGrantV1.schema.json",
+  "title": "DependencyAcquisitionGrantV1",
+  "description": "One-use bounded acquisition; no lifecycle scripts inside credential broker. Installation scripts run credential-free in sandbox. Private cache tenant scoped; redirects/DNS/private-address changes revalidated against approved endpoints.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "DependencyAcquisitionGrantV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "attempt_binding_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "lockfile_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "packages": {
+      "type": "array",
+      "items": {
+        "$ref": "DependencyPackageV1.schema.json"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "endpoint_allowlist_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "credential_authority_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "cache_scope_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "maximum_bytes": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_packages": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "maximum_requests": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "maximum_duration_ms": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "issued_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "grant_id",
+    "attempt_binding_digest",
+    "lockfile_digest",
+    "policy_digest",
+    "packages",
+    "endpoint_allowlist_digest",
+    "credential_authority_id",
+    "cache_scope_digest",
+    "maximum_bytes",
+    "maximum_packages",
+    "maximum_requests",
+    "maximum_duration_ms",
+    "issued_at",
+    "expires_at",
+    "nonce"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "grant_id",
+    "attempt_binding_digest",
+    "lockfile_digest",
+    "policy_digest",
+    "packages",
+    "endpoint_allowlist_digest",
+    "credential_authority_id",
+    "cache_scope_digest",
+    "maximum_bytes",
+    "maximum_packages",
+    "maximum_requests",
+    "maximum_duration_ms",
+    "issued_at",
+    "expires_at",
+    "nonce"
+  ]
+}

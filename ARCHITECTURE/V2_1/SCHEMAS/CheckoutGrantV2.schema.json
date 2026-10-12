@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CheckoutGrantV2.schema.json",
+  "title": "CheckoutGrantV2",
+  "description": "Finite read-only grant, exact OIDs; no reusable credential enters parser or guest. Replacement only after safe termination/reconciliation.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CheckoutGrantV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "attempt_binding_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "allowed_oids": {
+      "type": "array",
+      "items": {
+        "$ref": "GitOidV1.schema.json"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "maximum_bytes": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_objects": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_calls": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "deadline": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "broker_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "grant_id",
+    "attempt_binding_digest",
+    "allowed_oids",
+    "maximum_bytes",
+    "maximum_objects",
+    "maximum_calls",
+    "deadline",
+    "broker_generation",
+    "nonce"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "grant_id",
+    "attempt_binding_digest",
+    "allowed_oids",
+    "maximum_bytes",
+    "maximum_objects",
+    "maximum_calls",
+    "deadline",
+    "broker_generation",
+    "nonce"
+  ]
+}

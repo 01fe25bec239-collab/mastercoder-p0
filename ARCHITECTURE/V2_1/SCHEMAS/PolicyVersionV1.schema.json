@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PolicyVersionV1.schema.json",
+  "title": "PolicyVersionV1",
+  "description": "Policy Authority writes only through policy authorization ceremony. Immutable content, activation pointer protected. Normal staged update vs emergency immediate revocation follows 54.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "PolicyVersionV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "policy_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "previous_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "requirements_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "analyzer_configuration_schema_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "trust_set_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "capability_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "approver_scope_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "activated_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "policy_id",
+    "generation",
+    "previous_digest",
+    "requirements_digest",
+    "analyzer_configuration_schema_digest",
+    "trust_set_digest",
+    "capability_digest",
+    "approver_scope_digest",
+    "created_at",
+    "activated_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "policy_id",
+    "generation",
+    "previous_digest",
+    "requirements_digest",
+    "analyzer_configuration_schema_digest",
+    "trust_set_digest",
+    "capability_digest",
+    "approver_scope_digest",
+    "created_at",
+    "activated_at"
+  ]
+}

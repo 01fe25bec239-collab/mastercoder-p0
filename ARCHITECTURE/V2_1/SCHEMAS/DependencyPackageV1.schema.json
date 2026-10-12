@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "DependencyPackageV1.schema.json",
+  "title": "DependencyPackageV1",
+  "description": "Exact hash lock, no floating branch/version; broker authenticates registry and verifies bytes. Git requires exact commit and fetched content hash; package metadata cannot add endpoints.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "DependencyPackageV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "ecosystem": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "registry_origin": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^https://[a-z0-9.-]+(:[0-9]+)?$"
+    },
+    "package_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "content_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "lockfile_entry_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provenance_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "git_commit": {
+      "type": "array",
+      "items": {
+        "$ref": "GitOidV1.schema.json"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "ecosystem",
+    "registry_origin",
+    "package_name",
+    "version",
+    "content_digest",
+    "lockfile_entry_digest",
+    "provenance_digest",
+    "git_commit"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "ecosystem",
+    "registry_origin",
+    "package_name",
+    "version",
+    "content_digest",
+    "lockfile_entry_digest",
+    "provenance_digest",
+    "git_commit"
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "EffectStateV1.schema.json",
+  "title": "EffectStateV1",
+  "description": "Append-only revisions, live pointer protected by CAS. STARTED has started_at; CONFIRMED requires provider-result identity proof. FAILED_TERMINAL requires proven non-execution or terminal provider error; timeout/404 alone is UNKNOWN. No ABSENT_CONFIRMED.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "EffectStateV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "effect_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "intent_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "state": {
+      "enum": [
+        "PENDING",
+        "STARTED",
+        "CONFIRMED",
+        "FAILED_TERMINAL",
+        "UNKNOWN",
+        "MANUAL_RECONCILIATION"
+      ],
+      "x-cbor-enum-codes": {
+        "PENDING": 0,
+        "STARTED": 1,
+        "CONFIRMED": 2,
+        "FAILED_TERMINAL": 3,
+        "UNKNOWN": 4,
+        "MANUAL_RECONCILIATION": 5
+      }
+    },
+    "prior_state_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "started_at": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(0|-?[1-9][0-9]*)$",
+        "x-minimum": "-9223372036854775808",
+        "x-maximum": "9223372036854775807"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "completed_at": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(0|-?[1-9][0-9]*)$",
+        "x-minimum": "-9223372036854775808",
+        "x-maximum": "9223372036854775807"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "provider_result_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "reconciliation_evidence_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "recorded_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "effect_id",
+    "intent_digest",
+    "revision",
+    "state",
+    "prior_state_digest",
+    "started_at",
+    "completed_at",
+    "provider_result_digest",
+    "reconciliation_evidence_digests",
+    "recorded_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "effect_id",
+    "intent_digest",
+    "revision",
+    "state",
+    "prior_state_digest",
+    "started_at",
+    "completed_at",
+    "provider_result_digest",
+    "reconciliation_evidence_digests",
+    "recorded_at"
+  ]
+}

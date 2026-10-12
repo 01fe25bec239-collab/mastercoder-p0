@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ApprovalEnrollmentAuthorizationV1.schema.json",
+  "title": "ApprovalEnrollmentAuthorizationV1",
+  "description": "Enroller verifies current epoch, action->intent->create challenge->registration chain where required; consent_receipt_digests resolve signed ApprovalLifecycleConsentV1, authority_signature_envelope_digests contain only independently registered offline bootstrap/recovery signatures over exact action. Enforce operation-specific52 quorum; no publication assertion substituted. Audit and new binding commit with nonce consumption and old-binding revocation atomically.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ApprovalEnrollmentAuthorizationV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "recovery_policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "consent_receipt_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "authority_signature_envelope_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "enroller_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "committed_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "action_digest",
+    "recovery_policy_digest",
+    "consent_receipt_digests",
+    "authority_signature_envelope_digests",
+    "enroller_id",
+    "committed_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "action_digest",
+    "recovery_policy_digest",
+    "consent_receipt_digests",
+    "authority_signature_envelope_digests",
+    "enroller_id",
+    "committed_at"
+  ]
+}

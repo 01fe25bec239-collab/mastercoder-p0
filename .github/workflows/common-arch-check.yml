@@ -1,0 +1,37 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Owner: W06.
+# Verifies the read-only V2.1 architecture snapshot (all package checksums, no extra files, pinned registry/claims hashes)
+# and runs the architecture checker, which must still report p0_executed:false.
+# Trust model (audit F-2): on PRs, `pull_request_target` loads this workflow, the verifier and the checker from the
+# protected base revision; the candidate's ARCHITECTURE/ tree is extracted as DATA and verified, never executed.
+# Read-only token, no secrets, no third-party actions.
+name: arch-check
+on:
+  pull_request_target:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  arch-check:
+    name: arch-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the trusted revision (git only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TRUSTED_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --no-tags --depth=1 origin "$TRUSTED_SHA" "$CANDIDATE_SHA"
+          git checkout -q "$TRUSTED_SHA"
+          mkdir -p "$RUNNER_TEMP/candidate"
+          git archive "$CANDIDATE_SHA" ARCHITECTURE | tar -x -C "$RUNNER_TEMP/candidate"
+      - name: Verify the candidate's architecture snapshot with the trusted verifier
+        run: python3 scripts/verify_architecture.py "$RUNNER_TEMP/candidate/ARCHITECTURE/V2_1"
+      - name: Architecture checker from the trusted tree (no P0 executed)
+        run: |
+          python3 ARCHITECTURE/V2_1/TEST_VECTORS/check_spec.py | tee /tmp/spec.txt
+          grep -q '"p0_executed": false' /tmp/spec.txt

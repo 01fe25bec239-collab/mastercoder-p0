@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PublicationOperationV1.schema.json",
+  "title": "PublicationOperationV1",
+  "description": "Parent is orchestration only and NEVER grants STARTED authority to children; every child independently authorized.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "PublicationOperationV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "approval_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "effect_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "maxItems": 65536
+    },
+    "state": {
+      "enum": [
+        "PLANNED",
+        "AWAITING_APPROVAL",
+        "AUTHORIZED",
+        "RUNNING",
+        "CONFIRMED",
+        "FAILED_TERMINAL",
+        "REVOKED",
+        "EXPIRED",
+        "UNKNOWN",
+        "MANUAL_RECONCILIATION"
+      ],
+      "x-cbor-enum-codes": {
+        "PLANNED": 0,
+        "AWAITING_APPROVAL": 1,
+        "AUTHORIZED": 2,
+        "RUNNING": 3,
+        "CONFIRMED": 4,
+        "FAILED_TERMINAL": 5,
+        "REVOKED": 6,
+        "EXPIRED": 7,
+        "UNKNOWN": 8,
+        "MANUAL_RECONCILIATION": 9
+      }
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "plan_digest",
+    "approval_digest",
+    "effect_ids",
+    "state",
+    "generation",
+    "created_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "plan_digest",
+    "approval_digest",
+    "effect_ids",
+    "state",
+    "generation",
+    "created_at"
+  ]
+}

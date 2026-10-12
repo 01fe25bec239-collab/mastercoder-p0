@@ -1,0 +1,422 @@
+{
+ "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
+ "tasks": {
+  "W04-DEPENDENCY-UPDATE": {
+   "allow": [
+    "ws04-agent-model-graph/Cargo.toml",
+    "ws04-agent-model-graph/Cargo.lock",
+    "ws04-agent-model-graph/crates/*/Cargo.toml",
+    "ws04-agent-model-graph/doubles/*/v1/Cargo.toml",
+    "ws04-agent-model-graph/claims/*/harness/Cargo.toml",
+    "ws04-agent-model-graph/tools/*/Cargo.toml",
+    "ws04-agent-model-graph/docs/MODULES.md"
+   ],
+   "deny": [],
+   "standing": "DEPENDENCY_REQUEST resolution only (AGENTS.md \u00a73a dependency rule)"
+  },
+  "W04-LOCKFILE-SYNC": {
+   "allow": [
+    "ws04-agent-model-graph/Cargo.lock"
+   ],
+   "deny": [],
+   "standing": "lockfile regeneration only (AGENTS.md \u00a73a lockfile rule)"
+  },
+  "W04-RUN-P0-01A": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-01B": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01B/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-01C": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-01D": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01D/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-05E": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-05E/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-05F": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-05F/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-05G": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-05G/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-08B": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-08B/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-08C": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-08C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-RUN-P0-08D": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-08D/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W04-T000-WORKSPACE-SCAFFOLD": {
+   "allow": [
+    ".github/workflows/ws04-ci.yml",
+    "ws04-agent-model-graph/.env.example",
+    "ws04-agent-model-graph/.gitignore",
+    "ws04-agent-model-graph/Cargo.lock",
+    "ws04-agent-model-graph/Cargo.toml",
+    "ws04-agent-model-graph/README.md",
+    "ws04-agent-model-graph/claims/*/harness/Cargo.toml",
+    "ws04-agent-model-graph/claims/*/harness/src/main.rs",
+    "ws04-agent-model-graph/claims/README.md",
+    "ws04-agent-model-graph/compose.yaml",
+    "ws04-agent-model-graph/crates/*/Cargo.toml",
+    "ws04-agent-model-graph/crates/*/src/*.rs",
+    "ws04-agent-model-graph/crates/*/src/lib.rs",
+    "ws04-agent-model-graph/db/*/.keep",
+    "ws04-agent-model-graph/db/MODULES",
+    "ws04-agent-model-graph/docs/MODULES.md",
+    "ws04-agent-model-graph/docs/README.md",
+    "ws04-agent-model-graph/doubles/README.md",
+    "ws04-agent-model-graph/doubles/fake-model-provider/v1/Cargo.toml",
+    "ws04-agent-model-graph/doubles/fake-model-provider/v1/README.md",
+    "ws04-agent-model-graph/doubles/fake-model-provider/v1/src/lib.rs",
+    "ws04-agent-model-graph/doubles/model-broker/v1/Cargo.toml",
+    "ws04-agent-model-graph/doubles/model-broker/v1/README.md",
+    "ws04-agent-model-graph/doubles/model-broker/v1/src/lib.rs"
+   ],
+   "deny": []
+  },
+  "W04-T001-MODEL-CELLS-DOC": {
+   "allow": [
+    "ws04-agent-model-graph/compat/MODEL_CELLS.md",
+    "ws04-agent-model-graph/compat/README.md"
+   ],
+   "deny": []
+  },
+  "W04-T002-API-FREEZE": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-authority/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-resolver/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-graph-envelope/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-graph-runtime/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-graph/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-model-turn/src/api.rs",
+    "ws04-agent-model-graph/crates/mc-secret-dialer/src/api.rs",
+    "ws04-agent-model-graph/docs/INTERFACES.md"
+   ],
+   "deny": []
+  },
+  "W04-T003-MODEL-TEST-SUPPORT": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-model-test-support/src/**",
+    "ws04-agent-model-graph/crates/mc-model-test-support/tests/**"
+   ],
+   "deny": []
+  },
+  "W04-T004-FAKE-MODEL-PROVIDER": {
+   "allow": [
+    "ws04-agent-model-graph/doubles/fake-model-provider/v1/README.md",
+    "ws04-agent-model-graph/doubles/fake-model-provider/v1/scripts/**",
+    "ws04-agent-model-graph/doubles/fake-model-provider/v1/src/**",
+    "ws04-agent-model-graph/doubles/fake-model-provider/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W04-T005-MODEL-TURN-VALIDATOR": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-model-turn/src/correlate.rs",
+    "ws04-agent-model-graph/crates/mc-model-turn/src/custody.rs",
+    "ws04-agent-model-graph/crates/mc-model-turn/src/stream.rs",
+    "ws04-agent-model-graph/crates/mc-model-turn/src/validate.rs",
+    "ws04-agent-model-graph/crates/mc-model-turn/tests/**"
+   ],
+   "deny": []
+  },
+  "W04-T006-BROKER-DOUBLE": {
+   "allow": [
+    "ws04-agent-model-graph/doubles/model-broker/v1/README.md",
+    "ws04-agent-model-graph/doubles/model-broker/v1/src/**",
+    "ws04-agent-model-graph/doubles/model-broker/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W04-T007-GRAPH-ENGINE-CORE": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-graph/src/cancel.rs",
+    "ws04-agent-model-graph/crates/mc-graph/src/events.rs",
+    "ws04-agent-model-graph/crates/mc-graph/src/lifecycle.rs",
+    "ws04-agent-model-graph/crates/mc-graph/src/model.rs",
+    "ws04-agent-model-graph/crates/mc-graph/src/store.rs",
+    "ws04-agent-model-graph/crates/mc-graph/tests/**",
+    "ws04-agent-model-graph/db/graph/0001_*",
+    "ws04-agent-model-graph/db/graph/0002_*",
+    "ws04-agent-model-graph/docs/GRAPH_ENGINE.md"
+   ],
+   "deny": []
+  },
+  "W04-T008-LEDGER-CORE": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-ledger/src/entries.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/src/reserve.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/src/settle.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/tests/conservation.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/tests/entries.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/tests/reserve.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/tests/settle.rs",
+    "ws04-agent-model-graph/db/model/0001_*"
+   ],
+   "deny": []
+  },
+  "W04-T009-SECRET-DIALER": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-secret-dialer/src/cell.rs",
+    "ws04-agent-model-graph/crates/mc-secret-dialer/src/dial.rs",
+    "ws04-agent-model-graph/crates/mc-secret-dialer/src/guard.rs",
+    "ws04-agent-model-graph/crates/mc-secret-dialer/src/main.rs",
+    "ws04-agent-model-graph/crates/mc-secret-dialer/tests/**"
+   ],
+   "deny": []
+  },
+  "W04-T010-OPENAI-COMPAT-ADAPTER": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-adapter-openai-compat/src/**",
+    "ws04-agent-model-graph/crates/mc-adapter-openai-compat/tests/**"
+   ],
+   "deny": []
+  },
+  "W04-T011-MODEL-BROKER-INTENTS": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-model-broker/src/authority.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/src/effect.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/src/intent.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/tests/authority.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/tests/effect.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/tests/intent.rs",
+    "ws04-agent-model-graph/db/model/0002_*"
+   ],
+   "deny": []
+  },
+  "W04-T012-GRAPH-EVENTS-REPLAY-FIXTURES": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-graph-replay/src/**",
+    "ws04-agent-model-graph/crates/mc-graph-replay/tests/**",
+    "ws04-agent-model-graph/fixtures/graphs/**"
+   ],
+   "deny": []
+  },
+  "W04-T013-LEDGER-CANCELLATION-SETTLEMENT": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-ledger/src/cancel.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/src/debt.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/src/settle.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/tests/cancel.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/tests/debt.rs",
+    "ws04-agent-model-graph/crates/mc-ledger/tests/late_usage.rs",
+    "ws04-agent-model-graph/db/model/0003_*"
+   ],
+   "deny": []
+  },
+  "W04-T014-GRAPH-AGENT-RUNTIME": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-graph-runtime/src/profiles.rs",
+    "ws04-agent-model-graph/crates/mc-graph-runtime/src/run_loop.rs",
+    "ws04-agent-model-graph/crates/mc-graph-runtime/src/spawn.rs",
+    "ws04-agent-model-graph/crates/mc-graph-runtime/src/tools.rs",
+    "ws04-agent-model-graph/crates/mc-graph-runtime/tests/**",
+    "ws04-agent-model-graph/profiles/**"
+   ],
+   "deny": []
+  },
+  "W04-T015-BROKER-HTTP-WIRING": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-model-broker/src/http.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/src/main.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/tests/http.rs"
+   ],
+   "deny": []
+  },
+  "W04-T016-GRAPH-ROOT-ENVELOPE": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-graph-envelope/src/admit.rs",
+    "ws04-agent-model-graph/crates/mc-graph-envelope/src/counters.rs",
+    "ws04-agent-model-graph/crates/mc-graph-envelope/tests/**",
+    "ws04-agent-model-graph/crates/mc-model-broker/src/graph.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/src/http.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/tests/graph.rs",
+    "ws04-agent-model-graph/db/graph/0003_*"
+   ],
+   "deny": []
+  },
+  "W04-T017-BROKER-RESTART-RECOVERY": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-model-broker/src/main.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/src/recovery.rs",
+    "ws04-agent-model-graph/crates/mc-model-broker/tests/recovery.rs"
+   ],
+   "deny": []
+  },
+  "W04-T018-P0-08C-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-08C/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-08C/harness/Cargo.toml"
+   ]
+  },
+  "W04-T019-P0-01A-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01A/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-01A/harness/Cargo.toml"
+   ]
+  },
+  "W04-T020-P0-01B-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01B/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-01B/harness/Cargo.toml"
+   ]
+  },
+  "W04-T021-P0-01C-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01C/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-01C/harness/Cargo.toml"
+   ]
+  },
+  "W04-T022-P0-08B-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-08B/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-08B/harness/Cargo.toml"
+   ]
+  },
+  "W04-T023-P0-08D-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-08D/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-08D/harness/Cargo.toml"
+   ]
+  },
+  "W04-T024-ENTITLEMENT-CHECKLIST": {
+   "allow": [
+    "ws04-agent-model-graph/compat/TERMS_CONFIRMATION_REQUEST.md",
+    "ws04-agent-model-graph/compat/capability-checklist.schema.json",
+    "ws04-agent-model-graph/compat/checklist-first-cell.json",
+    "ws04-agent-model-graph/crates/mc-adapter-openai-compat/tests/sentinels.rs"
+   ],
+   "deny": []
+  },
+  "W04-T025-P0-01D-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-01D/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-01D/harness/Cargo.toml"
+   ]
+  },
+  "W04-T026-NPM-RESOLVER": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-dependency-resolver/src/npm.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-resolver/tests/npm.rs"
+   ],
+   "deny": []
+  },
+  "W04-T027-ENDPOINT-POLICY": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/src/policy.rs",
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/tests/policy.rs"
+   ],
+   "deny": []
+  },
+  "W04-T028-ACQUISITION-DIALER": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/src/connect.rs",
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/src/redirect.rs",
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/src/stream.rs",
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/tests/connect.rs",
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/tests/redirect.rs",
+    "ws04-agent-model-graph/crates/mc-acquisition-dialer/tests/stream.rs"
+   ],
+   "deny": []
+  },
+  "W04-T029-DEPENDENCY-AUTHORITY": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-dependency-authority/src/cache.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-authority/src/consume.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-authority/src/mint.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-authority/tests/**",
+    "ws04-agent-model-graph/db/dependency_cache/**",
+    "ws04-agent-model-graph/db/dependency_grants/**"
+   ],
+   "deny": []
+  },
+  "W04-T030-GIT-TOOLCHAIN-PINNING": {
+   "allow": [
+    "ws04-agent-model-graph/crates/mc-dependency-resolver/src/git_dep.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-resolver/src/toolchain.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-resolver/tests/git_dep.rs",
+    "ws04-agent-model-graph/crates/mc-dependency-resolver/tests/toolchain.rs",
+    "ws04-agent-model-graph/fixtures/toolchains/**"
+   ],
+   "deny": []
+  },
+  "W04-T031-P0-05E-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-05E/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-05E/harness/Cargo.toml"
+   ]
+  },
+  "W04-T032-P0-05F-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-05F/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-05F/harness/Cargo.toml"
+   ]
+  },
+  "W04-T033-P0-05G-HARNESS": {
+   "allow": [
+    "ws04-agent-model-graph/claims/P0-05G/**"
+   ],
+   "deny": [
+    "ws04-agent-model-graph/claims/P0-05G/harness/Cargo.toml"
+   ]
+  }
+ },
+ "workstream": "W04"
+}

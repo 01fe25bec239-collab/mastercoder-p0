@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ModelMessageV1.schema.json",
+  "title": "ModelMessageV1",
+  "description": "Exact bounded content resides in ephemeral tenant custody, never audit. TOOL requires correlated previous unique tool_call_id.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ModelMessageV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "role": {
+      "enum": [
+        "SYSTEM",
+        "USER",
+        "ASSISTANT",
+        "TOOL"
+      ],
+      "x-cbor-enum-codes": {
+        "SYSTEM": 0,
+        "USER": 1,
+        "ASSISTANT": 2,
+        "TOOL": 3
+      }
+    },
+    "content_custody_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "tool_call_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "role",
+    "content_custody_digest",
+    "tool_call_id"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "role",
+    "content_custody_digest",
+    "tool_call_id"
+  ]
+}

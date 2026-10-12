@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "MergeSubjectV2.schema.json",
+  "title": "MergeSubjectV2",
+  "description": "Observed through protected provider read-back; all OIDs use one algorithm. expires_at > observed_at. HEAD_ONLY_NONMERGE cannot authorize integrated merge.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "MergeSubjectV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "provider": {
+      "enum": [
+        "GITHUB",
+        "OTHER"
+      ]
+    },
+    "pr_number": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "head_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "head_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "base_ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "base_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "base_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "candidate_kind": {
+      "enum": [
+        "HEAD_ONLY_NONMERGE",
+        "TEST_MERGE",
+        "MERGE_GROUP",
+        "PROVIDER_EQUIVALENT"
+      ],
+      "x-cbor-enum-codes": {
+        "HEAD_ONLY_NONMERGE": 0,
+        "TEST_MERGE": 1,
+        "MERGE_GROUP": 2,
+        "PROVIDER_EQUIVALENT": 3
+      }
+    },
+    "candidate_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "candidate_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "merge_method": {
+      "enum": [
+        "MERGE",
+        "SQUASH",
+        "REBASE",
+        "QUEUE",
+        "ADVISORY"
+      ],
+      "x-cbor-enum-codes": {
+        "MERGE": 0,
+        "SQUASH": 1,
+        "REBASE": 2,
+        "QUEUE": 3,
+        "ADVISORY": 4
+      }
+    },
+    "provider_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "observed_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "provider",
+    "pr_number",
+    "head_commit",
+    "head_tree",
+    "base_ref",
+    "base_commit",
+    "base_tree",
+    "candidate_kind",
+    "candidate_commit",
+    "candidate_tree",
+    "merge_method",
+    "provider_generation",
+    "observed_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "provider",
+    "pr_number",
+    "head_commit",
+    "head_tree",
+    "base_ref",
+    "base_commit",
+    "base_tree",
+    "candidate_kind",
+    "candidate_commit",
+    "candidate_tree",
+    "merge_method",
+    "provider_generation",
+    "observed_at",
+    "expires_at"
+  ]
+}

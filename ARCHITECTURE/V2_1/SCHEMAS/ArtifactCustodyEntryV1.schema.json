@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ArtifactCustodyEntryV1.schema.json",
+  "title": "ArtifactCustodyEntryV1",
+  "description": "Opaque tenant scoped object handle, never fetch arbitrary caller URL. Blob bytes fetched over authenticated custodian endpoint and digest/size validated.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ArtifactCustodyEntryV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "artifact_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "byte_length": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "region": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "encryption_key_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "artifact_digest",
+    "byte_length",
+    "location",
+    "region",
+    "encryption_key_ref"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "artifact_digest",
+    "byte_length",
+    "location",
+    "region",
+    "encryption_key_ref"
+  ]
+}

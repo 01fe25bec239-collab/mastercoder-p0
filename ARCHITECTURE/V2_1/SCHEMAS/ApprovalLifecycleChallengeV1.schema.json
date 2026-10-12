@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ApprovalLifecycleChallengeV1.schema.json",
+  "title": "ApprovalLifecycleChallengeV1",
+  "description": "Post-registration action challenge for webauthn.get with fresh UV. D(ApprovalLifecycleChallengeV1,challenge) is authenticator challenge. AA fetches exact action and renders user/scope/new key/replacement target. Purpose and current actor role checked against operation matrix in52; not usable for publication or oracle approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ApprovalLifecycleChallengeV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "authority_epoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "challenge_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "actor_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "credential_binding_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "credential_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "issued_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "purpose": {
+      "enum": [
+        "OWNER_CONSENT",
+        "ADMIN_CONSENT",
+        "SECURITY_SUSPEND"
+      ],
+      "x-cbor-enum-codes": {
+        "OWNER_CONSENT": 0,
+        "ADMIN_CONSENT": 1,
+        "SECURITY_SUSPEND": 2
+      }
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "challenge_id",
+    "action_digest",
+    "actor_id",
+    "credential_binding_id",
+    "credential_generation",
+    "session_id",
+    "nonce",
+    "issued_at",
+    "expires_at",
+    "purpose"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "challenge_id",
+    "action_digest",
+    "actor_id",
+    "credential_binding_id",
+    "credential_generation",
+    "session_id",
+    "nonce",
+    "issued_at",
+    "expires_at",
+    "purpose"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "EffectPlanEntryV1.schema.json",
+  "title": "EffectPlanEntryV1",
+  "description": "request_type restricted to five Create* Git publication request schemas. Acyclic ordered dependencies; no effect ID needed before runtime intents. Each request scope/publication ID equals parent plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "EffectPlanEntryV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "step_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "request_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "request_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "predecessor_step_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "step_id",
+    "request_type",
+    "request_digest",
+    "predecessor_step_ids"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "step_id",
+    "request_type",
+    "request_digest",
+    "predecessor_step_ids"
+  ]
+}

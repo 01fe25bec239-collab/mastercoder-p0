@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ExternalEffectJournalV1.schema.json",
+  "title": "ExternalEffectJournalV1",
+  "description": "Append-only journal in independent restore domain, synchronous verified witness receipt before send; full reconstructable intent/request retained by custody. Missing confirmation means DO NOT SEND. Detached signatures by journal/witness identities. No restore of ordinary DB may lower witness high-watermark or re-arm old intent.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ExternalEffectJournalV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "journal_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "sequence": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "previous_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "effect_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "intent_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "request_custody_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "state_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "entry_kind": {
+      "enum": [
+        "PREPARED",
+        "SEND_ARMED",
+        "OBSERVED",
+        "RESOLVED"
+      ],
+      "x-cbor-enum-codes": {
+        "PREPARED": 0,
+        "SEND_ARMED": 1,
+        "OBSERVED": 2,
+        "RESOLVED": 3
+      }
+    },
+    "entry_time": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "db_start_certificate_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "dispatcher_session_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "journal_id",
+    "sequence",
+    "previous_digest",
+    "scope",
+    "effect_id",
+    "intent_digest",
+    "request_custody_digest",
+    "state_digest",
+    "entry_kind",
+    "entry_time",
+    "db_start_certificate_digest",
+    "dispatcher_session_id"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "journal_id",
+    "sequence",
+    "previous_digest",
+    "scope",
+    "effect_id",
+    "intent_digest",
+    "request_custody_digest",
+    "state_digest",
+    "entry_kind",
+    "entry_time",
+    "db_start_certificate_digest",
+    "dispatcher_session_id"
+  ]
+}

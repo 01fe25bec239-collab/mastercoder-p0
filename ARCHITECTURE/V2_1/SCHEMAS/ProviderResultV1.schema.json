@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ProviderResultV1.schema.json",
+  "title": "ProviderResultV1",
+  "description": "Exact provider identity and request matching verified read-only; HTTP status alone never proves matching effect. Result readback evidence retained with journal.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ProviderResultV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "effect_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "request_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provider_request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "observed_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "result_oid": {
+      "type": "array",
+      "items": {
+        "$ref": "GitOidV1.schema.json"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "result_numeric_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(0|[1-9][0-9]*)$",
+        "x-minimum": "0",
+        "x-maximum": "18446744073709551615"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "result_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "readback_evidence_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "effect_id",
+    "request_digest",
+    "provider_request_id",
+    "observed_at",
+    "result_oid",
+    "result_numeric_id",
+    "result_digest",
+    "readback_evidence_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "effect_id",
+    "request_digest",
+    "provider_request_id",
+    "observed_at",
+    "result_oid",
+    "result_numeric_id",
+    "result_digest",
+    "readback_evidence_digest"
+  ]
+}

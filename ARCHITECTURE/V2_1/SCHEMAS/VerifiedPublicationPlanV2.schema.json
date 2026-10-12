@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "VerifiedPublicationPlanV2.schema.json",
+  "title": "VerifiedPublicationPlanV2",
+  "description": "destination_ref must equal refs/heads/mastercoder/fix/ + lower UUID publication_id. Effects are finite typed requests with dependencies, no update/delete/merge. All retained request metadata and exact bytes are digest-bound; verifier independently derives candidate tree. Custody is referenced by ID to avoid a digest cycle with PatchCustodyV1 plan_digest.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "VerifiedPublicationPlanV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "patch_revision_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "subject_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "base_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "base_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "candidate_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "patch_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "manifest_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "verification_set_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "trust_set_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "changed_objects": {
+      "type": "array",
+      "items": {
+        "$ref": "ChangedObjectV1.schema.json"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "destination_ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "target_base_ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "commit_metadata_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "fix_pr_metadata_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "custody_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "effects_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "verifier_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "patch_revision_id",
+    "subject_digest",
+    "base_commit",
+    "base_tree",
+    "candidate_tree",
+    "patch_digest",
+    "manifest_digest",
+    "verification_set_digest",
+    "policy_digest",
+    "trust_set_digest",
+    "changed_objects",
+    "destination_ref",
+    "target_base_ref",
+    "commit_metadata_digest",
+    "fix_pr_metadata_digest",
+    "custody_id",
+    "effects_digest",
+    "verifier_id",
+    "created_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "patch_revision_id",
+    "subject_digest",
+    "base_commit",
+    "base_tree",
+    "candidate_tree",
+    "patch_digest",
+    "manifest_digest",
+    "verification_set_digest",
+    "policy_digest",
+    "trust_set_digest",
+    "changed_objects",
+    "destination_ref",
+    "target_base_ref",
+    "commit_metadata_digest",
+    "fix_pr_metadata_digest",
+    "custody_id",
+    "effects_digest",
+    "verifier_id",
+    "created_at",
+    "expires_at"
+  ]
+}

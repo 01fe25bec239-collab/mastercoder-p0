@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ApprovalEnrollmentActionV1.schema.json",
+  "title": "ApprovalEnrollmentActionV1",
+  "description": "Final post-registration action binds current-epoch intent and create proof/new key, except REVOKE/SUSPEND require absent ceremony and empty new key/ID. Required owner/administrator consents or offline signatures bind this exact action under52. CHANGE_BINDING re-registers a fresh key, with owner consent plus required admin scope authorization. No OIDC recovery or stale-epoch replay authorizes.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ApprovalEnrollmentActionV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "authority_epoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "action_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "intent_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "registration_ceremony_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "new_credential_id": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "new_public_key_cose": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "registration_authority_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "action_id",
+    "intent_digest",
+    "registration_ceremony_digest",
+    "new_credential_id",
+    "new_public_key_cose",
+    "registration_authority_id",
+    "created_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "authority_epoch",
+    "action_id",
+    "intent_digest",
+    "registration_ceremony_digest",
+    "new_credential_id",
+    "new_public_key_cose",
+    "registration_authority_id",
+    "created_at",
+    "expires_at"
+  ]
+}

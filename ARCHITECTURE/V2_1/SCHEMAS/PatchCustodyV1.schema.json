@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PatchCustodyV1.schema.json",
+  "title": "PatchCustodyV1",
+  "description": "Revisioned immutable snapshots. Pin lifetime covers display through terminal reconciliation; expiry/loss invalidates approval and blocks unstarted calls. Reacquisition cannot silently reconstruct alternative bytes; fresh verification/approval required. Legal hold never grants publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "PatchCustodyV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "custody_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "patch_revision_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "patch_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "manifest_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "verification_set_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "ArtifactCustodyEntryV1.schema.json"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "access_policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "retention_policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "retention_deadline": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "legal_hold": {
+      "type": "boolean"
+    },
+    "state": {
+      "enum": [
+        "AVAILABLE",
+        "LOST",
+        "DELETION_PENDING",
+        "DELETED"
+      ],
+      "x-cbor-enum-codes": {
+        "AVAILABLE": 0,
+        "LOST": 1,
+        "DELETION_PENDING": 2,
+        "DELETED": 3
+      }
+    },
+    "pinned_publication_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "custody_id",
+    "patch_revision_id",
+    "patch_digest",
+    "manifest_digest",
+    "candidate_tree",
+    "plan_digest",
+    "verification_set_digest",
+    "artifacts",
+    "access_policy_digest",
+    "retention_policy_digest",
+    "retention_deadline",
+    "legal_hold",
+    "state",
+    "pinned_publication_ids",
+    "generation"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "custody_id",
+    "patch_revision_id",
+    "patch_digest",
+    "manifest_digest",
+    "candidate_tree",
+    "plan_digest",
+    "verification_set_digest",
+    "artifacts",
+    "access_policy_digest",
+    "retention_policy_digest",
+    "retention_deadline",
+    "legal_hold",
+    "state",
+    "pinned_publication_ids",
+    "generation"
+  ]
+}

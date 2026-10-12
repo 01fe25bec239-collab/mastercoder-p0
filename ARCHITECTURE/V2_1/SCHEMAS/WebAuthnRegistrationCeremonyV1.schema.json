@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "WebAuthnRegistrationCeremonyV1.schema.json",
+  "title": "WebAuthnRegistrationCeremonyV1",
+  "description": "Exact WebAuthn create ceremony bytes. Verify client type webauthn.create, exact origin/challenge/session/RP, UV/UP, attested credential ID/public key, valid ES256 P-256 point, exclusion list and registration policy. Attestation policy initially none allowed only where declared; attestation is not approval-role authorization. Digest is registration_ceremony_digest on binding.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "WebAuthnRegistrationCeremonyV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "credential_id": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "client_data_json": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "attestation_object": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "challenge_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "received_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "credential_id",
+    "client_data_json",
+    "attestation_object",
+    "challenge_digest",
+    "received_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "credential_id",
+    "client_data_json",
+    "attestation_object",
+    "challenge_digest",
+    "received_at"
+  ]
+}

@@ -1,0 +1,712 @@
+[
+  {
+    "finding": 1,
+    "severity": "CRITICAL",
+    "title": "Publisher create-only authority",
+    "v2_defect": "08 Git identities and ADR-003 call publisher create-only although provider Contents credential permits broader ref mutation.",
+    "semantic_repair": "Separate credential-free planner and independently administered typed gateway; per-effect exact body/ref/capability validation, no-bypass provider posture; gateway/token residual risk stated.",
+    "affected_documents": [
+      "08_GIT_INTEGRATION.md",
+      "14_PATCH_APPROVAL_PUBLICATION.md",
+      "15_IDENTITY_SECRETS.md",
+      "22_TRUST_BOUNDARIES.md",
+      "23_THREAT_MODEL.md",
+      "27_FIX_PUBLICATION_SEQUENCE_DIAGRAMS.md",
+      "53_GIT_PUBLICATION_CAPABILITY.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-016-GIT-PUBLICATION-CAPABILITY.md"
+    ],
+    "affected_contracts": [
+      "GitPublicationCapabilityV2",
+      "VerifiedPublicationPlanV2",
+      "EffectIntentV2"
+    ],
+    "affected_state_machines": [
+      "PublicationOperation",
+      "ExternalEffect"
+    ],
+    "prototype_requirements": [
+      "P0-09D",
+      "P0-09E"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 2,
+    "severity": "CRITICAL",
+    "title": "Stale provider success",
+    "v2_defect": "08 pre-write check and30 freshness omit withdrawal of already successful provider checks.",
+    "semantic_repair": "Generation-fenced projection/readback/withdrawal; serialize unresolved old writes; shared-SHA association guard; staged normal changes versus emergency unsafe interval and confirmed freeze.",
+    "affected_documents": [
+      "08_GIT_INTEGRATION.md",
+      "14_PATCH_APPROVAL_PUBLICATION.md",
+      "17_PLATFORM_RELIABILITY.md",
+      "19_STATE_MACHINES.md",
+      "22_TRUST_BOUNDARIES.md",
+      "23_THREAT_MODEL.md",
+      "25_PR_SEQUENCE_DIAGRAMS.md",
+      "30_EXACT_GIT_LINEAGE.md",
+      "35_DISASTER_RECOVERY.md",
+      "48_COMPONENT_REVOCATION_POLICY.md",
+      "54_CHECK_PROJECTION_LIFECYCLE.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-017-CHECK-PROJECTION-REVOCATION.md"
+    ],
+    "affected_contracts": [
+      "CheckProjectionV2",
+      "CheckWriteRequestV1",
+      "GateProofV2"
+    ],
+    "affected_state_machines": [
+      "Evaluation",
+      "GitCheckProjection",
+      "ExternalEffect"
+    ],
+    "prototype_requirements": [
+      "P0-03B",
+      "P0-03C",
+      "P0-03D",
+      "P0-03E"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 3,
+    "severity": "HIGH",
+    "title": "Trusted approval display",
+    "v2_defect": "14/16 ordinary UI display plus WebAuthn does not establish displayed patch equals signed plan.",
+    "semantic_repair": "Independent AA origin/session fetches and renders canonical pinned diff/effects; purpose-bound challenge; browser/OS residual explicit.",
+    "affected_documents": [
+      "14_PATCH_APPROVAL_PUBLICATION.md",
+      "15_IDENTITY_SECRETS.md",
+      "16_NEXTJS_REACT_WEB_UX.md",
+      "22_TRUST_BOUNDARIES.md",
+      "23_THREAT_MODEL.md",
+      "24_PRIVACY_DATA_CLASSIFICATION.md",
+      "27_FIX_PUBLICATION_SEQUENCE_DIAGRAMS.md",
+      "52_APPROVAL_AUTHORITY_CONTRACT.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-018-TRUSTED-APPROVAL-AUTHORITY.md"
+    ],
+    "affected_contracts": [
+      "TrustedDisplayReceiptV1",
+      "ApprovalChallengeV2",
+      "HumanApprovalAssertionV2"
+    ],
+    "affected_state_machines": [
+      "Patch",
+      "Approval"
+    ],
+    "prototype_requirements": [
+      "P0-09A",
+      "P0-09C"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 4,
+    "severity": "HIGH",
+    "title": "Authenticator lifecycle authority",
+    "v2_defect": "15 has no independent add/replace/recovery authority and registration proof contract.",
+    "semantic_repair": "Constructible intent-create-action-authority-signature enrollment chain; scoped credential generations, dual-admin or offline bootstrap, ordinary recovery excluded.",
+    "affected_documents": [
+      "14_PATCH_APPROVAL_PUBLICATION.md",
+      "15_IDENTITY_SECRETS.md",
+      "16_NEXTJS_REACT_WEB_UX.md",
+      "19_STATE_MACHINES.md",
+      "22_TRUST_BOUNDARIES.md",
+      "23_THREAT_MODEL.md",
+      "35_DISASTER_RECOVERY.md",
+      "48_COMPONENT_REVOCATION_POLICY.md",
+      "52_APPROVAL_AUTHORITY_CONTRACT.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-018-TRUSTED-APPROVAL-AUTHORITY.md"
+    ],
+    "affected_contracts": [
+      "ApprovalCredentialBindingV1",
+      "ApprovalEnrollmentIntentV1",
+      "ApprovalEnrollmentAuthorizationV1"
+    ],
+    "affected_state_machines": [
+      "Approval",
+      "Credential",
+      "Recovery"
+    ],
+    "prototype_requirements": [
+      "P0-09B",
+      "P0-10I"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 5,
+    "severity": "HIGH",
+    "title": "Signer input authority",
+    "v2_defect": "06/18 name verified records without protected producer/write/consumer matrix; ordinary API boundary underspecified.",
+    "semantic_repair": "Nine gate-input rows plus manifest/eligibility have authenticated producer, immutable signature, dedicated DB writer, tenant/attempt/epoch binding and consumer revalidation.",
+    "affected_documents": [
+      "06_RUST_CONTROL_PLANE.md",
+      "07_POSTGRES_PERSISTENCE_WORKFLOW.md",
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "20_API_CONTRACTS.md",
+      "21_EVENT_CONTRACTS.md",
+      "22_TRUST_BOUNDARIES.md",
+      "23_THREAT_MODEL.md",
+      "29_CONCURRENCY_FENCING.md",
+      "35_DISASTER_RECOVERY.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-019-GATE-INPUT-AUTHORITY-AND-DATABASE-WRITERS.md"
+    ],
+    "affected_contracts": [
+      "EvidenceReceiptV2",
+      "VerificationReceiptV2",
+      "VerificationSetV2",
+      "GateProofV2",
+      "PolicyVersionV1",
+      "TrustBundleV1"
+    ],
+    "affected_state_machines": [
+      "Evaluation",
+      "Verification",
+      "JobAttempt"
+    ],
+    "prototype_requirements": [
+      "P0-07B",
+      "P0-10A",
+      "P0-10I"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 6,
+    "severity": "HIGH",
+    "title": "Complete required analysis",
+    "v2_defect": "09/13 PASS can confuse no finding with analyzer did not run.",
+    "semantic_repair": "Policy-derived logical plan, allocation then immutable attempt-bound expected manifest; mandatory matching completion and coverage including zero findings.",
+    "affected_documents": [
+      "09_ANALYSIS_ENGINE.md",
+      "13_REVIEW_VERIFICATION.md",
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "20_API_CONTRACTS.md",
+      "21_EVENT_CONTRACTS.md",
+      "25_PR_SEQUENCE_DIAGRAMS.md",
+      "26_DEEP_SCAN_SEQUENCE_DIAGRAMS.md",
+      "40_TEST_ARCHITECTURE.md",
+      "51_ANALYSIS_COVERAGE_CONTRACT.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-020-EXPECTED-ANALYSIS-MANIFEST.md"
+    ],
+    "affected_contracts": [
+      "AnalysisPlanV1",
+      "ExpectedAnalysisManifestV1",
+      "AnalysisCompletionReceiptV1"
+    ],
+    "affected_state_machines": [
+      "Evaluation",
+      "JobAttempt",
+      "Verification"
+    ],
+    "prototype_requirements": [
+      "P0-07A",
+      "P0-10E"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 7,
+    "severity": "HIGH",
+    "title": "Agent oracle validity",
+    "v2_defect": "09 final paragraph/13 E3 allow causal reproduction to stand in for requirement validity.",
+    "semantic_repair": "Independent oracle trust classification plus applicability and causal reproduction; untrusted agent expectations never block; typed maintainer resolution purpose.",
+    "affected_documents": [
+      "09_ANALYSIS_ENGINE.md",
+      "13_REVIEW_VERIFICATION.md",
+      "19_STATE_MACHINES.md",
+      "23_THREAT_MODEL.md",
+      "40_TEST_ARCHITECTURE.md",
+      "51_ANALYSIS_COVERAGE_CONTRACT.md",
+      "56_MANUAL_RESOLUTION.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-021-ORACLE-TRUST.md"
+    ],
+    "affected_contracts": [
+      "OracleTrustClassV1",
+      "EvidenceReceiptV2",
+      "ManualResolutionActionV1"
+    ],
+    "affected_state_machines": [
+      "Verification",
+      "Finding",
+      "Evaluation"
+    ],
+    "prototype_requirements": [
+      "P0-07C",
+      "P0-10J"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 8,
+    "severity": "HIGH",
+    "title": "Actual lease expiry",
+    "v2_defect": "07 Work acquisition and29 CAS predicates omit expiry; reaper timing controls acceptance.",
+    "semantic_repair": "Lock then sample database clock_timestamp; owner/generation/epoch/state and strictly unexpired predicate on heartbeat/completion/artifact/verification/model authorization.",
+    "affected_documents": [
+      "06_RUST_CONTROL_PLANE.md",
+      "07_POSTGRES_PERSISTENCE_WORKFLOW.md",
+      "12_MODEL_ACCESS.md",
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "20_API_CONTRACTS.md",
+      "25_PR_SEQUENCE_DIAGRAMS.md",
+      "26_DEEP_SCAN_SEQUENCE_DIAGRAMS.md",
+      "28_FAILURE_RECOVERY.md",
+      "29_CONCURRENCY_FENCING.md",
+      "50_EXTERNAL_EFFECT_RECOVERY.md",
+      "53_GIT_PUBLICATION_CAPABILITY.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-022-ACTUAL-LEASE-EXPIRATION.md"
+    ],
+    "affected_contracts": [
+      "AttemptBindingV2",
+      "AnalysisCompletionReceiptV1",
+      "ModelIntentV2"
+    ],
+    "affected_state_machines": [
+      "Job",
+      "JobAttempt",
+      "Verification",
+      "ExternalEffect"
+    ],
+    "prototype_requirements": [
+      "P0-08A"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 9,
+    "severity": "HIGH",
+    "title": "Lost external intents after restore",
+    "v2_defect": "35 scans surviving STARTED/UNKNOWN rows despite nonzero RPO, missing whole lost intents.",
+    "semantic_repair": "Synchronous two-copy independent-restore-domain intent/send journal, fail-closed unconfirmed durability, complete restore enumeration; no restored entitlement reused without fresh security bootstrap.",
+    "affected_documents": [
+      "07_POSTGRES_PERSISTENCE_WORKFLOW.md",
+      "17_PLATFORM_RELIABILITY.md",
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "28_FAILURE_RECOVERY.md",
+      "29_CONCURRENCY_FENCING.md",
+      "34_OBSERVABILITY.md",
+      "35_DISASTER_RECOVERY.md",
+      "48_COMPONENT_REVOCATION_POLICY.md",
+      "50_EXTERNAL_EFFECT_RECOVERY.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-023-PER-EFFECT-WITNESSED-JOURNAL-AND-RECOVERY.md"
+    ],
+    "affected_contracts": [
+      "ExternalEffectJournalV1",
+      "JournalWitnessReceiptV1",
+      "JournalEpochFenceV1",
+      "EffectIntentV2"
+    ],
+    "affected_state_machines": [
+      "ExternalEffect",
+      "ManualReconciliation",
+      "Recovery"
+    ],
+    "prototype_requirements": [
+      "P0-10G",
+      "P0-10H",
+      "P0-10I"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 10,
+    "severity": "HIGH",
+    "title": "Weak absence proof",
+    "v2_defect": "19 and29 permit ABSENT_CONFIRMED without excluding late completion.",
+    "semantic_repair": "No absence state; exact positive result or strong terminal nonexecution/qualified idempotency proof; otherwise UNKNOWN/manual tombstone with no conflicting retry.",
+    "affected_documents": [
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "28_FAILURE_RECOVERY.md",
+      "29_CONCURRENCY_FENCING.md",
+      "35_DISASTER_RECOVERY.md",
+      "50_EXTERNAL_EFFECT_RECOVERY.md",
+      "56_MANUAL_RESOLUTION.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-023-PER-EFFECT-WITNESSED-JOURNAL-AND-RECOVERY.md",
+      "ADRs/ADR-027-AUTHORIZED-MANUAL-RESOLUTION-WITHOUT-EVIDENCE-PROMOTION.md"
+    ],
+    "affected_contracts": [
+      "EffectIntentV2",
+      "EffectStateV1",
+      "ManualResolutionV1",
+      "ProviderResultV1"
+    ],
+    "affected_state_machines": [
+      "ExternalEffect",
+      "ManualReconciliation"
+    ],
+    "prototype_requirements": [
+      "P0-09H",
+      "P0-10J"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 11,
+    "severity": "HIGH",
+    "title": "Parent versus individual effect",
+    "v2_defect": "14 post-STARTED rule and18 EffectIntent conflate entire publication with single send.",
+    "semantic_repair": "Parent orchestration separate from immutable per-call intent and state revisions; every child freshly authorized, witnessed and deadline-bounded.",
+    "affected_documents": [
+      "14_PATCH_APPROVAL_PUBLICATION.md",
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "27_FIX_PUBLICATION_SEQUENCE_DIAGRAMS.md",
+      "28_FAILURE_RECOVERY.md",
+      "29_CONCURRENCY_FENCING.md",
+      "50_EXTERNAL_EFFECT_RECOVERY.md",
+      "53_GIT_PUBLICATION_CAPABILITY.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-023-PER-EFFECT-WITNESSED-JOURNAL-AND-RECOVERY.md"
+    ],
+    "affected_contracts": [
+      "PublicationOperationV1",
+      "EffectIntentV2",
+      "EffectStateV1",
+      "DbStartCertificateV1"
+    ],
+    "affected_state_machines": [
+      "PublicationOperation",
+      "ExternalEffect"
+    ],
+    "prototype_requirements": [
+      "P0-09G",
+      "P0-10H"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 12,
+    "severity": "HIGH",
+    "title": "Complete normative wire contracts",
+    "v2_defect": "18/20/21/ADR-005 omit complete fixed-array layouts, domain/version/optional rules and vectors despite freeze claim.",
+    "semantic_repair": "Machine-readable complete ordered registry, strict JSON projections, exact CBOR profile, detached signature inputs and positive/rejection vectors; implementation interoperability remains P0.",
+    "affected_documents": [
+      "18_DATA_MODEL.md",
+      "20_API_CONTRACTS.md",
+      "21_EVENT_CONTRACTS.md",
+      "40_TEST_ARCHITECTURE.md",
+      "47_COMPATIBILITY_MATRIX.md",
+      "49_CANONICAL_PROTOCOL_GLOSSARY.md",
+      "50_EXTERNAL_EFFECT_RECOVERY.md",
+      "51_ANALYSIS_COVERAGE_CONTRACT.md",
+      "52_APPROVAL_AUTHORITY_CONTRACT.md",
+      "53_GIT_PUBLICATION_CAPABILITY.md",
+      "54_CHECK_PROJECTION_LIFECYCLE.md",
+      "55_DEPENDENCY_ACQUISITION.md",
+      "56_MANUAL_RESOLUTION.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-024-NORMATIVE-WIRE-SCHEMA.md"
+    ],
+    "affected_contracts": [
+      "ALL_REGISTERED_CONTRACTS"
+    ],
+    "affected_state_machines": [
+      "ALL_AFFECTED_STATE_MACHINES"
+    ],
+    "prototype_requirements": [
+      "P0-06A",
+      "P0-06B",
+      "P0-06C",
+      "P0-06D"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 13,
+    "severity": "MEDIUM",
+    "title": "Patch-byte custody",
+    "v2_defect": "24 ephemeral P3 versus14 later display/replay has no pin through approval/publication.",
+    "semantic_repair": "Encrypted scoped exact-byte custody and pins across verification/display/publication/reconciliation; loss/expiry invalidates unstarted publication, no alternate reconstruction.",
+    "affected_documents": [
+      "14_PATCH_APPROVAL_PUBLICATION.md",
+      "16_NEXTJS_REACT_WEB_UX.md",
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "24_PRIVACY_DATA_CLASSIFICATION.md",
+      "27_FIX_PUBLICATION_SEQUENCE_DIAGRAMS.md",
+      "30_EXACT_GIT_LINEAGE.md",
+      "35_DISASTER_RECOVERY.md",
+      "52_APPROVAL_AUTHORITY_CONTRACT.md",
+      "53_GIT_PUBLICATION_CAPABILITY.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-025-PATCH-BYTE-CUSTODY.md"
+    ],
+    "affected_contracts": [
+      "PatchCustodyV1",
+      "ArtifactCustodyEntryV1",
+      "VerifiedPublicationPlanV2"
+    ],
+    "affected_state_machines": [
+      "Patch",
+      "Approval",
+      "PublicationOperation",
+      "ExternalEffect"
+    ],
+    "prototype_requirements": [
+      "P0-09A",
+      "P0-09F",
+      "P0-10C"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 14,
+    "severity": "MEDIUM",
+    "title": "C3 deployment availability",
+    "v2_defect": "13 C3 already requires independent admin domain; small deployment limitation needs explicit product profile.",
+    "semantic_repair": "Clarify individual/team/independent-pool achievable classes; single-domain at most C2; ordinary deterministic policies usable, C3-required category non-pass without independent pool.",
+    "affected_documents": [
+      "10_RUNNER_SANDBOX.md",
+      "13_REVIEW_VERIFICATION.md",
+      "31_CROSS_PLATFORM.md",
+      "32_DEPLOYMENT_TOPOLOGY.md",
+      "37_V1_SCOPE.md",
+      "47_COMPATIBILITY_MATRIX.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-020-EXPECTED-ANALYSIS-MANIFEST.md",
+      "ADRs/ADR-021-ORACLE-TRUST.md"
+    ],
+    "affected_contracts": [
+      "CapabilityProfileV1",
+      "VerificationReceiptV2",
+      "OracleTrustClassV1"
+    ],
+    "affected_state_machines": [
+      "Verification",
+      "Evaluation"
+    ],
+    "prototype_requirements": [
+      "P0-07D"
+    ],
+    "final_status": "CLARIFIED_EXISTING_LIMITATION"
+  },
+  {
+    "finding": 15,
+    "severity": "MEDIUM",
+    "title": "Bounded authenticated dependencies",
+    "v2_defect": "10 denies package credentials and36 pins locks but lacks realistic acquisition path.",
+    "semantic_repair": "Credential-free resolution plus bounded credential-bearing acquisition, exact pinned closure/provenance, approved endpoints/cache scope, offline installation and sandbox-only scripts.",
+    "affected_documents": [
+      "10_RUNNER_SANDBOX.md",
+      "11_AGENT_HARNESS_GRAPH.md",
+      "12_MODEL_ACCESS.md",
+      "22_TRUST_BOUNDARIES.md",
+      "24_PRIVACY_DATA_CLASSIFICATION.md",
+      "31_CROSS_PLATFORM.md",
+      "32_DEPLOYMENT_TOPOLOGY.md",
+      "36_SUPPLY_CHAIN.md",
+      "40_TEST_ARCHITECTURE.md",
+      "55_DEPENDENCY_ACQUISITION.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-026-DEPENDENCY-ACQUISITION.md"
+    ],
+    "affected_contracts": [
+      "DependencyAcquisitionGrantV1",
+      "DependencyPackageV1"
+    ],
+    "affected_state_machines": [
+      "JobAttempt",
+      "ExternalEffect"
+    ],
+    "prototype_requirements": [
+      "P0-05E",
+      "P0-05F",
+      "P0-05G",
+      "P0-05H"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 16,
+    "severity": "MEDIUM",
+    "title": "Authorized manual resolution",
+    "v2_defect": "19/28 name human and manual states without complete scoped evidence/expiry/resolution flows.",
+    "semantic_repair": "Trusted purpose-bound resolution, fresh UV, evidence and nonce; exact-result/nonexecution proof, unresolved tombstones; no direct PASS and new evaluation after policy/oracle changes.",
+    "affected_documents": [
+      "14_PATCH_APPROVAL_PUBLICATION.md",
+      "16_NEXTJS_REACT_WEB_UX.md",
+      "18_DATA_MODEL.md",
+      "19_STATE_MACHINES.md",
+      "20_API_CONTRACTS.md",
+      "21_EVENT_CONTRACTS.md",
+      "28_FAILURE_RECOVERY.md",
+      "35_DISASTER_RECOVERY.md",
+      "56_MANUAL_RESOLUTION.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-027-AUTHORIZED-MANUAL-RESOLUTION-WITHOUT-EVIDENCE-PROMOTION.md"
+    ],
+    "affected_contracts": [
+      "ManualResolutionActionV1",
+      "ResolutionChallengeV1",
+      "ManualResolutionV1"
+    ],
+    "affected_state_machines": [
+      "Evaluation",
+      "Finding",
+      "ManualReconciliation",
+      "ExternalEffect"
+    ],
+    "prototype_requirements": [
+      "P0-10J"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 17,
+    "severity": "MEDIUM",
+    "title": "Deterministic work DAG",
+    "v2_defect": "05 MODEL\u2192ANALYSIS and39 MODEL\u2192VER incorrectly block deterministic review on model integration.",
+    "semantic_repair": "Separate deterministic FAST DAG from optional model-assisted AI/HYBRID/DEEP extension; retain required security/capability dependencies.",
+    "affected_documents": [
+      "05_DEPENDENCY_DAG.md",
+      "09_ANALYSIS_ENGINE.md",
+      "11_AGENT_HARNESS_GRAPH.md",
+      "12_MODEL_ACCESS.md",
+      "13_REVIEW_VERIFICATION.md",
+      "37_V1_SCOPE.md",
+      "38_IMPLEMENTATION_DECOMPOSITION.md",
+      "39_WORK_ITEM_DAG.md",
+      "40_TEST_ARCHITECTURE.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-020-EXPECTED-ANALYSIS-MANIFEST.md"
+    ],
+    "affected_contracts": [
+      "WorkflowSpecCoreV2",
+      "AnalysisPlanV1"
+    ],
+    "affected_state_machines": [
+      "Review",
+      "Evaluation"
+    ],
+    "prototype_requirements": [
+      "P0-07A"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 18,
+    "severity": "MEDIUM",
+    "title": "Atomic reproducible P0 claims",
+    "v2_defect": "42 umbrella groups omit individual environments/injections/observations/thresholds/review/expiry.",
+    "semantic_repair": "Retain ten P0 groups;55 uniquely identified atomic claims with every required specification field; exact run-manifest seal is precondition, all NOT_RUN.",
+    "affected_documents": [
+      "40_TEST_ARCHITECTURE.md",
+      "41_SECURITY_VALIDATION.md",
+      "42_PROTOTYPE_GATES.md",
+      "47_COMPATIBILITY_MATRIX.md",
+      "57_ATOMIC_PROTOTYPE_CLAIMS.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-028-ATOMIC-PROTOTYPE-CONTRACTS.md"
+    ],
+    "affected_contracts": [
+      "AtomicPrototypeClaimV1"
+    ],
+    "affected_state_machines": [
+      "PrototypeEvidence"
+    ],
+    "prototype_requirements": [
+      "P0-01A",
+      "P0-10J"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 19,
+    "severity": "LOW",
+    "title": "Protocol terminology drift",
+    "v2_defect": "00B/00C/21 alternate ProducerBinding/ProducerEvent and PublicationPlan/VerifiedPublicationPlan.",
+    "semantic_repair": "One registry and explicit historical alias map; normative unknown-name/revision checks; historical docs isolated.",
+    "affected_documents": [
+      "18_DATA_MODEL.md",
+      "20_API_CONTRACTS.md",
+      "21_EVENT_CONTRACTS.md",
+      "43_ADR_INDEX.md",
+      "47_COMPATIBILITY_MATRIX.md",
+      "49_CANONICAL_PROTOCOL_GLOSSARY.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-024-NORMATIVE-WIRE-SCHEMA.md"
+    ],
+    "affected_contracts": [
+      "ProducerEventV2",
+      "VerifiedPublicationPlanV2",
+      "HumanApprovalAssertionV2"
+    ],
+    "affected_state_machines": [
+      "ProtocolNegotiation"
+    ],
+    "prototype_requirements": [
+      "P0-06B",
+      "P0-06D"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  },
+  {
+    "finding": 20,
+    "severity": "LOW",
+    "title": "Diagram trust arrows",
+    "v2_defect": "25 W\u2192P and26 W/S\u2192P imply runner/sandbox direct PostgreSQL credentials.",
+    "semantic_repair": "Route every runner/verification/agent submission through trusted control/ingress services; label actual DB owner and separate logical plan/allocation/manifest ordering.",
+    "affected_documents": [
+      "01_EXECUTIVE_ARCHITECTURE.md",
+      "22_TRUST_BOUNDARIES.md",
+      "25_PR_SEQUENCE_DIAGRAMS.md",
+      "26_DEEP_SCAN_SEQUENCE_DIAGRAMS.md",
+      "27_FIX_PUBLICATION_SEQUENCE_DIAGRAMS.md"
+    ],
+    "affected_adrs": [
+      "ADRs/ADR-019-GATE-INPUT-AUTHORITY-AND-DATABASE-WRITERS.md",
+      "ADRs/ADR-020-EXPECTED-ANALYSIS-MANIFEST.md"
+    ],
+    "affected_contracts": [
+      "AttemptBindingV2",
+      "AttemptEventV2",
+      "ProducerEventV2"
+    ],
+    "affected_state_machines": [
+      "JobAttempt",
+      "Evaluation",
+      "Verification"
+    ],
+    "prototype_requirements": [
+      "P0-02A",
+      "P0-10A"
+    ],
+    "final_status": "RESOLVED_IN_V2_1"
+  }
+]

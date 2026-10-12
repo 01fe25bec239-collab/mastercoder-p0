@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateRefRequestV1.schema.json",
+  "title": "CreateRefRequestV1",
+  "description": "POST /git/refs; namespace exact publication UUID; ref must be absent and create-only. Existing ref conflict is reconciliation, never PATCH.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CreateRefRequestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "destination_ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "commit": {
+      "$ref": "GitOidV1.schema.json"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "destination_ref",
+    "commit"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "destination_ref",
+    "commit"
+  ]
+}

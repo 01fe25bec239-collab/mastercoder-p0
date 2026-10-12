@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ProviderEventV2.schema.json",
+  "title": "ProviderEventV2",
+  "description": "Webhook signature authenticates delivery; protected fresh readback establishes subject. Dedupe stable installation/delivery identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ProviderEventV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "provider": {
+      "enum": [
+        "GITHUB",
+        "OTHER"
+      ]
+    },
+    "installation_id": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "delivery_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "delivery_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "received_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "normalized_readback_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "event_id",
+    "provider",
+    "installation_id",
+    "delivery_id",
+    "delivery_digest",
+    "received_at",
+    "normalized_readback_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "event_id",
+    "provider",
+    "installation_id",
+    "delivery_id",
+    "delivery_digest",
+    "received_at",
+    "normalized_readback_digest"
+  ]
+}

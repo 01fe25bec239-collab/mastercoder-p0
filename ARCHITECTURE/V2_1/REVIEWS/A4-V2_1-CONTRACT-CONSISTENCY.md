@@ -1,0 +1,44 @@
+# A4-V2_1-CONTRACT-CONSISTENCY
+
+Reviewer: fresh independent contract-consistency reviewer, separate from the architecture repair author. Final targeted recheck: 2026-10-03. Architecture-only bounded review; no product implementation or P0 execution. BASELINE_HISTORY excluded from current approval evidence.
+
+Status: **PASS_FOR_NARROW_EXTERNAL_AUDIT**. No unresolved architecture blocker found within the scope below. This is not production freeze, implementation authorization, security implementation certification or prototype PASS. All P0 claims remain NOT_RUN.
+
+Reviewed final registry SHA-256: `b516004c690dd86860c263334d9f32f79a6c935ac82f2b801d3117223ed8d787`.
+
+## Contract findings and independent closure
+
+| Finding | Defect found | Observed author repair and disposition |
+|---|---|---|
+| CC-01 — High | CheckWriteRequestV1 required a gate proof although legitimate initial IN_PROGRESS and withdrawal FAILURE can precede or invalidate that proof. A subsequent propagation check found CheckProjectionV2 still required a finalized evaluation identity before its manifest/verification dependencies existed. | CLOSED. CheckWriteRequestV1 proof is an explicit option; SUCCESS requires a current PASS proof. CheckProjectionV2 and CheckOutputV1 can omit finalized identity only on the defined pre-verdict path, with allocated evaluation UUID; SUCCESS requires matching final identity/proof. Catalog defines projection authorization without future effect back-reference and preserves historical identity for withdrawal. Current vectors cover revised structures and no-proof SUCCESS rejection. |
+| CC-02 — Medium | Document 47 specified nonexistent min_reader_minor/critical-field bitmap despite ENCODING's closed-record/no-bitmap rule; registry hash input was unspecified. Historical UNKNOWN_EFFECT terminology also remained outside its glossary exception. | CLOSED. Document 47 now requires exact authenticated type/revision/registry identity and explicitly has no bitmap. ENCODING defines registry_digest as SHA-256 of exact distributed UTF-8 REGISTRY.json bytes. Canonical UNKNOWN terminology replaces the identified stray labels. No weaker unknown-field fallback remains in the reviewed rule. |
+| CC-03 — Medium | ResourceEnvelopeV2 lacked root model-call/event/dependency package-byte-request ceilings that documents 11/33 and ADR-009 required. Individual dependency grants did not establish aggregate root caps. | CLOSED. Five explicit u64 fields bind maximum_model_calls, maximum_events, maximum_dependency_packages, maximum_dependency_bytes and maximum_dependency_requests. Existing protected root-ledger semantics apply to descendants. Registry, JSON projection and regenerated vectors agree. |
+
+The final authority catalog initially overgeneralized subject_digest and prior_state_digest. Author corrections give registered subject types for revocation/audit and a distinct ManualCaseStateV1 reference for resolution prior state. Targeted reread found no remaining contradiction in these mappings. Typed planning/capability/output references and lifecycle ordering avoid the specific workflow/attempt, publication/custody, check/projection, model-intent and enrollment digest cycles examined. This is a bounded review, not a formal proof of every runtime reference graph.
+
+## Independent closure addendum for earlier security findings
+
+The earlier A4-V2_1-SECURITY report remains an authentic record of that reviewer's RECONCILIATION_REQUIRED conclusion. The following is this independent reviewer's later closure evidence; it does not rewrite or impersonate the original author.
+
+**SEC-01 — CLOSED at the contract level.** Registration is now constructible in this order: ApprovalEnrollmentIntentV1 → ApprovalEnrollmentChallengeV1 → WebAuthnRegistrationCeremonyV1/new key → ApprovalEnrollmentActionV1 → ApprovalLifecycleChallengeV1 → ApprovalLifecycleConsentV1 or registered offline action signatures → ApprovalEnrollmentAuthorizationV1 → credential binding/audit. The create challenge no longer depends on a not-yet-generated key. Human owners/administrators use fresh WebAuthn and AA-issued typed consent, rather than being assumed to possess an AA Ed25519 key. Document 52's operation matrix distinguishes routine owner ADD/REPLACE, existing-authority initial registration, dual-admin recovery, offline bootstrap, scope expansion, revoke and suspend. Current-role checks, distinct-person quorum, recovery hold, scope subset and old-binding invalidation are explicit. Changed-key, expanded-scope, duplicate-authority and replay/stale-epoch specification cases supplement exact structural vectors. Actual authenticators, origin isolation, hold races and administrative independence still require P0 evidence.
+
+**SEC-02 — CLOSED at the contract level.** MAINTAINER_APPROVED resolves only to ManualResolutionV1 containing ManualResolutionActionV1 kind UNTRUSTED_ORACLE and decision PROVIDE_ORACLE, exact candidate/requirement/test evidence and a current scoped resolver. ResolutionChallengeV1 and the final signed resolution form an acyclic purpose-specific chain. Publication-only HumanApprovalAssertionV2 cannot substitute. Documents 13/56 and the catalog agree; oracle-purpose rejection explicitly tests the publication-record substitution. Independent reproduction without trusted requirement remains nonblocking/human review.
+
+**SEC-03 — CLOSED at the contract level.** ResourceEnvelopeV2 and GitPublicationCapabilityV2 bind EligibilityProofV2. Documents 07/15/53 and the catalog require the protected admission/per-effect authority to check eligible=true, linked user equal to action/admission actor, exact PR/opener/policy/tenant/repository epoch, current membership generation and actual-time expiry, with required current provider confirmation. Broad approver scope cannot replace MY_PRS_ONLY/ORG_MEMBERS. Actor mismatch and revoked membership specification cases are present. Runtime provider freshness and every STARTED transaction remain P0 obligations.
+
+## Local checks actually performed
+
+- Supplied standard-library architecture fixture checker: PASS for 85 registered runtime records, 85 ACCEPT_ENCODING vectors, 355 REJECT_ENCODING vectors and 40 declarative semantic cases. Its output explicitly says P0 was not executed.
+- Independent full registry-to-JSON-schema comparison: PASS for all 85 records, including every field type/primitive constraint/array width, required-field set, canonical field order and additionalProperties=false. AtomicPrototypeClaimV1 is expressly a standalone document schema, not an omitted runtime CBOR record.
+- Independently reconstructed all six detached-signature input byte strings and checked their payload digests against current wire fixtures. OpenSSL 3.6.3 verified all six Ed25519 signatures and rejected all six corrupted signatures. This is local vector sanity checking, not independent Rust/TypeScript interoperability qualification or producer-role authorization proof.
+- Read the fixture checker and vector README to distinguish structural acceptance, synthetic semantic predicates and real authority validation. Synthetic positive records are not asserted to be valid live approvals, evidence or provider requests. The semantic checker evaluates declarative examples; it does not exercise an implemented gate, database, authenticator or gateway.
+
+A checker failure seen during active author edits reflected stale option/vector representations; the final complete rerun above passed. Final export/metadata/baseline byte validation is owned by the coordinating author and is not asserted as performed by this reviewer.
+
+## Actual scope and limits
+
+Read the supplied bounded-repair brief; the numbered architecture corpus through 56, with detailed tracing of authority/state/API/event, analysis, enrollment, custody, effects/recovery, projection and eligibility contracts; registry fields and semantic rules; ENCODING and the final authority catalog; ADR decisions and amendments; fixture checker and vector data. Reviewed document 57's common atomic-claim structure, all 55 claim identities and their procedure/injection/observation material through its JSON source, with targeted security/contract cases. This was not a separate line-by-line external audit of every repeated prototype paragraph.
+
+The author owns all normative repairs. This reviewer wrote only this report and communicated findings. No provider mutation, prototype, product code, database implementation, Rust/TypeScript codec, live WebAuthn ceremony or sandbox experiment was performed. No additional external-provider claims were established. The earlier security report's primary-source checks are not relabeled as this reviewer's own work.
+
+Recommended next action: narrow external audit of the repaired V2.1 contracts, then separately authorized atomic P0 execution if that audit passes. A later material registry/semantic change requires rechecking the affected closure and vectors.

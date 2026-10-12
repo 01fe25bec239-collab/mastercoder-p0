@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "GitPublicationCapabilityV2.schema.json",
+  "title": "GitPublicationCapabilityV2",
+  "description": "One effect, one credential-free caller capability. Gateway independently derives allowed exact path/body and rejects all generic provider URLs, HTTP methods, updates, deletes, bypass and merges. Token itself has broader residual Contents write authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "GitPublicationCapabilityV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "capability_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "effect_intent_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "approval_assertion_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "custody_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gateway_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "gateway_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "provider_app_id": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "installation_id": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "effect_kind": {
+      "enum": [
+        "CREATE_BLOB",
+        "CREATE_TREE",
+        "CREATE_COMMIT",
+        "CREATE_REF",
+        "CREATE_FIX_PR"
+      ],
+      "x-cbor-enum-codes": {
+        "CREATE_BLOB": 0,
+        "CREATE_TREE": 1,
+        "CREATE_COMMIT": 2,
+        "CREATE_REF": 3,
+        "CREATE_FIX_PR": 4
+      }
+    },
+    "request_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "destination_ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "eligibility_proof_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "capability_id",
+    "publication_id",
+    "effect_intent_id",
+    "plan_digest",
+    "approval_assertion_digest",
+    "custody_digest",
+    "gateway_identity",
+    "gateway_generation",
+    "provider_app_id",
+    "installation_id",
+    "effect_kind",
+    "request_digest",
+    "destination_ref",
+    "expires_at",
+    "nonce",
+    "eligibility_proof_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "capability_id",
+    "publication_id",
+    "effect_intent_id",
+    "plan_digest",
+    "approval_assertion_digest",
+    "custody_digest",
+    "gateway_identity",
+    "gateway_generation",
+    "provider_app_id",
+    "installation_id",
+    "effect_kind",
+    "request_digest",
+    "destination_ref",
+    "expires_at",
+    "nonce",
+    "eligibility_proof_digest"
+  ]
+}

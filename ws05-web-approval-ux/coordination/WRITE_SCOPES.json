@@ -1,0 +1,345 @@
+{
+ "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
+ "tasks": {
+  "W05-DEPENDENCY-UPDATE": {
+   "allow": [
+    "ws05-web-approval-ux/package.json",
+    "ws05-web-approval-ux/pnpm-lock.yaml",
+    "ws05-web-approval-ux/apps/*/package.json",
+    "ws05-web-approval-ux/packages/*/package.json",
+    "ws05-web-approval-ux/docs/MODULES.md"
+   ],
+   "deny": [],
+   "standing": "DEPENDENCY_REQUEST resolution only (AGENTS.md \u00a73a dependency rule)"
+  },
+  "W05-LOCKFILE-SYNC": {
+   "allow": [
+    "ws05-web-approval-ux/pnpm-lock.yaml"
+   ],
+   "deny": [],
+   "standing": "lockfile regeneration only (AGENTS.md \u00a73a lockfile rule)"
+  },
+  "W05-RUN-P0-09A": {
+   "allow": [
+    "ws05-web-approval-ux/claims/P0-09A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W05-T000-WORKSPACE-SCAFFOLD": {
+   "allow": [
+    ".github/workflows/ws05-ci.yml",
+    "ws05-web-approval-ux/.env.example",
+    "ws05-web-approval-ux/.gitignore",
+    "ws05-web-approval-ux/.npmrc",
+    "ws05-web-approval-ux/.nvmrc",
+    "ws05-web-approval-ux/README.md",
+    "ws05-web-approval-ux/a11y/package.json",
+    "ws05-web-approval-ux/a11y/tsconfig.json",
+    "ws05-web-approval-ux/apps/*/app/layout.tsx",
+    "ws05-web-approval-ux/apps/*/app/not-found.tsx",
+    "ws05-web-approval-ux/apps/*/app/page.tsx",
+    "ws05-web-approval-ux/apps/*/next-env.d.ts",
+    "ws05-web-approval-ux/apps/*/next.config.mjs",
+    "ws05-web-approval-ux/apps/*/package.json",
+    "ws05-web-approval-ux/apps/*/tsconfig.json",
+    "ws05-web-approval-ux/claims/P0-09A/harness/package.json",
+    "ws05-web-approval-ux/claims/P0-09A/harness/tsconfig.json",
+    "ws05-web-approval-ux/claims/README.md",
+    "ws05-web-approval-ux/docs/MODULES.md",
+    "ws05-web-approval-ux/docs/README.md",
+    "ws05-web-approval-ux/eslint.config.mjs",
+    "ws05-web-approval-ux/mocks/*/package.json",
+    "ws05-web-approval-ux/mocks/*/src/index.ts",
+    "ws05-web-approval-ux/mocks/*/tsconfig.json",
+    "ws05-web-approval-ux/package.json",
+    "ws05-web-approval-ux/packages/*/package.json",
+    "ws05-web-approval-ux/packages/*/src/index.ts",
+    "ws05-web-approval-ux/packages/*/tsconfig.json",
+    "ws05-web-approval-ux/playwright.config.ts",
+    "ws05-web-approval-ux/pnpm-lock.yaml",
+    "ws05-web-approval-ux/pnpm-workspace.yaml",
+    "ws05-web-approval-ux/tsconfig.base.json",
+    "ws05-web-approval-ux/vitest.workspace.ts"
+   ],
+   "deny": []
+  },
+  "W05-T001-CONTRACT-TYPES-TS": {
+   "allow": [
+    "ws05-web-approval-ux/packages/contracts-ts/scripts/**",
+    "ws05-web-approval-ux/packages/contracts-ts/src/**",
+    "ws05-web-approval-ux/packages/contracts-ts/test/**"
+   ],
+   "deny": []
+  },
+  "W05-T002-STATE-LANGUAGE": {
+   "allow": [
+    "ws05-web-approval-ux/packages/state-language/src/**",
+    "ws05-web-approval-ux/packages/state-language/test/**"
+   ],
+   "deny": []
+  },
+  "W05-T003-WIRE-TS-CBOR-CORE": {
+   "allow": [
+    "ws05-web-approval-ux/packages/wire-ts/src/cbor/**",
+    "ws05-web-approval-ux/packages/wire-ts/test/cbor/**"
+   ],
+   "deny": []
+  },
+  "W05-T004-TRUSTED-ORIGIN-KIT": {
+   "allow": [
+    "ws05-web-approval-ux/packages/trusted-origin/src/**",
+    "ws05-web-approval-ux/packages/trusted-origin/test/**"
+   ],
+   "deny": []
+  },
+  "W05-T005-EXTERNAL-AUDIT-PACKET": {
+   "allow": [
+    "ws05-web-approval-ux/docs/external-audit/**"
+   ],
+   "deny": []
+  },
+  "W05-T006-G047-RESOLUTION-ORIGIN-TRIAGE": {
+   "allow": [
+    "ws05-web-approval-ux/docs/G-047*"
+   ],
+   "deny": []
+  },
+  "W05-T007-TEST-IDP": {
+   "allow": [
+    "ws05-web-approval-ux/test-idp/**"
+   ],
+   "deny": []
+  },
+  "W05-T008-WEBAUTHN-CROSSCHECK-FIXTURES": {
+   "allow": [
+    "ws05-web-approval-ux/packages/webauthn-fixtures/**"
+   ],
+   "deny": []
+  },
+  "W05-T009-SYNTHETIC-VULNERABLE-REPOS": {
+   "allow": [
+    "ws05-web-approval-ux/fixtures/repos/**"
+   ],
+   "deny": []
+  },
+  "W05-T010-PATH-FIXTURES": {
+   "allow": [
+    "ws05-web-approval-ux/fixtures/paths/**"
+   ],
+   "deny": []
+  },
+  "W05-T011-PACK-FIXTURES": {
+   "allow": [
+    "ws05-web-approval-ux/fixtures/packs/**"
+   ],
+   "deny": []
+  },
+  "W05-T012-REGISTRY-AND-ARCHIVE-FIXTURES": {
+   "allow": [
+    "ws05-web-approval-ux/fixtures/registries/**"
+   ],
+   "deny": []
+  },
+  "W05-T013-AA-API-MOCK-SERVER": {
+   "allow": [
+    "ws05-web-approval-ux/mocks/aa-api/**"
+   ],
+   "deny": []
+  },
+  "W05-T014-RESOLUTION-API-MOCK-SERVER": {
+   "allow": [
+    "ws05-web-approval-ux/mocks/resolution-api/**"
+   ],
+   "deny": []
+  },
+  "W05-T015-WIRE-TS-CANONICAL": {
+   "allow": [
+    "ws05-web-approval-ux/packages/wire-ts/src/cli/**",
+    "ws05-web-approval-ux/packages/wire-ts/src/digest/**",
+    "ws05-web-approval-ux/packages/wire-ts/src/index.ts",
+    "ws05-web-approval-ux/packages/wire-ts/src/record/**",
+    "ws05-web-approval-ux/packages/wire-ts/src/registry/**",
+    "ws05-web-approval-ux/packages/wire-ts/src/signature/**",
+    "ws05-web-approval-ux/packages/wire-ts/test/properties/**",
+    "ws05-web-approval-ux/packages/wire-ts/test/signature/**",
+    "ws05-web-approval-ux/packages/wire-ts/test/vectors/**"
+   ],
+   "deny": []
+  },
+  "W05-T016-ORDINARY-API-MOCKS": {
+   "allow": [
+    "ws05-web-approval-ux/mocks/control-api/README.md",
+    "ws05-web-approval-ux/mocks/control-api/src/**",
+    "ws05-web-approval-ux/mocks/control-api/test/**"
+   ],
+   "deny": []
+  },
+  "W05-T017-AA-ORIGIN-SHELL": {
+   "allow": [
+    "ws05-web-approval-ux/apps/aa-origin/app/plan/**",
+    "ws05-web-approval-ux/apps/aa-origin/lib/**",
+    "ws05-web-approval-ux/apps/aa-origin/middleware.ts",
+    "ws05-web-approval-ux/apps/aa-origin/scripts/**",
+    "ws05-web-approval-ux/apps/aa-origin/test/shell/**"
+   ],
+   "deny": []
+  },
+  "W05-T018-RESOLUTION-ORIGIN-SHELL": {
+   "allow": [
+    "ws05-web-approval-ux/apps/resolution-origin/app/case/[caseId]/loading.tsx",
+    "ws05-web-approval-ux/apps/resolution-origin/app/case/[caseId]/page.tsx",
+    "ws05-web-approval-ux/apps/resolution-origin/lib/**",
+    "ws05-web-approval-ux/apps/resolution-origin/middleware.ts",
+    "ws05-web-approval-ux/apps/resolution-origin/test/shell/**"
+   ],
+   "deny": []
+  },
+  "W05-T019-WEBAUTHN-HARNESS-CI": {
+   "allow": [
+    "ws05-web-approval-ux/packages/webauthn-harness/selftest/**",
+    "ws05-web-approval-ux/packages/webauthn-harness/src/**",
+    "ws05-web-approval-ux/packages/webauthn-harness/test/**"
+   ],
+   "deny": []
+  },
+  "W05-T020-REVIEW-COVERAGE-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/review/[id]/coverage/**",
+    "ws05-web-approval-ux/apps/web/components/review/coverage/**",
+    "ws05-web-approval-ux/apps/web/test/review-coverage/**"
+   ],
+   "deny": []
+  },
+  "W05-T021-REVIEW-FINDINGS-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/review/[id]/findings/**",
+    "ws05-web-approval-ux/apps/web/components/review/findings/**",
+    "ws05-web-approval-ux/apps/web/test/review-findings/**"
+   ],
+   "deny": []
+  },
+  "W05-T022-REVIEW-PROJECTION-PANEL": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/review/[id]/projection/**",
+    "ws05-web-approval-ux/apps/web/components/review/projection/**",
+    "ws05-web-approval-ux/apps/web/test/review-projection/**"
+   ],
+   "deny": []
+  },
+  "W05-T023-ATTEMPT-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/attempt/[id]/loading.tsx",
+    "ws05-web-approval-ux/apps/web/app/attempt/[id]/page.tsx",
+    "ws05-web-approval-ux/apps/web/components/attempt/**",
+    "ws05-web-approval-ux/apps/web/test/attempt/**"
+   ],
+   "deny": []
+  },
+  "W05-T024-GRAPH-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/attempt/[id]/graph/**",
+    "ws05-web-approval-ux/apps/web/components/graph/**",
+    "ws05-web-approval-ux/apps/web/test/graph/**"
+   ],
+   "deny": []
+  },
+  "W05-T025-SETUP-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/setup/**",
+    "ws05-web-approval-ux/apps/web/components/setup/**",
+    "ws05-web-approval-ux/apps/web/test/setup/**"
+   ],
+   "deny": []
+  },
+  "W05-T026-PATCH-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/patch/**",
+    "ws05-web-approval-ux/apps/web/components/patch/**",
+    "ws05-web-approval-ux/apps/web/test/patch/**"
+   ],
+   "deny": []
+  },
+  "W05-T027-ADMIN-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/admin/**",
+    "ws05-web-approval-ux/apps/web/components/admin/**",
+    "ws05-web-approval-ux/apps/web/test/admin/**"
+   ],
+   "deny": []
+  },
+  "W05-T028-DISCLOSURE-BUDGET-VIEW": {
+   "allow": [
+    "ws05-web-approval-ux/apps/web/app/budget/**",
+    "ws05-web-approval-ux/apps/web/app/disclosure/**",
+    "ws05-web-approval-ux/apps/web/components/budget/**",
+    "ws05-web-approval-ux/apps/web/components/disclosure/**",
+    "ws05-web-approval-ux/apps/web/test/budget/**",
+    "ws05-web-approval-ux/apps/web/test/disclosure/**"
+   ],
+   "deny": []
+  },
+  "W05-T029-AA-DIFF-RENDERER": {
+   "allow": [
+    "ws05-web-approval-ux/apps/aa-origin/app/plan/[planId]/page.tsx",
+    "ws05-web-approval-ux/apps/aa-origin/components/display/**",
+    "ws05-web-approval-ux/apps/aa-origin/test/display/**"
+   ],
+   "deny": []
+  },
+  "W05-T030-RESOLUTION-FLOWS-UI": {
+   "allow": [
+    "ws05-web-approval-ux/apps/resolution-origin/app/case/[caseId]/page.tsx",
+    "ws05-web-approval-ux/apps/resolution-origin/components/flows/**",
+    "ws05-web-approval-ux/apps/resolution-origin/test/flows/**"
+   ],
+   "deny": []
+  },
+  "W05-T031-AA-CEREMONY": {
+   "allow": [
+    "ws05-web-approval-ux/apps/aa-origin/app/plan/[planId]/page.tsx",
+    "ws05-web-approval-ux/apps/aa-origin/components/ceremony/**",
+    "ws05-web-approval-ux/apps/aa-origin/test/ceremony/**"
+   ],
+   "deny": []
+  },
+  "W05-T032-AUTHENTICATOR-MATRIX": {
+   "allow": [
+    "ws05-web-approval-ux/docs/authenticator-matrix.md",
+    "ws05-web-approval-ux/packages/webauthn-harness/manual/**"
+   ],
+   "deny": []
+  },
+  "W05-T033-P0-09A-HARNESS": {
+   "allow": [
+    "ws05-web-approval-ux/claims/P0-09A/**"
+   ],
+   "deny": [
+    "ws05-web-approval-ux/claims/P0-09A/harness/package.json",
+    "ws05-web-approval-ux/claims/P0-09A/harness/tsconfig.json"
+   ]
+  },
+  "W05-T034-A11Y-AUTOMATED": {
+   "allow": [
+    "ws05-web-approval-ux/a11y/**"
+   ],
+   "deny": [
+    "ws05-web-approval-ux/a11y/package.json",
+    "ws05-web-approval-ux/a11y/tsconfig.json"
+   ]
+  },
+  "W05-T035-A11Y-MANUAL": {
+   "allow": [
+    "ws05-web-approval-ux/a11y/REPORT.md",
+    "ws05-web-approval-ux/a11y/manual/**"
+   ],
+   "deny": []
+  },
+  "W05-T036-ESCAPE-CORPUS": {
+   "allow": [
+    "ws05-web-approval-ux/corpus/escape/**"
+   ],
+   "deny": []
+  }
+ },
+ "workstream": "W05"
+}

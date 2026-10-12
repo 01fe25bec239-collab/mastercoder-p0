@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TrustMemberV1.schema.json",
+  "title": "TrustMemberV1",
+  "description": "Role is a closed deployment registration from authority matrix; unrecognized role cannot authorize any operation.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "TrustMemberV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "component_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "role": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "key_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "public_key": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "credential_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "administrative_domain_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "capability_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "component_id",
+    "role",
+    "key_id",
+    "public_key",
+    "credential_generation",
+    "administrative_domain_id",
+    "capability_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "component_id",
+    "role",
+    "key_id",
+    "public_key",
+    "credential_generation",
+    "administrative_domain_id",
+    "capability_digest"
+  ]
+}

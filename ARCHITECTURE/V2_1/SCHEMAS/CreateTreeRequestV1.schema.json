@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateTreeRequestV1.schema.json",
+  "title": "CreateTreeRequestV1",
+  "description": "POST /git/trees; fixed base_tree plus exact entries; reject duplicate paths and returned-tree mismatch.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CreateTreeRequestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "base_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "TreeEntryV1.schema.json"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "expected_tree": {
+      "$ref": "GitOidV1.schema.json"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "base_tree",
+    "entries",
+    "expected_tree"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "base_tree",
+    "entries",
+    "expected_tree"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PublicationEffectsV1.schema.json",
+  "title": "PublicationEffectsV1",
+  "description": "Finite topological sequence of blob/tree/commit/ref/PR effects. Request schemas are closed; root plan effects_digest hashes this record. Requests cannot include plan digest, avoiding recursive hash dependency.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "PublicationEffectsV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "EffectPlanEntryV1.schema.json"
+      },
+      "maxItems": 65536
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "steps"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "steps"
+  ]
+}

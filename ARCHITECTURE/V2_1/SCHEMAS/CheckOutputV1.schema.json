@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CheckOutputV1.schema.json",
+  "title": "CheckOutputV1",
+  "description": "Metadata-only trusted template output. Provider summary generated from fixed code and exact identifiers; no arbitrary markdown, repository source or caller URL. Digest is CheckWriteRequestV1.output_digest. No finalized evaluation identity exists before manifest/verification completion; initial output may omit it. SUCCESS output must include the same identity as its present GateProofV2.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CheckOutputV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "summary_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "evaluation_identity_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "projection_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "title",
+    "summary_code",
+    "evaluation_identity_digest",
+    "projection_id",
+    "generation"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "title",
+    "summary_code",
+    "evaluation_identity_digest",
+    "projection_id",
+    "generation"
+  ]
+}

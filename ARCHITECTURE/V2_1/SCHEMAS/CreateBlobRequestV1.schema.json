@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateBlobRequestV1.schema.json",
+  "title": "CreateBlobRequestV1",
+  "description": "POST /repos/{resolved_owner}/{resolved_repo}/git/blobs; encoding=base64 and content exact pinned bytes; returned sha must equal expected OID.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CreateBlobRequestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "content_custody_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "content_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "byte_length": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "expected_blob_oid": {
+      "$ref": "GitOidV1.schema.json"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "content_custody_digest",
+    "content_digest",
+    "byte_length",
+    "expected_blob_oid"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "content_custody_digest",
+    "content_digest",
+    "byte_length",
+    "expected_blob_oid"
+  ]
+}

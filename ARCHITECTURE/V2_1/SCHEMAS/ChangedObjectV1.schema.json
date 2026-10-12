@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ChangedObjectV1.schema.json",
+  "title": "ChangedObjectV1",
+  "description": "DELETE has absent blob fields and zero length; others require both. Refuse absolute/dot-dot/NUL/duplicate paths; symlink is materialized as link bytes not traversed. Gitlinks/submodules need separate enabled cell; no implicit mode conversion.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ChangedObjectV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})+$",
+      "maxLength": 8192
+    },
+    "mode": {
+      "enum": [
+        "REGULAR",
+        "EXECUTABLE",
+        "SYMLINK",
+        "DELETE"
+      ],
+      "x-cbor-enum-codes": {
+        "REGULAR": 0,
+        "EXECUTABLE": 1,
+        "SYMLINK": 2,
+        "DELETE": 3
+      }
+    },
+    "blob_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "blob_oid": {
+      "type": "array",
+      "items": {
+        "$ref": "GitOidV1.schema.json"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "byte_length": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "path",
+    "mode",
+    "blob_digest",
+    "blob_oid",
+    "byte_length"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "path",
+    "mode",
+    "blob_digest",
+    "blob_oid",
+    "byte_length"
+  ]
+}

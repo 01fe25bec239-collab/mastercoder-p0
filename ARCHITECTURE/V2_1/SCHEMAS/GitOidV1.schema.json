@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "GitOidV1.schema.json",
+  "title": "GitOidV1",
+  "description": "Exactly 20 bytes for SHA1 or 32 for SHA256. SHA256 cells disabled until separately qualified; never reinterpret old OIDs.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "GitOidV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "algorithm": {
+      "enum": [
+        "SHA1",
+        "SHA256"
+      ],
+      "x-cbor-enum-codes": {
+        "SHA1": 0,
+        "SHA256": 1
+      }
+    },
+    "oid": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "algorithm",
+    "oid"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "algorithm",
+    "oid"
+  ]
+}

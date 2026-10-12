@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ModelContentBlockV1.schema.json",
+  "title": "ModelContentBlockV1",
+  "description": "TEXT: content_digest present, call/tool/arguments/is_error absent. TOOL_USE: call+tool+arguments present, content/is_error absent, truncated=false; arguments are exact JSON validated against ModelToolV1 input schema. TOOL_RESULT: call+content+is_error present, tool/arguments absent; error/truncation explicit. Content/prompt bytes remain in bounded ephemeral custody; missing bytes reject the turn.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ModelContentBlockV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "kind": {
+      "enum": [
+        "TEXT",
+        "TOOL_USE",
+        "TOOL_RESULT"
+      ],
+      "x-cbor-enum-codes": {
+        "TEXT": 0,
+        "TOOL_USE": 1,
+        "TOOL_RESULT": 2
+      }
+    },
+    "tool_call_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "tool_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "content_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "arguments_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "is_error": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "kind",
+    "tool_call_id",
+    "tool_id",
+    "content_digest",
+    "arguments_digest",
+    "is_error",
+    "truncated"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "kind",
+    "tool_call_id",
+    "tool_id",
+    "content_digest",
+    "arguments_digest",
+    "is_error",
+    "truncated"
+  ]
+}

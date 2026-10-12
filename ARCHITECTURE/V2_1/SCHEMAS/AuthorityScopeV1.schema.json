@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AuthorityScopeV1.schema.json",
+  "title": "AuthorityScopeV1",
+  "description": "Closed permission vocabulary: APPROVE_PUBLICATION, REGISTER_APPROVER, REVOKE_APPROVER, RECOVER_APPROVER, RESOLVE_FINDING, RECONCILE_EFFECT, ACTIVATE_POLICY, ROTATE_TRUST. Unknown permission rejects; empty repository list grants none, never wildcard.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "AuthorityScopeV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "repository_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(0|[1-9][0-9]*)$",
+        "x-minimum": "0",
+        "x-maximum": "18446744073709551615"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "repository_ids",
+    "permissions",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "tenant_id",
+    "repository_ids",
+    "permissions",
+    "expires_at"
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claim_id",
+    "parent_gate",
+    "requirement",
+    "invariant",
+    "environment",
+    "component_versions",
+    "preconditions",
+    "procedure",
+    "failure_injection",
+    "expected_observation",
+    "quantitative_threshold",
+    "pass_condition",
+    "fail_condition",
+    "evidence_artifacts",
+    "evidence_reviewer",
+    "evidence_expiry",
+    "status"
+  ],
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^P0-(0[1-9]|10)[A-Z]$"
+    },
+    "parent_gate": {
+      "type": "string",
+      "minLength": 1,
+      "enum": [
+        "P0-01",
+        "P0-02",
+        "P0-03",
+        "P0-04",
+        "P0-05",
+        "P0-06",
+        "P0-07",
+        "P0-08",
+        "P0-09",
+        "P0-10"
+      ]
+    },
+    "requirement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "invariant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "topology",
+        "fixture",
+        "configuration"
+      ],
+      "properties": {
+        "profile_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "topology": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fixture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "configuration": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "component_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version_manifest",
+        "pinning_rule"
+      ],
+      "properties": {
+        "version_manifest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pinning_rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "procedure": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "failure_injection": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "expected_observation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "quantitative_threshold": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pass_condition": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fail_condition": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_reviewer": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_expiry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_age_days",
+        "invalidate_on"
+      ],
+      "properties": {
+        "max_age_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365
+        },
+        "invalidate_on": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "status": {
+      "const": "NOT_RUN"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AtomicPrototypeClaimV1.schema.json",
+  "title": "AtomicPrototypeClaimV1",
+  "description": "JSON architecture claim specification, not a signed CBOR runtime contract. Version1 identified by this schema ID; no P0 execution in this package."
+}

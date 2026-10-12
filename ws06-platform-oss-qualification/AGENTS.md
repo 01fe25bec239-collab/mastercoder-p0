@@ -1,0 +1,25 @@
+# WORKSTREAM-06-PLATFORM-OSS-QUALIFICATION — agent entry point (auto-loaded)
+
+You are working in `ws06-platform-oss-qualification/` of the private repo `mastercoder-p0`. Authoritative rules: `coordination/AGENTS.md` and `coordination/SKILLS.md`.
+Operator: master (one human runs all six lanes). Lane: Platform, OSS & Qualification.
+
+**Before doing anything:** read, in order: coordination/AGENTS.md, coordination/SKILLS.md, coordination/memory.md, coordination/task.md, plus the latest file in HANDOFFS/ if you are A1. Then follow the playbook for your role (A1, A2 or A3) in SKILLS.md §13.
+
+Bundled skills: read the package SKILL.md (pre-G0) or /SKILL.md (repo root) and relevant Matt Pocock skills. Project scope/gates/independent review remain authoritative.
+
+Non-negotiable rules (full text in AGENTS.md):
+1. Agent model is A1 → A2 → A1 → A3 → A1. There is no A4. Never approve your own work. Reviews bind to one exact 40-hex SHA + tree.
+2. Start every session by printing your WORK LOCATION code block (pwd, repo toplevel, branch, HEAD). End every handoff with a WORK LOCATION code block and a NEXT AGENT PROMPT code block, fully filled in (AGENTS.md §0).
+   No location, no handoff: if the next agent's folder/worktree does not exist, create it (git fetch + git worktree add), verify HEAD and clean status, then give the user the blocks. If YOUR folder is missing, run the CREATE command from your WORK LOCATION message exactly, verify, tell the user, continue. If it is wrong or cannot be created: BLOCKED + HUMAN COMMANDS; never reset/stash/delete.
+3. Change only paths in WRITE_SET.md and the task's EXACT WRITE SCOPE. Never edit ARCHITECTURE/** or another workstream's directory.
+4. The architecture (MASTERCODER_CONVERGENCE_ARCHITECTURE_SOL_V2_1, REGISTRY_SHA256 b516004c690dd86860c263334d9f32f79a6c935ac82f2b801d3117223ed8d787) is read-only. Do not invent schema names, enum values, digest rules, authority rules or state transitions. Conflicts go to a CCR.
+5. Everything here is PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Production implementation is NOT AUTHORIZED. No P0 claim runs before G2 + G3.
+6. No secrets in files, commits, logs or outputs. Synthetic data and disposable staging accounts only.
+7. No push, PR, merge, provider mutation or account action unless master explicitly says so in this session.
+8. Fail closed. When unsure, stop with BLOCKED and say exactly what you need.
+9. ASK, DON'T LOOP: if the same failure happens twice, three fixes fail, you'd have to guess, sources conflict, you lack access, or an action is destructive, STOP and ask the user with the QUESTION FOR USER code block (AGENTS.md §0.1): problem, what you tried, options, your recommendation, what you need. Then wait. Never weaken checks or invent values to avoid asking.
+10. PROBLEMS / "just fix it": follow AGENTS.md §0.2 (locate, restate, check KNOWN_ISSUES.md + TROUBLESHOOTING.md, classify, reproduce, diagnose, PROPOSE before editing, apply only via the allowed route, verify, record). Never apply the forbidden quick fixes (deleting/weakening tests, --no-verify, reset --hard, force push, disabling checks, editing files you don't own).
+11. Coordination files (task.md, memory.md, DISPATCHES/RETURNS/REVIEWS/HANDOFFS, KNOWN_ISSUES) are edited ONLY in the COORDINATION worktree on branch ws06/coordination, never on task branches.
+12. NO HARDCODING (AGENTS.md §0.3): secrets, URLs, ports, paths, usernames, org/repo names, App IDs, model IDs, regions, limits come from .env via one validated config module; add new variables to .env.example in the same commit; never copy example SHAs/paths.
+13. CLEANUP (A1): every time you record a MERGED_SHA, and at the start of every A1 session, remove the worktrees of INTEGRATED tasks and processed attempts/reviews with `git -C <WORKSPACE>/repo worktree remove <path>` (this also deletes their Rust `target/`), then `git worktree prune` and `git branch -d` the merged branches. Never use --force, rm -rf or git clean; never remove a dirty, in-flight or COORDINATION worktree (AGENTS.md §3b).
+14. SUB-AGENT SWARMS (A1, A2, A3): split your work across sub-agents to go faster (AGENTS.md §3c). Normally use 2–3 helpers. Claude sessions use Haiku 5.5 max for routine work and Sonnet 5.5 high for complex work; OpenAI sessions use GPT-6 Luna xhigh for routine work and GPT-6.1 Sol high for complex work. Validate host availability, no silent substitutions. The exact names come from the MC_SUBAGENT_* values in .env. One file per sub-agent, no commits/pushes/coordination edits by sub-agents, verify every result yourself, and replace a sub-agent before it reaches 100k tokens of context.

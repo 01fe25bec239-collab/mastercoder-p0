@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateFixPrRequestV1.schema.json",
+  "title": "CreateFixPrRequestV1",
+  "description": "POST /pulls only; exact refs and pinned title/body with stable publication marker. Body/title UTF8 and bounded; no auto-merge settings, existing PR edits, or arbitrary issue endpoints.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CreateFixPrRequestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "head_ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "base_ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "title": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "body_custody_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "body_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "draft": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "head_ref",
+    "base_ref",
+    "title",
+    "body_custody_digest",
+    "body_digest",
+    "draft"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "head_ref",
+    "base_ref",
+    "title",
+    "body_custody_digest",
+    "body_digest",
+    "draft"
+  ]
+}

@@ -1,0 +1,4287 @@
+{
+  "profile": "MASTERCODER/V2.1",
+  "max_record_bytes": 16777216,
+  "max_nesting": 32,
+  "primitives": {
+    "bool": {
+      "type": "boolean"
+    },
+    "u16": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "i16": {
+      "type": "integer",
+      "minimum": -32768,
+      "maximum": 32767
+    },
+    "u32": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "u64": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "i64": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "bytes": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "bytes32": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "bytes64": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "gitpath": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})+$",
+      "maxLength": 8192
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 1024,
+      "pattern": "^refs/heads/[^ ~^:?*\\\\\\[\\x00-\\x20]+$"
+    },
+    "hostname": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9.-]+$"
+    },
+    "origin": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^https://[a-z0-9.-]+(:[0-9]+)?$"
+    },
+    "provider": {
+      "enum": [
+        "GITHUB",
+        "OTHER"
+      ]
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "effect_kind": {
+      "enum": [
+        "CREATE_BLOB",
+        "CREATE_TREE",
+        "CREATE_COMMIT",
+        "CREATE_REF",
+        "CREATE_FIX_PR",
+        "CREATE_CHECK",
+        "UPDATE_CHECK",
+        "MODEL_REQUEST",
+        "CHECKOUT_FETCH",
+        "DEPENDENCY_FETCH"
+      ]
+    }
+  },
+  "contracts": {
+    "ScopeV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "repository_id",
+          "type": "u64"
+        },
+        {
+          "name": "repository_tenant_epoch",
+          "type": "u64"
+        },
+        {
+          "name": "authority_epoch",
+          "type": "uuid"
+        }
+      ],
+      "semantic_rules": "All values are authenticated by the receiving authority; repository ID is the stable GitHub numeric ID, never owner/name. Epochs must match current authority."
+    },
+    "GitOidV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "algorithm",
+          "type": {
+            "enum": [
+              "SHA1",
+              "SHA256"
+            ]
+          }
+        },
+        {
+          "name": "oid",
+          "type": "bytes"
+        }
+      ],
+      "semantic_rules": "Exactly 20 bytes for SHA1 or 32 for SHA256. SHA256 cells disabled until separately qualified; never reinterpret old OIDs."
+    },
+    "MergeSubjectV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "provider",
+          "type": "provider"
+        },
+        {
+          "name": "pr_number",
+          "type": "u64"
+        },
+        {
+          "name": "head_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "head_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "base_ref",
+          "type": "ref"
+        },
+        {
+          "name": "base_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "base_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "candidate_kind",
+          "type": {
+            "enum": [
+              "HEAD_ONLY_NONMERGE",
+              "TEST_MERGE",
+              "MERGE_GROUP",
+              "PROVIDER_EQUIVALENT"
+            ]
+          }
+        },
+        {
+          "name": "candidate_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "candidate_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "merge_method",
+          "type": {
+            "enum": [
+              "MERGE",
+              "SQUASH",
+              "REBASE",
+              "QUEUE",
+              "ADVISORY"
+            ]
+          }
+        },
+        {
+          "name": "provider_generation",
+          "type": "u64"
+        },
+        {
+          "name": "observed_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Observed through protected provider read-back; all OIDs use one algorithm. expires_at > observed_at. HEAD_ONLY_NONMERGE cannot authorize integrated merge."
+    },
+    "WorkflowSpecCoreV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "workflow_id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "analysis_plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "capability_digest",
+          "type": "digest"
+        },
+        {
+          "name": "resource_envelope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "mode",
+          "type": {
+            "enum": [
+              "FAST",
+              "AI",
+              "HYBRID",
+              "DEEP"
+            ]
+          }
+        },
+        {
+          "name": "required_unit_ids",
+          "type": {
+            "set": "identifier",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "No attempt digest here: immutable workflow is hashed before attempt allocation; no cyclic binding."
+    },
+    "AttemptBindingV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "attempt_id",
+          "type": "uuid"
+        },
+        {
+          "name": "job_id",
+          "type": "uuid"
+        },
+        {
+          "name": "evaluation_id",
+          "type": "uuid"
+        },
+        {
+          "name": "evaluation_sequence",
+          "type": "u64"
+        },
+        {
+          "name": "workflow_digest",
+          "type": "digest"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "capability_digest",
+          "type": "digest"
+        },
+        {
+          "name": "runner_id",
+          "type": "uuid"
+        },
+        {
+          "name": "runner_session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "lease_generation",
+          "type": "u64"
+        },
+        {
+          "name": "runner_credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "sandbox_tier",
+          "type": {
+            "enum": [
+              "S0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          }
+        },
+        {
+          "name": "resource_envelope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "protocol_major",
+          "type": "u16"
+        },
+        {
+          "name": "protocol_minor",
+          "type": "u16"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "lease_expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Lease acceptance additionally checks actual protected DB row under lock at database clock time. Signed snapshot never extends a lease. workflow has no attempt digest."
+    },
+    "AnalysisUnitV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "unit_id",
+          "type": "identifier"
+        },
+        {
+          "name": "analyzer_id",
+          "type": "identifier"
+        },
+        {
+          "name": "analyzer_bundle_digest",
+          "type": "digest"
+        },
+        {
+          "name": "effective_configuration_digest",
+          "type": "digest"
+        },
+        {
+          "name": "scopes_digest",
+          "type": "digest"
+        },
+        {
+          "name": "required_files_symbols_digest",
+          "type": "digest"
+        },
+        {
+          "name": "allowed_exclusions_digest",
+          "type": "digest"
+        },
+        {
+          "name": "sandbox_requirements_digest",
+          "type": "digest"
+        },
+        {
+          "name": "mandatory_build_test_units",
+          "type": {
+            "set": "identifier",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "coverage_expectations_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Referenced descriptors are canonical ManifestDescriptorV1 records pinned before execution; complete file/symbol sets cannot be supplied solely by hostile repository configuration."
+    },
+    "ManifestDescriptorV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "kind",
+          "type": {
+            "enum": [
+              "SCOPES",
+              "FILES_SYMBOLS",
+              "EXCLUSIONS",
+              "SANDBOX_REQUIREMENTS",
+              "COVERAGE_EXPECTATIONS",
+              "ANALYZER_CONFIGURATION"
+            ]
+          }
+        },
+        {
+          "name": "entries",
+          "type": {
+            "set": "DescriptorEntryV1",
+            "max_items": 65536
+          }
+        }
+      ],
+      "semantic_rules": "Entries use policy-owned keys; unknown key rejects for the pinned analyzer configuration schema digest in PolicyVersionV1. These records are retained with the manifest."
+    },
+    "DescriptorEntryV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "key",
+          "type": "identifier"
+        },
+        {
+          "name": "value",
+          "type": "bytes"
+        }
+      ],
+      "semantic_rules": "Value is opaque exact configuration bytes interpreted only under a policy-approved analyzer configuration schema, not by the signer. Security meaning requires the policy-approved schema digest; no free-form override can disable mandatory units."
+    },
+    "ExpectedAnalysisManifestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "manifest_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "candidate_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "analysis_plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "required_units",
+          "type": {
+            "set": "AnalysisUnitV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "issuer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Nonempty required_units with unique unit_id; commit before any unit execution. PASS requires exactly one accepted successful completion for every unit, with matching digests and policy coverage; finding_count=0 still requires a receipt."
+    },
+    "AnalysisCompletionReceiptV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "receipt_id",
+          "type": "uuid"
+        },
+        {
+          "name": "manifest_digest",
+          "type": "digest"
+        },
+        {
+          "name": "unit_id",
+          "type": "identifier"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "actual_analyzer_bundle_digest",
+          "type": "digest"
+        },
+        {
+          "name": "actual_configuration_digest",
+          "type": "digest"
+        },
+        {
+          "name": "actual_scope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "coverage_digest",
+          "type": "digest"
+        },
+        {
+          "name": "artifact_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "finding_count",
+          "type": "u32"
+        },
+        {
+          "name": "outcome",
+          "type": {
+            "enum": [
+              "COMPLETED",
+              "FAILED",
+              "UNSUPPORTED",
+              "CANCELLED"
+            ]
+          }
+        },
+        {
+          "name": "producer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "started_at",
+          "type": "i64"
+        },
+        {
+          "name": "completed_at",
+          "type": "i64"
+        },
+        {
+          "name": "lease_generation",
+          "type": "u64"
+        }
+      ],
+      "semantic_rules": "Producer signature verifies authenticated workload only; protected verifier validates manifest matching, coverage and live lease before acceptance. Zero findings is not proof of execution absent this receipt."
+    },
+    "OracleTrustClassV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "origin",
+          "type": {
+            "enum": [
+              "TRUSTED_REPOSITORY_TEST",
+              "TRUSTED_SPECIFICATION",
+              "SECURITY_INVARIANT",
+              "STANDARDS_REQUIREMENT",
+              "MAINTAINER_APPROVED",
+              "DETERMINISTIC_EXPLOIT",
+              "UNTRUSTED_AGENT_EXPECTATION"
+            ]
+          }
+        },
+        {
+          "name": "source_digest",
+          "type": "digest"
+        },
+        {
+          "name": "applicability_digest",
+          "type": "digest"
+        },
+        {
+          "name": "approval_authority_id",
+          "type": {
+            "option": "uuid"
+          }
+        },
+        {
+          "name": "approval_record_digest",
+          "type": {
+            "option": "digest"
+          }
+        }
+      ],
+      "semantic_rules": "Origin asserted by runner is untrusted. Policy/evidence authority validates independently trusted source and applicability. MAINTAINER_APPROVED requires both options; UNTRUSTED_AGENT_EXPECTATION never blocks regardless of reproduction."
+    },
+    "EvidenceReceiptV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "receipt_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "manifest_digest",
+          "type": "digest"
+        },
+        {
+          "name": "unit_id",
+          "type": "identifier"
+        },
+        {
+          "name": "producer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_generation",
+          "type": "u64"
+        },
+        {
+          "name": "input_digest",
+          "type": "digest"
+        },
+        {
+          "name": "environment_digest",
+          "type": "digest"
+        },
+        {
+          "name": "output_digest",
+          "type": "digest"
+        },
+        {
+          "name": "oracle",
+          "type": "OracleTrustClassV1"
+        },
+        {
+          "name": "grade",
+          "type": {
+            "enum": [
+              "E0",
+              "E1",
+              "E2",
+              "E3",
+              "E4"
+            ]
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Receipt signature establishes provenance; accepted evidence requires evidence authority and current trust. E3 requires valid oracle in addition to base-pass/candidate-fail."
+    },
+    "VerificationReceiptV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "receipt_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "evidence_digest",
+          "type": "digest"
+        },
+        {
+          "name": "verifier_id",
+          "type": "uuid"
+        },
+        {
+          "name": "verifier_generation",
+          "type": "u64"
+        },
+        {
+          "name": "administrative_domain_id",
+          "type": "uuid"
+        },
+        {
+          "name": "environment_digest",
+          "type": "digest"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "oracle",
+          "type": "OracleTrustClassV1"
+        },
+        {
+          "name": "independence_class",
+          "type": {
+            "enum": [
+              "C0",
+              "C1",
+              "C2",
+              "C3",
+              "C4"
+            ]
+          }
+        },
+        {
+          "name": "outcome",
+          "type": {
+            "enum": [
+              "CONFIRMED",
+              "REJECTED",
+              "UNSUPPORTED",
+              "INCONCLUSIVE"
+            ]
+          }
+        },
+        {
+          "name": "started_at",
+          "type": "i64"
+        },
+        {
+          "name": "completed_at",
+          "type": "i64"
+        },
+        {
+          "name": "lease_generation",
+          "type": "u64"
+        }
+      ],
+      "semantic_rules": "C3 requires independently registered administrative domain from producer and other required runs, not a self-declared string. Expired attempt cannot submit authoritative results."
+    },
+    "VerificationSetV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "verification_set_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "trust_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "receipt_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "issuer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Immutable set, recomputed digest; every receipt signature, applicability, class, epoch and component revocation verified by Gate Authority."
+    },
+    "EvaluationIdentityV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "evaluation_id",
+          "type": "uuid"
+        },
+        {
+          "name": "evaluation_sequence",
+          "type": "u64"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "capability_digest",
+          "type": "digest"
+        },
+        {
+          "name": "trust_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "manifest_digest",
+          "type": "digest"
+        },
+        {
+          "name": "verification_set_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Identity is not a mutable verdict or current pointer; supersession creates new identity and projection generation."
+    },
+    "GateProofV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "identity",
+          "type": "EvaluationIdentityV2"
+        },
+        {
+          "name": "conclusion",
+          "type": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "BLOCKED",
+              "HUMAN_REVIEW_REQUIRED",
+              "PARTIALLY_AVAILABLE",
+              "STALE",
+              "REVOKED",
+              "INVALID"
+            ]
+          }
+        },
+        {
+          "name": "completion_receipt_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "reason_codes",
+          "type": {
+            "set": "identifier",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "gate_authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "gate_generation",
+          "type": "u64"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Protected gate signer independently validates all trusted inputs against authority/write matrix, mandatory coverage, oracle qualification and current subject. PASS is disallowed for missing/untrusted work; signature is not sufficient without currentness checks."
+    },
+    "PolicyVersionV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "policy_id",
+          "type": "uuid"
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        },
+        {
+          "name": "previous_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "requirements_digest",
+          "type": "digest"
+        },
+        {
+          "name": "analyzer_configuration_schema_digest",
+          "type": "digest"
+        },
+        {
+          "name": "trust_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "capability_digest",
+          "type": "digest"
+        },
+        {
+          "name": "approver_scope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "activated_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Policy Authority writes only through policy authorization ceremony. Immutable content, activation pointer protected. Normal staged update vs emergency immediate revocation follows 54."
+    },
+    "TrustBundleV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "trust_bundle_id",
+          "type": "uuid"
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        },
+        {
+          "name": "members",
+          "type": {
+            "set": "TrustMemberV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Trust Authority verifies administrative domain registration outside ordinary API. Revocation checked online, never only via cached bundle expiry."
+    },
+    "TrustMemberV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "component_id",
+          "type": "uuid"
+        },
+        {
+          "name": "role",
+          "type": "identifier"
+        },
+        {
+          "name": "key_id",
+          "type": "uuid"
+        },
+        {
+          "name": "public_key",
+          "type": "bytes32"
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "administrative_domain_id",
+          "type": "uuid"
+        },
+        {
+          "name": "capability_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Role is a closed deployment registration from authority matrix; unrecognized role cannot authorize any operation."
+    },
+    "RevocationRecordV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "revocation_id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "revoked_generation",
+          "type": "u64"
+        },
+        {
+          "name": "reason",
+          "type": "identifier"
+        },
+        {
+          "name": "effective_at",
+          "type": "i64"
+        },
+        {
+          "name": "authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_type",
+          "type": "identifier"
+        }
+      ],
+      "semantic_rules": "Immutable and monotonic. Restore may not lower effective generation; journal EPOCH_FENCE records protect recovery."
+    },
+    "CurrentCandidateV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "provider_generation",
+          "type": "u64"
+        },
+        {
+          "name": "observation_digest",
+          "type": "digest"
+        },
+        {
+          "name": "writer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "observed_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Only protected provider-read authority writes. Webhooks trigger read-back; raw webhook data cannot advance truth."
+    },
+    "ChangedObjectV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "path",
+          "type": "gitpath"
+        },
+        {
+          "name": "mode",
+          "type": {
+            "enum": [
+              "REGULAR",
+              "EXECUTABLE",
+              "SYMLINK",
+              "DELETE"
+            ]
+          }
+        },
+        {
+          "name": "blob_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "blob_oid",
+          "type": {
+            "option": "GitOidV1"
+          }
+        },
+        {
+          "name": "byte_length",
+          "type": "u64"
+        }
+      ],
+      "semantic_rules": "DELETE has absent blob fields and zero length; others require both. Refuse absolute/dot-dot/NUL/duplicate paths; symlink is materialized as link bytes not traversed. Gitlinks/submodules need separate enabled cell; no implicit mode conversion."
+    },
+    "VerifiedPublicationPlanV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "patch_revision_id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "base_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "base_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "candidate_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "patch_digest",
+          "type": "digest"
+        },
+        {
+          "name": "manifest_digest",
+          "type": "digest"
+        },
+        {
+          "name": "verification_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "trust_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "changed_objects",
+          "type": {
+            "set": "ChangedObjectV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "destination_ref",
+          "type": "ref"
+        },
+        {
+          "name": "target_base_ref",
+          "type": "ref"
+        },
+        {
+          "name": "commit_metadata_digest",
+          "type": "digest"
+        },
+        {
+          "name": "fix_pr_metadata_digest",
+          "type": "digest"
+        },
+        {
+          "name": "custody_id",
+          "type": "uuid"
+        },
+        {
+          "name": "effects_digest",
+          "type": "digest"
+        },
+        {
+          "name": "verifier_id",
+          "type": "uuid"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "destination_ref must equal refs/heads/mastercoder/fix/ + lower UUID publication_id. Effects are finite typed requests with dependencies, no update/delete/merge. All retained request metadata and exact bytes are digest-bound; verifier independently derives candidate tree. Custody is referenced by ID to avoid a digest cycle with PatchCustodyV1 plan_digest."
+    },
+    "ArtifactCustodyEntryV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "artifact_digest",
+          "type": "digest"
+        },
+        {
+          "name": "byte_length",
+          "type": "u64"
+        },
+        {
+          "name": "location",
+          "type": "identifier"
+        },
+        {
+          "name": "region",
+          "type": "identifier"
+        },
+        {
+          "name": "encryption_key_ref",
+          "type": "identifier"
+        }
+      ],
+      "semantic_rules": "Opaque tenant scoped object handle, never fetch arbitrary caller URL. Blob bytes fetched over authenticated custodian endpoint and digest/size validated."
+    },
+    "PatchCustodyV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "custody_id",
+          "type": "uuid"
+        },
+        {
+          "name": "patch_revision_id",
+          "type": "uuid"
+        },
+        {
+          "name": "patch_digest",
+          "type": "digest"
+        },
+        {
+          "name": "manifest_digest",
+          "type": "digest"
+        },
+        {
+          "name": "candidate_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "verification_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "artifacts",
+          "type": {
+            "set": "ArtifactCustodyEntryV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "access_policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "retention_policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "retention_deadline",
+          "type": "i64"
+        },
+        {
+          "name": "legal_hold",
+          "type": "bool"
+        },
+        {
+          "name": "state",
+          "type": {
+            "enum": [
+              "AVAILABLE",
+              "LOST",
+              "DELETION_PENDING",
+              "DELETED"
+            ]
+          }
+        },
+        {
+          "name": "pinned_publication_ids",
+          "type": {
+            "set": "uuid",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        }
+      ],
+      "semantic_rules": "Revisioned immutable snapshots. Pin lifetime covers display through terminal reconciliation; expiry/loss invalidates approval and blocks unstarted calls. Reacquisition cannot silently reconstruct alternative bytes; fresh verification/approval required. Legal hold never grants publication authority."
+    },
+    "ApprovalCredentialBindingV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "binding_id",
+          "type": "uuid"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_id",
+          "type": "bytes"
+        },
+        {
+          "name": "public_key_cose",
+          "type": "bytes"
+        },
+        {
+          "name": "rp_id",
+          "type": "hostname"
+        },
+        {
+          "name": "allowed_origin",
+          "type": "origin"
+        },
+        {
+          "name": "authorization_scope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "registration_ceremony_digest",
+          "type": "digest"
+        },
+        {
+          "name": "registration_authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "state",
+          "type": {
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "REVOKED"
+            ]
+          }
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "recovery_lineage",
+          "type": {
+            "array": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "audit_record_id",
+          "type": "uuid"
+        }
+      ],
+      "semantic_rules": "Scope repository_id=0 only for tenant enrollment; authorization_scope explicitly names allowed repositories and is evaluated against publication scope. ES256 COSE key must be valid canonical WebAuthn key; only -7/P-256 accepted initially. Ordinary OIDC recovery cannot mint/change this binding."
+    },
+    "TrustedDisplayReceiptV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "receipt_id",
+          "type": "uuid"
+        },
+        {
+          "name": "plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "displayed_effects_digest",
+          "type": "digest"
+        },
+        {
+          "name": "candidate_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "display_origin",
+          "type": "origin"
+        },
+        {
+          "name": "renderer_bundle_digest",
+          "type": "digest"
+        },
+        {
+          "name": "session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "displayed_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Produced by Approval Authority controlled origin using independently fetched plan/bytes; no ordinary-app diff or caller-provided digest accepted as display truth. Browser/OS compromise is residual threat."
+    },
+    "ApprovalChallengeV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "challenge_id",
+          "type": "uuid"
+        },
+        {
+          "name": "plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "display_receipt_digest",
+          "type": "digest"
+        },
+        {
+          "name": "credential_binding_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "WebAuthn challenge = SHA256(domain-separated canonical challenge record), served only directly by approval origin. Nonce consumed once in same transaction as assertion creation; no challenge reuse."
+    },
+    "HumanApprovalAssertionV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "approval_id",
+          "type": "uuid"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "verification_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "candidate_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "destination_ref",
+          "type": "ref"
+        },
+        {
+          "name": "effects_digest",
+          "type": "digest"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_binding_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "display_receipt_digest",
+          "type": "digest"
+        },
+        {
+          "name": "challenge_digest",
+          "type": "digest"
+        },
+        {
+          "name": "challenge_nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "ceremony_digest",
+          "type": "digest"
+        },
+        {
+          "name": "approval_authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "approval_authority_generation",
+          "type": "u64"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Detached Approval Authority signature after fresh direct UV. Gateway resolves current binding/generation, revocation, scope, custody and exact plan before each effect STARTED; assertion expiry cannot authorize a whole future sequence."
+    },
+    "WebAuthnCeremonyV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "credential_id",
+          "type": "bytes"
+        },
+        {
+          "name": "client_data_json",
+          "type": "bytes"
+        },
+        {
+          "name": "authenticator_data",
+          "type": "bytes"
+        },
+        {
+          "name": "signature",
+          "type": "bytes"
+        },
+        {
+          "name": "challenge_digest",
+          "type": "digest"
+        },
+        {
+          "name": "received_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Exact received bytes, do not JSON reserialize before checking WebAuthn signature. Verify type webauthn.get, base64url challenge, exact origin/RP hash, UP/UV, credential key, flags/extension policy, session and unused challenge. ES256 DER signature follows WebAuthn, distinct from Ed25519 authority envelope."
+    },
+    "PublicationOperationV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "approval_digest",
+          "type": "digest"
+        },
+        {
+          "name": "effect_ids",
+          "type": {
+            "array": "uuid",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "state",
+          "type": {
+            "enum": [
+              "PLANNED",
+              "AWAITING_APPROVAL",
+              "AUTHORIZED",
+              "RUNNING",
+              "CONFIRMED",
+              "FAILED_TERMINAL",
+              "REVOKED",
+              "EXPIRED",
+              "UNKNOWN",
+              "MANUAL_RECONCILIATION"
+            ]
+          }
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Parent is orchestration only and NEVER grants STARTED authority to children; every child independently authorized."
+    },
+    "GitPublicationCapabilityV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "capability_id",
+          "type": "uuid"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "effect_intent_id",
+          "type": "uuid"
+        },
+        {
+          "name": "plan_digest",
+          "type": "digest"
+        },
+        {
+          "name": "approval_assertion_digest",
+          "type": "digest"
+        },
+        {
+          "name": "custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "gateway_identity",
+          "type": "uuid"
+        },
+        {
+          "name": "gateway_generation",
+          "type": "u64"
+        },
+        {
+          "name": "provider_app_id",
+          "type": "u64"
+        },
+        {
+          "name": "installation_id",
+          "type": "u64"
+        },
+        {
+          "name": "effect_kind",
+          "type": {
+            "enum": [
+              "CREATE_BLOB",
+              "CREATE_TREE",
+              "CREATE_COMMIT",
+              "CREATE_REF",
+              "CREATE_FIX_PR"
+            ]
+          }
+        },
+        {
+          "name": "request_digest",
+          "type": "digest"
+        },
+        {
+          "name": "destination_ref",
+          "type": "ref"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "eligibility_proof_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "One effect, one credential-free caller capability. Gateway independently derives allowed exact path/body and rejects all generic provider URLs, HTTP methods, updates, deletes, bypass and merges. Token itself has broader residual Contents write authority."
+    },
+    "EffectIntentV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "effect_id",
+          "type": "uuid"
+        },
+        {
+          "name": "logical_operation_id",
+          "type": "uuid"
+        },
+        {
+          "name": "parent_operation_id",
+          "type": "uuid"
+        },
+        {
+          "name": "predecessor_effect_ids",
+          "type": {
+            "set": "uuid",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "call_attempt",
+          "type": "u32"
+        },
+        {
+          "name": "effect_kind",
+          "type": "effect_kind"
+        },
+        {
+          "name": "provider",
+          "type": "provider"
+        },
+        {
+          "name": "account_id",
+          "type": "identifier"
+        },
+        {
+          "name": "canonical_request_digest",
+          "type": "digest"
+        },
+        {
+          "name": "request_custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "authorization_proof_digest",
+          "type": "digest"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "dispatch_deadline",
+          "type": "i64"
+        },
+        {
+          "name": "request_deadline",
+          "type": "i64"
+        },
+        {
+          "name": "idempotency_token",
+          "type": {
+            "option": "identifier"
+          }
+        },
+        {
+          "name": "state",
+          "type": {
+            "enum": [
+              "PENDING"
+            ]
+          }
+        }
+      ],
+      "semantic_rules": "Immutable per provider call; state remains initial PENDING in this hashed intent. Runtime state is EffectStateV1. No transparent HTTP retry/redirect; new call requires own intent and provider-specific safe-retry proof. Provider = OTHER only for model/dependency allowed profile, never Git effects."
+    },
+    "EffectStateV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "effect_id",
+          "type": "uuid"
+        },
+        {
+          "name": "intent_digest",
+          "type": "digest"
+        },
+        {
+          "name": "revision",
+          "type": "u64"
+        },
+        {
+          "name": "state",
+          "type": {
+            "enum": [
+              "PENDING",
+              "STARTED",
+              "CONFIRMED",
+              "FAILED_TERMINAL",
+              "UNKNOWN",
+              "MANUAL_RECONCILIATION"
+            ]
+          }
+        },
+        {
+          "name": "prior_state_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "started_at",
+          "type": {
+            "option": "i64"
+          }
+        },
+        {
+          "name": "completed_at",
+          "type": {
+            "option": "i64"
+          }
+        },
+        {
+          "name": "provider_result_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "reconciliation_evidence_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "recorded_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Append-only revisions, live pointer protected by CAS. STARTED has started_at; CONFIRMED requires provider-result identity proof. FAILED_TERMINAL requires proven non-execution or terminal provider error; timeout/404 alone is UNKNOWN. No ABSENT_CONFIRMED."
+    },
+    "ExternalEffectJournalV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "journal_id",
+          "type": "uuid"
+        },
+        {
+          "name": "sequence",
+          "type": "u64"
+        },
+        {
+          "name": "previous_digest",
+          "type": "digest"
+        },
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "effect_id",
+          "type": "uuid"
+        },
+        {
+          "name": "intent_digest",
+          "type": "digest"
+        },
+        {
+          "name": "request_custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "state_digest",
+          "type": "digest"
+        },
+        {
+          "name": "entry_kind",
+          "type": {
+            "enum": [
+              "PREPARED",
+              "SEND_ARMED",
+              "OBSERVED",
+              "RESOLVED"
+            ]
+          }
+        },
+        {
+          "name": "entry_time",
+          "type": "i64"
+        },
+        {
+          "name": "db_start_certificate_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "dispatcher_session_id",
+          "type": {
+            "option": "uuid"
+          }
+        }
+      ],
+      "semantic_rules": "Append-only journal in independent restore domain, synchronous verified witness receipt before send; full reconstructable intent/request retained by custody. Missing confirmation means DO NOT SEND. Detached signatures by journal/witness identities. No restore of ordinary DB may lower witness high-watermark or re-arm old intent."
+    },
+    "JournalWitnessReceiptV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "journal_id",
+          "type": "uuid"
+        },
+        {
+          "name": "entry_digest",
+          "type": "digest"
+        },
+        {
+          "name": "sequence",
+          "type": "u64"
+        },
+        {
+          "name": "authority_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "witness_id",
+          "type": "uuid"
+        },
+        {
+          "name": "witness_generation",
+          "type": "u64"
+        },
+        {
+          "name": "durable_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Witness signs only after durable write of complete entry and retrievable referenced intent/request; configured recovery quorum policy must survive admitted failure model."
+    },
+    "CheckProjectionV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "projection_id",
+          "type": "uuid"
+        },
+        {
+          "name": "evaluation_id",
+          "type": "uuid"
+        },
+        {
+          "name": "provider",
+          "type": "provider"
+        },
+        {
+          "name": "pr_number",
+          "type": "u64"
+        },
+        {
+          "name": "evaluation_identity_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "head_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "candidate_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "candidate_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "trust_set_digest",
+          "type": "digest"
+        },
+        {
+          "name": "provider_app_id",
+          "type": "u64"
+        },
+        {
+          "name": "check_run_id",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "projected_conclusion",
+          "type": {
+            "enum": [
+              "UNCONFIRMED",
+              "IN_PROGRESS",
+              "SUCCESS",
+              "FAILURE",
+              "CANCELLED",
+              "ACTION_REQUIRED"
+            ]
+          }
+        },
+        {
+          "name": "desired_conclusion",
+          "type": {
+            "enum": [
+              "IN_PROGRESS",
+              "SUCCESS",
+              "FAILURE",
+              "CANCELLED",
+              "ACTION_REQUIRED"
+            ]
+          }
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        },
+        {
+          "name": "state",
+          "type": {
+            "enum": [
+              "PENDING",
+              "WRITING",
+              "CONFIRMED",
+              "WITHDRAWAL_PENDING",
+              "UNKNOWN",
+              "MANUAL_RECONCILIATION"
+            ]
+          }
+        },
+        {
+          "name": "gate_proof_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "last_confirmed_at",
+          "type": {
+            "option": "i64"
+          }
+        },
+        {
+          "name": "effect_intent_id",
+          "type": {
+            "option": "uuid"
+          }
+        },
+        {
+          "name": "freeze_state",
+          "type": {
+            "enum": [
+              "NONE",
+              "REQUESTED",
+              "CONFIRMED",
+              "FAILED"
+            ]
+          }
+        }
+      ],
+      "semantic_rules": "Only dedicated check App; generation serialization and read-back cover delayed writes. SUCCESS needs current PASS proof. Internal invalidation cannot atomically retract provider result; emergency freeze must be externally confirmed or merging considered unsafe. evaluation_id is allocated early; evaluation_identity_digest is absent only before final manifest/verification inputs exist. SUCCESS requires present exact finalized identity matching gate proof. Pre-verdict writes have no fabricated zero identity."
+    },
+    "ModelIntentV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "intent_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "root_envelope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "turn_id",
+          "type": "uuid"
+        },
+        {
+          "name": "model_cell_digest",
+          "type": "digest"
+        },
+        {
+          "name": "maximum_input_tokens",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_output_tokens",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_spend_microunits",
+          "type": "u64"
+        },
+        {
+          "name": "request_digest",
+          "type": "digest"
+        },
+        {
+          "name": "broker_generation",
+          "type": "u64"
+        },
+        {
+          "name": "deadline",
+          "type": "i64"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ],
+      "semantic_rules": "One use, budget consumed atomically under live lease before each call; actual spend settles even after lease loss. Currency is pinned in root resource envelope."
+    },
+    "ModelMessageV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "role",
+          "type": {
+            "enum": [
+              "SYSTEM",
+              "USER",
+              "ASSISTANT",
+              "TOOL"
+            ]
+          }
+        },
+        {
+          "name": "content_custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "tool_call_id",
+          "type": {
+            "option": "identifier"
+          }
+        }
+      ],
+      "semantic_rules": "Exact bounded content resides in ephemeral tenant custody, never audit. TOOL requires correlated previous unique tool_call_id."
+    },
+    "ModelToolV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tool_id",
+          "type": "identifier"
+        },
+        {
+          "name": "input_schema_digest",
+          "type": "digest"
+        },
+        {
+          "name": "capability_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Approved exact tool schema digest; a tool cannot mint authority beyond root envelope."
+    },
+    "ModelTurnV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "turn_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "model_intent_id",
+          "type": "uuid"
+        },
+        {
+          "name": "model_cell_digest",
+          "type": "digest"
+        },
+        {
+          "name": "messages",
+          "type": {
+            "array": "ModelMessageV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "tools",
+          "type": {
+            "set": "ModelToolV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "maximum_output_tokens",
+          "type": "u64"
+        },
+        {
+          "name": "sampling_parameters_digest",
+          "type": "digest"
+        },
+        {
+          "name": "deadline",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Ordered messages; tool IDs unique. No credentials, arbitrary headers or destination URL. Provider adapter maps only approved profile and rejects unsupported parameter/tool semantics."
+    },
+    "ResourceEnvelopeV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "root_id",
+          "type": "uuid"
+        },
+        {
+          "name": "maximum_cpu_ms",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_memory_bytes",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_wall_ms",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_model_tokens",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_spend_microunits",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": "currency"
+        },
+        {
+          "name": "maximum_nodes",
+          "type": "u32"
+        },
+        {
+          "name": "maximum_depth",
+          "type": "u16"
+        },
+        {
+          "name": "maximum_concurrency",
+          "type": "u32"
+        },
+        {
+          "name": "maximum_artifact_bytes",
+          "type": "u64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        },
+        {
+          "name": "eligibility_proof_digest",
+          "type": "digest"
+        },
+        {
+          "name": "maximum_model_calls",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_events",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_dependency_packages",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_dependency_bytes",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_dependency_requests",
+          "type": "u64"
+        }
+      ],
+      "semantic_rules": "Every descendant charges one protected root ledger; reservations serializable, no child budget creation. Native hidden-agent mode limited by measured outer envelope, no claimed internal accounting."
+    },
+    "EligibilityProofV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "proof_id",
+          "type": "uuid"
+        },
+        {
+          "name": "provider",
+          "type": "provider"
+        },
+        {
+          "name": "installation_id",
+          "type": "u64"
+        },
+        {
+          "name": "pr_number",
+          "type": "u64"
+        },
+        {
+          "name": "provider_actor_id",
+          "type": "u64"
+        },
+        {
+          "name": "linked_user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "membership_generation",
+          "type": "u64"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "observation_digest",
+          "type": "digest"
+        },
+        {
+          "name": "issuer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        },
+        {
+          "name": "eligible",
+          "type": "bool"
+        }
+      ],
+      "semantic_rules": "Stable PR opener and current role/membership read-back required; commit author strings and stale cached membership do not grant eligibility."
+    },
+    "CheckoutGrantV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "grant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "allowed_oids",
+          "type": {
+            "set": "GitOidV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "maximum_bytes",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_objects",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_calls",
+          "type": "u32"
+        },
+        {
+          "name": "deadline",
+          "type": "i64"
+        },
+        {
+          "name": "broker_generation",
+          "type": "u64"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ],
+      "semantic_rules": "Finite read-only grant, exact OIDs; no reusable credential enters parser or guest. Replacement only after safe termination/reconciliation."
+    },
+    "DependencyPackageV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "ecosystem",
+          "type": "identifier"
+        },
+        {
+          "name": "registry_origin",
+          "type": "origin"
+        },
+        {
+          "name": "package_name",
+          "type": "identifier"
+        },
+        {
+          "name": "version",
+          "type": "identifier"
+        },
+        {
+          "name": "content_digest",
+          "type": "digest"
+        },
+        {
+          "name": "lockfile_entry_digest",
+          "type": "digest"
+        },
+        {
+          "name": "provenance_digest",
+          "type": "digest"
+        },
+        {
+          "name": "git_commit",
+          "type": {
+            "option": "GitOidV1"
+          }
+        }
+      ],
+      "semantic_rules": "Exact hash lock, no floating branch/version; broker authenticates registry and verifies bytes. Git requires exact commit and fetched content hash; package metadata cannot add endpoints."
+    },
+    "DependencyAcquisitionGrantV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "grant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "lockfile_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "packages",
+          "type": {
+            "set": "DependencyPackageV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "endpoint_allowlist_digest",
+          "type": "digest"
+        },
+        {
+          "name": "credential_authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "cache_scope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "maximum_bytes",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_packages",
+          "type": "u32"
+        },
+        {
+          "name": "maximum_requests",
+          "type": "u32"
+        },
+        {
+          "name": "maximum_duration_ms",
+          "type": "u64"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ],
+      "semantic_rules": "One-use bounded acquisition; no lifecycle scripts inside credential broker. Installation scripts run credential-free in sandbox. Private cache tenant scoped; redirects/DNS/private-address changes revalidated against approved endpoints."
+    },
+    "ManualResolutionV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "action",
+          "type": "ManualResolutionActionV1"
+        },
+        {
+          "name": "authentication_ceremony_digest",
+          "type": "digest"
+        },
+        {
+          "name": "challenge_nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "resolution_authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "resolution_authority_generation",
+          "type": "u64"
+        },
+        {
+          "name": "committed_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Fresh UV challenge binds D(ManualResolutionActionV1,action) and challenge_nonce via ResolutionChallengeV1, never the final ManualResolutionV1 containing ceremony digest. One-use challenge consumed under case/current scope locks. No action digest cycle. Ceremony independently authorizes resolver scope; ordinary account recovery cannot grant it."
+    },
+    "FindingCandidateV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "finding_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "unit_id",
+          "type": "identifier"
+        },
+        {
+          "name": "claim_digest",
+          "type": "digest"
+        },
+        {
+          "name": "oracle",
+          "type": "OracleTrustClassV1"
+        },
+        {
+          "name": "evidence_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "producer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Untrusted claim until evidence authority acceptance. No provider/gate privilege."
+    },
+    "PatchCandidateV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "patch_revision_id",
+          "type": "uuid"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "base_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "base_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "patch_digest",
+          "type": "digest"
+        },
+        {
+          "name": "manifest_digest",
+          "type": "digest"
+        },
+        {
+          "name": "producer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Advisory; candidate tree and publication plan are independently verified."
+    },
+    "AttemptEventV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "event_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_generation",
+          "type": "u64"
+        },
+        {
+          "name": "attempt_binding_digest",
+          "type": "digest"
+        },
+        {
+          "name": "sequence",
+          "type": "u64"
+        },
+        {
+          "name": "occurred_at",
+          "type": "i64"
+        },
+        {
+          "name": "received_at",
+          "type": "i64"
+        },
+        {
+          "name": "payload_type",
+          "type": "identifier"
+        },
+        {
+          "name": "payload_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Payload is a registered contract digest only. At least once, sequence scoped to producer session; replay cannot revive authority; occurred_at does not determine leases."
+    },
+    "ProducerEventV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "event_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_generation",
+          "type": "u64"
+        },
+        {
+          "name": "sequence",
+          "type": "u64"
+        },
+        {
+          "name": "occurred_at",
+          "type": "i64"
+        },
+        {
+          "name": "received_at",
+          "type": "i64"
+        },
+        {
+          "name": "payload_type",
+          "type": "identifier"
+        },
+        {
+          "name": "payload_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Non-attempt authoritative events require specific authorized producer role; ordinary API cannot publish trust/epoch/policy changes merely by using this envelope."
+    },
+    "ProviderEventV2": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "event_id",
+          "type": "uuid"
+        },
+        {
+          "name": "provider",
+          "type": "provider"
+        },
+        {
+          "name": "installation_id",
+          "type": "u64"
+        },
+        {
+          "name": "delivery_id",
+          "type": "identifier"
+        },
+        {
+          "name": "delivery_digest",
+          "type": "digest"
+        },
+        {
+          "name": "received_at",
+          "type": "i64"
+        },
+        {
+          "name": "normalized_readback_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Webhook signature authenticates delivery; protected fresh readback establishes subject. Dedupe stable installation/delivery identity."
+    },
+    "AuditEnvelopeV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "audit_id",
+          "type": "uuid"
+        },
+        {
+          "name": "stream_id",
+          "type": "uuid"
+        },
+        {
+          "name": "sequence",
+          "type": "u64"
+        },
+        {
+          "name": "previous_digest",
+          "type": "digest"
+        },
+        {
+          "name": "producer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "producer_generation",
+          "type": "u64"
+        },
+        {
+          "name": "event_type",
+          "type": "identifier"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "outcome",
+          "type": "identifier"
+        },
+        {
+          "name": "recorded_at",
+          "type": "i64"
+        },
+        {
+          "name": "subject_type",
+          "type": "identifier"
+        }
+      ],
+      "semantic_rules": "Metadata only, no raw source, secrets, free-form reason text, prompt, patch or request/response bodies. Subject digest points to protected authorized record. Immutable hash chain plus external seals; seal delay does not confer authority."
+    },
+    "SignedEnvelopeV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "contract_type",
+          "type": "identifier"
+        },
+        {
+          "name": "payload_digest",
+          "type": "digest"
+        },
+        {
+          "name": "signer_id",
+          "type": "uuid"
+        },
+        {
+          "name": "key_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "signature",
+          "type": "bytes64"
+        }
+      ],
+      "semantic_rules": "Ed25519 detached signature; exact signature input defined in ENCODING.md. Signer key is authorized for payload type and authenticated scope/current epoch, not merely cryptographically valid."
+    },
+    "CreateBlobRequestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "content_custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "content_digest",
+          "type": "digest"
+        },
+        {
+          "name": "byte_length",
+          "type": "u64"
+        },
+        {
+          "name": "expected_blob_oid",
+          "type": "GitOidV1"
+        }
+      ],
+      "semantic_rules": "POST /repos/{resolved_owner}/{resolved_repo}/git/blobs; encoding=base64 and content exact pinned bytes; returned sha must equal expected OID."
+    },
+    "TreeEntryV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "path",
+          "type": "gitpath"
+        },
+        {
+          "name": "mode",
+          "type": "identifier"
+        },
+        {
+          "name": "oid",
+          "type": {
+            "option": "GitOidV1"
+          }
+        }
+      ],
+      "semantic_rules": "Mode closed to 100644/100755/120000. Missing oid means deletion; Gitlink unsupported unless new qualified schema revision. Request translator maps missing option to provider JSON null only, never canonical null."
+    },
+    "CreateTreeRequestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "base_tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "entries",
+          "type": {
+            "set": "TreeEntryV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "expected_tree",
+          "type": "GitOidV1"
+        }
+      ],
+      "semantic_rules": "POST /git/trees; fixed base_tree plus exact entries; reject duplicate paths and returned-tree mismatch."
+    },
+    "CommitIdentityV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "name",
+          "type": "bytes"
+        },
+        {
+          "name": "email",
+          "type": "bytes"
+        },
+        {
+          "name": "timestamp_seconds",
+          "type": "i64"
+        },
+        {
+          "name": "timezone_minutes",
+          "type": "i16"
+        }
+      ],
+      "semantic_rules": "Exact UTF-8 Git identity bytes, no CR/LF/NUL/angle-bracket injection; timezone -1439..1439. Commit headers rendered deterministically from these fields; no provider-supplied current time."
+    },
+    "CreateCommitRequestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "tree",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "parent",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "author",
+          "type": "CommitIdentityV1"
+        },
+        {
+          "name": "committer",
+          "type": "CommitIdentityV1"
+        },
+        {
+          "name": "message",
+          "type": "bytes"
+        },
+        {
+          "name": "expected_commit",
+          "type": "GitOidV1"
+        }
+      ],
+      "semantic_rules": "POST /git/commits with exactly one verified parent; exact UTF8 message, identities and dates; no signature field unless new approved schema. Verify returned object, tree and expected SHA."
+    },
+    "CreateRefRequestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "destination_ref",
+          "type": "ref"
+        },
+        {
+          "name": "commit",
+          "type": "GitOidV1"
+        }
+      ],
+      "semantic_rules": "POST /git/refs; namespace exact publication UUID; ref must be absent and create-only. Existing ref conflict is reconciliation, never PATCH."
+    },
+    "CreateFixPrRequestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "head_ref",
+          "type": "ref"
+        },
+        {
+          "name": "base_ref",
+          "type": "ref"
+        },
+        {
+          "name": "title",
+          "type": "bytes"
+        },
+        {
+          "name": "body_custody_digest",
+          "type": "digest"
+        },
+        {
+          "name": "body_digest",
+          "type": "digest"
+        },
+        {
+          "name": "draft",
+          "type": "bool"
+        }
+      ],
+      "semantic_rules": "POST /pulls only; exact refs and pinned title/body with stable publication marker. Body/title UTF8 and bounded; no auto-merge settings, existing PR edits, or arbitrary issue endpoints."
+    },
+    "CheckWriteRequestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "projection_id",
+          "type": "uuid"
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        },
+        {
+          "name": "provider_app_id",
+          "type": "u64"
+        },
+        {
+          "name": "check_run_id",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "name",
+          "type": "identifier"
+        },
+        {
+          "name": "head_commit",
+          "type": "GitOidV1"
+        },
+        {
+          "name": "external_id",
+          "type": "identifier"
+        },
+        {
+          "name": "conclusion",
+          "type": {
+            "enum": [
+              "IN_PROGRESS",
+              "SUCCESS",
+              "FAILURE",
+              "CANCELLED",
+              "ACTION_REQUIRED"
+            ]
+          }
+        },
+        {
+          "name": "gate_proof_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "output_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Dedicated Review Broker only. POST check-runs if ID absent, PATCH exact check-run if present. Name=Mastercoder Review; external_id binds projection UUID and generation. SUCCESS requires present current PASS GateProofV2. IN_PROGRESS or withdrawal FAILURE may omit proof and must bind current authorized CheckProjectionV2. Missing proof never permits SUCCESS; output is exact metadata-only CheckOutputV1."
+    },
+    "EffectPlanEntryV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "step_id",
+          "type": "identifier"
+        },
+        {
+          "name": "request_type",
+          "type": "identifier"
+        },
+        {
+          "name": "request_digest",
+          "type": "digest"
+        },
+        {
+          "name": "predecessor_step_ids",
+          "type": {
+            "set": "identifier",
+            "max_items": 65536
+          }
+        }
+      ],
+      "semantic_rules": "request_type restricted to five Create* Git publication request schemas. Acyclic ordered dependencies; no effect ID needed before runtime intents. Each request scope/publication ID equals parent plan."
+    },
+    "PublicationEffectsV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "publication_id",
+          "type": "uuid"
+        },
+        {
+          "name": "steps",
+          "type": {
+            "array": "EffectPlanEntryV1",
+            "max_items": 65536
+          }
+        }
+      ],
+      "semantic_rules": "Finite topological sequence of blob/tree/commit/ref/PR effects. Request schemas are closed; root plan effects_digest hashes this record. Requests cannot include plan digest, avoiding recursive hash dependency."
+    },
+    "AuthorityScopeV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "repository_ids",
+          "type": {
+            "set": "u64",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "permissions",
+          "type": {
+            "set": "identifier",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Closed permission vocabulary: APPROVE_PUBLICATION, REGISTER_APPROVER, REVOKE_APPROVER, RECOVER_APPROVER, RESOLVE_FINDING, RECONCILE_EFFECT, ACTIVATE_POLICY, ROTATE_TRUST. Unknown permission rejects; empty repository list grants none, never wildcard."
+    },
+    "ProviderResultV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "effect_id",
+          "type": "uuid"
+        },
+        {
+          "name": "request_digest",
+          "type": "digest"
+        },
+        {
+          "name": "provider_request_id",
+          "type": "identifier"
+        },
+        {
+          "name": "observed_at",
+          "type": "i64"
+        },
+        {
+          "name": "result_oid",
+          "type": {
+            "option": "GitOidV1"
+          }
+        },
+        {
+          "name": "result_numeric_id",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "result_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "readback_evidence_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Exact provider identity and request matching verified read-only; HTTP status alone never proves matching effect. Result readback evidence retained with journal."
+    },
+    "DbStartCertificateV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "effect_id",
+          "type": "uuid"
+        },
+        {
+          "name": "intent_digest",
+          "type": "digest"
+        },
+        {
+          "name": "state_revision",
+          "type": "u64"
+        },
+        {
+          "name": "dispatcher_session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "committed_at",
+          "type": "i64"
+        },
+        {
+          "name": "dispatch_deadline",
+          "type": "i64"
+        },
+        {
+          "name": "request_deadline",
+          "type": "i64"
+        },
+        {
+          "name": "authorization_snapshot_digest",
+          "type": "digest"
+        }
+      ],
+      "semantic_rules": "Protected effect authority signs only after committed STARTED transition with all current/expiry predicates. A DB timestamp is not proof by itself; journal validates authenticated certificate and current epoch fence."
+    },
+    "JournalEpochFenceV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "journal_id",
+          "type": "uuid"
+        },
+        {
+          "name": "sequence",
+          "type": "u64"
+        },
+        {
+          "name": "previous_digest",
+          "type": "digest"
+        },
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "previous_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "current_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "old_sender_fencing_evidence_digest",
+          "type": "digest"
+        },
+        {
+          "name": "recorded_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Same ordered witnessed chain as ExternalEffectJournalV1, distinguished by exact type. New epoch is random UUID, compared only by equality. Both witness acknowledgments required; previous epoch never becomes current again. No invented effect ID."
+    },
+    "ManualResolutionActionV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "resolution_id",
+          "type": "uuid"
+        },
+        {
+          "name": "case_id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "prior_state_digest",
+          "type": "digest"
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid"
+        },
+        {
+          "name": "actor_scope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "kind",
+          "type": {
+            "enum": [
+              "DISPUTED_FINDING",
+              "FALSE_POSITIVE",
+              "UNSUPPORTED_VERIFICATION",
+              "EXTERNAL_EFFECT_UNCERTAINTY",
+              "APPROVAL_RECOVERY",
+              "UNTRUSTED_ORACLE"
+            ]
+          }
+        },
+        {
+          "name": "decision",
+          "type": {
+            "enum": [
+              "REQUEST_FRESH_EVALUATION",
+              "PROVIDE_ORACLE",
+              "CONFIRM_EFFECT",
+              "PROVE_TERMINAL_NONEXECUTION",
+              "REMAIN_BLOCKED",
+              "REVOKE",
+              "ACCEPT_RISK",
+              "CLOSE_UNRESOLVED",
+              "CREATE_POLICY_EXCLUSION"
+            ]
+          }
+        },
+        {
+          "name": "reason_digest",
+          "type": "digest"
+        },
+        {
+          "name": "evidence_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        },
+        {
+          "name": "audit_record_id",
+          "type": "uuid"
+        }
+      ],
+      "semantic_rules": "Pre-ceremony immutable proposed decision. Trusted resolution origin displays this exact action and evidence. No PASS choice. Policy/oracle changes create fresh evaluation, and terminal nonexecution requires exact provider proof."
+    },
+    "ResolutionChallengeV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "challenge_id",
+          "type": "uuid"
+        },
+        {
+          "name": "action_digest",
+          "type": "digest"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_binding_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Five-minute challenge from trusted resolution origin; exact action, active independently scoped resolver credential and UV required. Ceremony challenge bytes D(ResolutionChallengeV1,challenge), verified analogous to approval; resolution authority signs final envelope only after action commit."
+    },
+    "ApprovalEnrollmentActionV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "authority_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "action_id",
+          "type": "uuid"
+        },
+        {
+          "name": "intent_digest",
+          "type": "digest"
+        },
+        {
+          "name": "registration_ceremony_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "new_credential_id",
+          "type": "bytes"
+        },
+        {
+          "name": "new_public_key_cose",
+          "type": "bytes"
+        },
+        {
+          "name": "registration_authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Final post-registration action binds current-epoch intent and create proof/new key, except REVOKE/SUSPEND require absent ceremony and empty new key/ID. Required owner/administrator consents or offline signatures bind this exact action under52. CHANGE_BINDING re-registers a fresh key, with owner consent plus required admin scope authorization. No OIDC recovery or stale-epoch replay authorizes."
+    },
+    "ApprovalEnrollmentChallengeV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "authority_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "challenge_id",
+          "type": "uuid"
+        },
+        {
+          "name": "intent_digest",
+          "type": "digest"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "rp_id",
+          "type": "hostname"
+        },
+        {
+          "name": "allowed_origin",
+          "type": "origin"
+        },
+        {
+          "name": "session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "WebAuthn registration challenge bytes D(ApprovalEnrollmentChallengeV1,challenge). Intent precedes credential generation. A successful create ceremony yields new key, after which final action and required authority signatures are collected; neither provisional intent nor ceremony alone grants approval scope."
+    },
+    "WebAuthnRegistrationCeremonyV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "credential_id",
+          "type": "bytes"
+        },
+        {
+          "name": "client_data_json",
+          "type": "bytes"
+        },
+        {
+          "name": "attestation_object",
+          "type": "bytes"
+        },
+        {
+          "name": "challenge_digest",
+          "type": "digest"
+        },
+        {
+          "name": "received_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Exact WebAuthn create ceremony bytes. Verify client type webauthn.create, exact origin/challenge/session/RP, UV/UP, attested credential ID/public key, valid ES256 P-256 point, exclusion list and registration policy. Attestation policy initially none allowed only where declared; attestation is not approval-role authorization. Digest is registration_ceremony_digest on binding."
+    },
+    "ApprovalRecoveryPolicyV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "policy_id",
+          "type": "uuid"
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        },
+        {
+          "name": "profile",
+          "type": {
+            "enum": [
+              "DUAL_ADMIN",
+              "INDIVIDUAL_OFFLINE"
+            ]
+          }
+        },
+        {
+          "name": "registration_authority_ids",
+          "type": {
+            "set": "uuid",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "minimum_authorities",
+          "type": "u16"
+        },
+        {
+          "name": "offline_recovery_key_id",
+          "type": {
+            "option": "uuid"
+          }
+        },
+        {
+          "name": "provider_ownership_evidence_digest",
+          "type": "digest"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "DUAL_ADMIN sets minimum_authorities>=2 for INITIAL_BOOTSTRAP, RECOVER and scope expansion; ordinary nonexpanding ADD/REPLACE use owner consent, INITIAL_REGISTRATION uses one currently registered administrator. INDIVIDUAL_OFFLINE substitutes pre-established offline signature and fresh provider-owner proof for bootstrap/recovery only; owner operations still require active owner UV. Exact operation quorum is52. Policy cannot lower minima; new independent bootstrap fences all old approval authority."
+    },
+    "ApprovalEnrollmentAuthorizationV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "action_digest",
+          "type": "digest"
+        },
+        {
+          "name": "recovery_policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "consent_receipt_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "authority_signature_envelope_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "enroller_id",
+          "type": "uuid"
+        },
+        {
+          "name": "committed_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Enroller verifies current epoch, action->intent->create challenge->registration chain where required; consent_receipt_digests resolve signed ApprovalLifecycleConsentV1, authority_signature_envelope_digests contain only independently registered offline bootstrap/recovery signatures over exact action. Enforce operation-specific52 quorum; no publication assertion substituted. Audit and new binding commit with nonce consumption and old-binding revocation atomically."
+    },
+    "ModelContentBlockV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "kind",
+          "type": {
+            "enum": [
+              "TEXT",
+              "TOOL_USE",
+              "TOOL_RESULT"
+            ]
+          }
+        },
+        {
+          "name": "tool_call_id",
+          "type": {
+            "option": "identifier"
+          }
+        },
+        {
+          "name": "tool_id",
+          "type": {
+            "option": "identifier"
+          }
+        },
+        {
+          "name": "content_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "arguments_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "is_error",
+          "type": {
+            "option": "bool"
+          }
+        },
+        {
+          "name": "truncated",
+          "type": "bool"
+        }
+      ],
+      "semantic_rules": "TEXT: content_digest present, call/tool/arguments/is_error absent. TOOL_USE: call+tool+arguments present, content/is_error absent, truncated=false; arguments are exact JSON validated against ModelToolV1 input schema. TOOL_RESULT: call+content+is_error present, tool/arguments absent; error/truncation explicit. Content/prompt bytes remain in bounded ephemeral custody; missing bytes reject the turn."
+    },
+    "ModelContentV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "blocks",
+          "type": {
+            "array": "ModelContentBlockV1",
+            "max_items": 65536
+          }
+        }
+      ],
+      "semantic_rules": "Ordered complete message content; ModelMessageV1 content_custody_digest locates exact canonical ModelContentV1 bytes and nested content. Broker validates role constraints, unique call IDs and each result against prior unconsumed tool use in same session."
+    },
+    "ApprovalEnrollmentIntentV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "authority_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "intent_id",
+          "type": "uuid"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid"
+        },
+        {
+          "name": "authorization_scope_digest",
+          "type": "digest"
+        },
+        {
+          "name": "operation",
+          "type": {
+            "enum": [
+              "INITIAL_BOOTSTRAP",
+              "ADD",
+              "REPLACE",
+              "REVOKE",
+              "RECOVER",
+              "CHANGE_BINDING",
+              "INITIAL_REGISTRATION",
+              "SUSPEND"
+            ]
+          }
+        },
+        {
+          "name": "previous_binding_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "recovery_policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Pre-registration intent has no not-yet-generated credential ID/key. Authority verifies existing privileges/ownership before issuing create challenge. Current epoch, scope and independent bootstrap policy mandatory."
+    },
+    "AnalysisPlanV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "plan_id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "capability_digest",
+          "type": "digest"
+        },
+        {
+          "name": "required_units",
+          "type": {
+            "set": "AnalysisUnitV1",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "planner_id",
+          "type": "uuid"
+        },
+        {
+          "name": "created_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Logical required work sealed before allocation, no attempt/manifest/workflow digest. Manifest after allocation copies exact units and subject/policy from plan; repository config cannot weaken required work."
+    },
+    "CapabilityProfileV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "profile_id",
+          "type": "identifier"
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        },
+        {
+          "name": "protocol_registry_digest",
+          "type": "digest"
+        },
+        {
+          "name": "mode",
+          "type": {
+            "enum": [
+              "FAST",
+              "AI",
+              "HYBRID",
+              "DEEP"
+            ]
+          }
+        },
+        {
+          "name": "sandbox_tier",
+          "type": {
+            "enum": [
+              "S0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          }
+        },
+        {
+          "name": "minimum_independence",
+          "type": {
+            "enum": [
+              "C0",
+              "C1",
+              "C2",
+              "C3",
+              "C4"
+            ]
+          }
+        },
+        {
+          "name": "qualified_claim_evidence_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "analyzer_bundle_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "model_cell_digests",
+          "type": {
+            "set": "digest",
+            "max_items": 65536
+          }
+        },
+        {
+          "name": "resource_policy_digest",
+          "type": "digest"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Approved profile signed by capability/trust authority. Production requires all applicable accepted unexpired prototype evidence. Empty model set permitted FAST only; no C3 without independently registered administrative domains."
+    },
+    "CheckOutputV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "title",
+          "type": "identifier"
+        },
+        {
+          "name": "summary_code",
+          "type": "identifier"
+        },
+        {
+          "name": "evaluation_identity_digest",
+          "type": {
+            "option": "digest"
+          }
+        },
+        {
+          "name": "projection_id",
+          "type": "uuid"
+        },
+        {
+          "name": "generation",
+          "type": "u64"
+        }
+      ],
+      "semantic_rules": "Metadata-only trusted template output. Provider summary generated from fixed code and exact identifiers; no arbitrary markdown, repository source or caller URL. Digest is CheckWriteRequestV1.output_digest. No finalized evaluation identity exists before manifest/verification completion; initial output may omit it. SUCCESS output must include the same identity as its present GateProofV2."
+    },
+    "ApprovalLifecycleChallengeV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "authority_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "challenge_id",
+          "type": "uuid"
+        },
+        {
+          "name": "action_digest",
+          "type": "digest"
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_binding_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "session_id",
+          "type": "uuid"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        },
+        {
+          "name": "purpose",
+          "type": {
+            "enum": [
+              "OWNER_CONSENT",
+              "ADMIN_CONSENT",
+              "SECURITY_SUSPEND"
+            ]
+          }
+        }
+      ],
+      "semantic_rules": "Post-registration action challenge for webauthn.get with fresh UV. D(ApprovalLifecycleChallengeV1,challenge) is authenticator challenge. AA fetches exact action and renders user/scope/new key/replacement target. Purpose and current actor role checked against operation matrix in52; not usable for publication or oracle approval."
+    },
+    "ApprovalLifecycleConsentV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "tenant_id",
+          "type": "uuid"
+        },
+        {
+          "name": "authority_epoch",
+          "type": "uuid"
+        },
+        {
+          "name": "action_digest",
+          "type": "digest"
+        },
+        {
+          "name": "challenge_digest",
+          "type": "digest"
+        },
+        {
+          "name": "ceremony_digest",
+          "type": "digest"
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_binding_id",
+          "type": "uuid"
+        },
+        {
+          "name": "credential_generation",
+          "type": "u64"
+        },
+        {
+          "name": "purpose",
+          "type": {
+            "enum": [
+              "OWNER_CONSENT",
+              "ADMIN_CONSENT",
+              "SECURITY_SUSPEND"
+            ]
+          }
+        },
+        {
+          "name": "approval_authority_id",
+          "type": "uuid"
+        },
+        {
+          "name": "issued_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "AA signs only after fresh validated WebAuthnCeremonyV1 using ApprovalLifecycleChallengeV1; digest references include exact action and independently enrolled current actor role. Count distinct actor_id, not keys, for dual quorum. Ordinary API cannot create receipt."
+    },
+    "AcquisitionRequestV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "grant_digest",
+          "type": "digest"
+        },
+        {
+          "name": "effect_kind",
+          "type": {
+            "enum": [
+              "CHECKOUT_FETCH",
+              "DEPENDENCY_FETCH"
+            ]
+          }
+        },
+        {
+          "name": "provider_origin",
+          "type": "origin"
+        },
+        {
+          "name": "method",
+          "type": {
+            "enum": [
+              "GET",
+              "POST"
+            ]
+          }
+        },
+        {
+          "name": "target",
+          "type": "bytes"
+        },
+        {
+          "name": "request_body",
+          "type": "bytes"
+        },
+        {
+          "name": "selection_digest",
+          "type": "digest"
+        },
+        {
+          "name": "maximum_response_bytes",
+          "type": "u64"
+        },
+        {
+          "name": "expected_content_digest",
+          "type": {
+            "option": "digest"
+          }
+        }
+      ],
+      "semantic_rules": "One exact credential-free acquisition HTTP request. target is exact ASCII origin-form path/query bytes, no host override, fragment, CR/LF/NUL, userinfo or absolute URL. Broker derives origin/method/target/body and selected OID/package solely from qualified grant/adapter. selection_digest is D(GitOidV1) for checkout or D(DependencyPackageV1) for package; request grant and scope must agree. Each metadata/object/package/network call has separate intent; redirects never reuse authority. Secrets injected by dialer are not persisted."
+    },
+    "ManualCaseStateV1": {
+      "wire_revision": 1,
+      "fields": [
+        {
+          "name": "scope",
+          "type": "ScopeV1"
+        },
+        {
+          "name": "case_id",
+          "type": "uuid"
+        },
+        {
+          "name": "subject_type",
+          "type": "identifier"
+        },
+        {
+          "name": "subject_digest",
+          "type": "digest"
+        },
+        {
+          "name": "revision",
+          "type": "u64"
+        },
+        {
+          "name": "state",
+          "type": {
+            "enum": [
+              "OPEN",
+              "EVIDENCE_PENDING",
+              "RESOLVED_CONFIRMED",
+              "RESOLVED_NOT_EXECUTED",
+              "RESOLVED_REEVALUATE",
+              "ACCEPTED_RISK",
+              "REJECTED",
+              "CLOSED_UNRESOLVED",
+              "EXPIRED"
+            ]
+          }
+        },
+        {
+          "name": "recorded_at",
+          "type": "i64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ],
+      "semantic_rules": "Resolution Authority immutable case-state snapshot; subject_type names one registered exact record. ManualResolutionActionV1.prior_state_digest references this snapshot, case_id/subject/scope must agree, and commit CAS checks exact current revision. No prior-case digest may be substituted for an effect-state payload."
+    }
+  }
+}

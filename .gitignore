@@ -1,0 +1,20 @@
+# secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+# build
+target/
+node_modules/
+.next/
+dist/
+coverage/
+# evidence raw payloads live in the private evidence store, not git
+**/claims/*/raw/
+# local
+.DS_Store
+worktrees/

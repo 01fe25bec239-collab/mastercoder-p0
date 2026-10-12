@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CheckProjectionV2.schema.json",
+  "title": "CheckProjectionV2",
+  "description": "Only dedicated check App; generation serialization and read-back cover delayed writes. SUCCESS needs current PASS proof. Internal invalidation cannot atomically retract provider result; emergency freeze must be externally confirmed or merging considered unsafe. evaluation_id is allocated early; evaluation_identity_digest is absent only before final manifest/verification inputs exist. SUCCESS requires present exact finalized identity matching gate proof. Pre-verdict writes have no fabricated zero identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CheckProjectionV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "projection_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "evaluation_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "provider": {
+      "enum": [
+        "GITHUB",
+        "OTHER"
+      ]
+    },
+    "pr_number": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "evaluation_identity_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "head_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "candidate_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "candidate_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "trust_set_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provider_app_id": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "check_run_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(0|[1-9][0-9]*)$",
+        "x-minimum": "0",
+        "x-maximum": "18446744073709551615"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "projected_conclusion": {
+      "enum": [
+        "UNCONFIRMED",
+        "IN_PROGRESS",
+        "SUCCESS",
+        "FAILURE",
+        "CANCELLED",
+        "ACTION_REQUIRED"
+      ],
+      "x-cbor-enum-codes": {
+        "UNCONFIRMED": 0,
+        "IN_PROGRESS": 1,
+        "SUCCESS": 2,
+        "FAILURE": 3,
+        "CANCELLED": 4,
+        "ACTION_REQUIRED": 5
+      }
+    },
+    "desired_conclusion": {
+      "enum": [
+        "IN_PROGRESS",
+        "SUCCESS",
+        "FAILURE",
+        "CANCELLED",
+        "ACTION_REQUIRED"
+      ],
+      "x-cbor-enum-codes": {
+        "IN_PROGRESS": 0,
+        "SUCCESS": 1,
+        "FAILURE": 2,
+        "CANCELLED": 3,
+        "ACTION_REQUIRED": 4
+      }
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "state": {
+      "enum": [
+        "PENDING",
+        "WRITING",
+        "CONFIRMED",
+        "WITHDRAWAL_PENDING",
+        "UNKNOWN",
+        "MANUAL_RECONCILIATION"
+      ],
+      "x-cbor-enum-codes": {
+        "PENDING": 0,
+        "WRITING": 1,
+        "CONFIRMED": 2,
+        "WITHDRAWAL_PENDING": 3,
+        "UNKNOWN": 4,
+        "MANUAL_RECONCILIATION": 5
+      }
+    },
+    "gate_proof_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "last_confirmed_at": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(0|-?[1-9][0-9]*)$",
+        "x-minimum": "-9223372036854775808",
+        "x-maximum": "9223372036854775807"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "effect_intent_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "freeze_state": {
+      "enum": [
+        "NONE",
+        "REQUESTED",
+        "CONFIRMED",
+        "FAILED"
+      ],
+      "x-cbor-enum-codes": {
+        "NONE": 0,
+        "REQUESTED": 1,
+        "CONFIRMED": 2,
+        "FAILED": 3
+      }
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "projection_id",
+    "evaluation_id",
+    "provider",
+    "pr_number",
+    "evaluation_identity_digest",
+    "head_commit",
+    "candidate_commit",
+    "candidate_tree",
+    "policy_digest",
+    "trust_set_digest",
+    "provider_app_id",
+    "check_run_id",
+    "projected_conclusion",
+    "desired_conclusion",
+    "generation",
+    "state",
+    "gate_proof_digest",
+    "last_confirmed_at",
+    "effect_intent_id",
+    "freeze_state"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "projection_id",
+    "evaluation_id",
+    "provider",
+    "pr_number",
+    "evaluation_identity_digest",
+    "head_commit",
+    "candidate_commit",
+    "candidate_tree",
+    "policy_digest",
+    "trust_set_digest",
+    "provider_app_id",
+    "check_run_id",
+    "projected_conclusion",
+    "desired_conclusion",
+    "generation",
+    "state",
+    "gate_proof_digest",
+    "last_confirmed_at",
+    "effect_intent_id",
+    "freeze_state"
+  ]
+}

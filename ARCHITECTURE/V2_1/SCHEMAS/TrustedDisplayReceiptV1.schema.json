@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TrustedDisplayReceiptV1.schema.json",
+  "title": "TrustedDisplayReceiptV1",
+  "description": "Produced by Approval Authority controlled origin using independently fetched plan/bytes; no ordinary-app diff or caller-provided digest accepted as display truth. Browser/OS compromise is residual threat.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "TrustedDisplayReceiptV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "custody_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "displayed_effects_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "display_origin": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^https://[a-z0-9.-]+(:[0-9]+)?$"
+    },
+    "renderer_bundle_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "displayed_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "receipt_id",
+    "plan_digest",
+    "custody_digest",
+    "displayed_effects_digest",
+    "candidate_tree",
+    "display_origin",
+    "renderer_bundle_digest",
+    "session_id",
+    "displayed_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "receipt_id",
+    "plan_digest",
+    "custody_digest",
+    "displayed_effects_digest",
+    "candidate_tree",
+    "display_origin",
+    "renderer_bundle_digest",
+    "session_id",
+    "displayed_at",
+    "expires_at"
+  ]
+}

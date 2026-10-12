@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ModelContentV1.schema.json",
+  "title": "ModelContentV1",
+  "description": "Ordered complete message content; ModelMessageV1 content_custody_digest locates exact canonical ModelContentV1 bytes and nested content. Broker validates role constraints, unique call IDs and each result against prior unconsumed tool use in same session.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ModelContentV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "$ref": "ModelContentBlockV1.schema.json"
+      },
+      "maxItems": 65536
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "blocks"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "blocks"
+  ]
+}

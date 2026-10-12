@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# PROTOTYPE guardrail (W06). Blocks pushing directly to the default branch.
+set -eu
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main) printf 'BLOCKED: never push to main; open a PR from your ws0N/ branch.\n' >&2; exit 1 ;;
+  esac
+done
+exit 0

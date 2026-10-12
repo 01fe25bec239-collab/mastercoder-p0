@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# PROTOTYPE guardrail (W06). Enable once per clone: git config core.hooksPath .githooks
+set -eu
+branch=$(git symbolic-ref --short -q HEAD || echo DETACHED)
+git diff --cached --name-only --diff-filter=ACMRD | bash "$(git rev-parse --show-toplevel)/scripts/check_write_set.sh" "$branch"
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --no-banner >/dev/null 2>&1 || { echo "BLOCKED: gitleaks found a possible secret (run: gitleaks protect --staged --redact)" >&2; exit 1; }
+fi

@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AcquisitionRequestV1.schema.json",
+  "title": "AcquisitionRequestV1",
+  "description": "One exact credential-free acquisition HTTP request. target is exact ASCII origin-form path/query bytes, no host override, fragment, CR/LF/NUL, userinfo or absolute URL. Broker derives origin/method/target/body and selected OID/package solely from qualified grant/adapter. selection_digest is D(GitOidV1) for checkout or D(DependencyPackageV1) for package; request grant and scope must agree. Each metadata/object/package/network call has separate intent; redirects never reuse authority. Secrets injected by dialer are not persisted.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "AcquisitionRequestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "grant_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "effect_kind": {
+      "enum": [
+        "CHECKOUT_FETCH",
+        "DEPENDENCY_FETCH"
+      ],
+      "x-cbor-enum-codes": {
+        "CHECKOUT_FETCH": 0,
+        "DEPENDENCY_FETCH": 1
+      }
+    },
+    "provider_origin": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^https://[a-z0-9.-]+(:[0-9]+)?$"
+    },
+    "method": {
+      "enum": [
+        "GET",
+        "POST"
+      ],
+      "x-cbor-enum-codes": {
+        "GET": 0,
+        "POST": 1
+      }
+    },
+    "target": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "request_body": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "selection_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "maximum_response_bytes": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "expected_content_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "grant_digest",
+    "effect_kind",
+    "provider_origin",
+    "method",
+    "target",
+    "request_body",
+    "selection_digest",
+    "maximum_response_bytes",
+    "expected_content_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "grant_digest",
+    "effect_kind",
+    "provider_origin",
+    "method",
+    "target",
+    "request_body",
+    "selection_digest",
+    "maximum_response_bytes",
+    "expected_content_digest"
+  ]
+}

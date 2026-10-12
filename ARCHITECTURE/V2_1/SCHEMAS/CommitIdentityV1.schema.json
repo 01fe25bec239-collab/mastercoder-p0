@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CommitIdentityV1.schema.json",
+  "title": "CommitIdentityV1",
+  "description": "Exact UTF-8 Git identity bytes, no CR/LF/NUL/angle-bracket injection; timezone -1439..1439. Commit headers rendered deterministically from these fields; no provider-supplied current time.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CommitIdentityV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "email": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "timestamp_seconds": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "timezone_minutes": {
+      "type": "integer",
+      "minimum": -32768,
+      "maximum": 32767
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "name",
+    "email",
+    "timestamp_seconds",
+    "timezone_minutes"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "name",
+    "email",
+    "timestamp_seconds",
+    "timezone_minutes"
+  ]
+}

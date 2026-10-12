@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AttemptBindingV2.schema.json",
+  "title": "AttemptBindingV2",
+  "description": "Lease acceptance additionally checks actual protected DB row under lock at database clock time. Signed snapshot never extends a lease. workflow has no attempt digest.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "AttemptBindingV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "attempt_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "job_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "evaluation_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "evaluation_sequence": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "workflow_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "subject_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "capability_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "runner_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "runner_session_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "lease_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "runner_credential_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "sandbox_tier": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "x-cbor-enum-codes": {
+        "S0": 0,
+        "S1": 1,
+        "S2": 2,
+        "S3": 3
+      }
+    },
+    "resource_envelope_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "protocol_major": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "protocol_minor": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "issued_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "lease_expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "attempt_id",
+    "job_id",
+    "evaluation_id",
+    "evaluation_sequence",
+    "workflow_digest",
+    "subject_digest",
+    "policy_digest",
+    "capability_digest",
+    "runner_id",
+    "runner_session_id",
+    "lease_generation",
+    "runner_credential_generation",
+    "sandbox_tier",
+    "resource_envelope_digest",
+    "protocol_major",
+    "protocol_minor",
+    "issued_at",
+    "lease_expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "attempt_id",
+    "job_id",
+    "evaluation_id",
+    "evaluation_sequence",
+    "workflow_digest",
+    "subject_digest",
+    "policy_digest",
+    "capability_digest",
+    "runner_id",
+    "runner_session_id",
+    "lease_generation",
+    "runner_credential_generation",
+    "sandbox_tier",
+    "resource_envelope_digest",
+    "protocol_major",
+    "protocol_minor",
+    "issued_at",
+    "lease_expires_at"
+  ]
+}

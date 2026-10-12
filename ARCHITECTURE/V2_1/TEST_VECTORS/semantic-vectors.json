@@ -1,0 +1,1076 @@
+[
+  {
+    "id": "lease-expiry-accept",
+    "contract": "AttemptBindingV2",
+    "trusted_test_state": {
+      "owner": "runner-A",
+      "current_owner": "runner-A",
+      "generation": 4,
+      "current_generation": 4,
+      "epoch": "epoch-A",
+      "current_epoch": "epoch-A",
+      "expiry_us": 101,
+      "db_now_after_lock_us": 100
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "owner",
+        "current_owner"
+      ],
+      [
+        "eq",
+        "generation",
+        "current_generation"
+      ],
+      [
+        "eq",
+        "epoch",
+        "current_epoch"
+      ],
+      [
+        "gt",
+        "expiry_us",
+        "db_now_after_lock_us"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "lease-expiry-reject",
+    "contract": "AttemptBindingV2",
+    "trusted_test_state": {
+      "owner": "runner-A",
+      "current_owner": "runner-A",
+      "generation": 4,
+      "current_generation": 4,
+      "epoch": "epoch-A",
+      "current_epoch": "epoch-A",
+      "expiry_us": 101,
+      "db_now_after_lock_us": 101
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "owner",
+        "current_owner"
+      ],
+      [
+        "eq",
+        "generation",
+        "current_generation"
+      ],
+      [
+        "eq",
+        "epoch",
+        "current_epoch"
+      ],
+      [
+        "gt",
+        "expiry_us",
+        "db_now_after_lock_us"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Expiry equality denies completion even if reaper has not run.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "attempt-epoch-accept",
+    "contract": "AttemptBindingV2",
+    "trusted_test_state": {
+      "epoch": "new-uuid",
+      "current_epoch": "new-uuid"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "epoch",
+        "current_epoch"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "attempt-epoch-reject",
+    "contract": "AttemptBindingV2",
+    "trusted_test_state": {
+      "epoch": "old-uuid",
+      "current_epoch": "new-uuid"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "epoch",
+        "current_epoch"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Restored old authority epoch cannot authorize a new result.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "display-plan-accept",
+    "contract": "HumanApprovalAssertionV2",
+    "trusted_test_state": {
+      "display_plan": "digest-A",
+      "challenge_plan": "digest-A",
+      "assertion_plan": "digest-A"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "display_plan",
+        "challenge_plan"
+      ],
+      [
+        "eq",
+        "assertion_plan",
+        "challenge_plan"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "display-plan-reject",
+    "contract": "HumanApprovalAssertionV2",
+    "trusted_test_state": {
+      "display_plan": "digest-A",
+      "challenge_plan": "digest-B",
+      "assertion_plan": "digest-A"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "display_plan",
+        "challenge_plan"
+      ],
+      [
+        "eq",
+        "assertion_plan",
+        "challenge_plan"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Displayed A cannot authorize B.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "approval-purpose-accept",
+    "contract": "HumanApprovalAssertionV2",
+    "trusted_test_state": {
+      "challenge_type": "ApprovalChallengeV2",
+      "expected_type": "ApprovalChallengeV2",
+      "nonce_unused": true
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "challenge_type",
+        "expected_type"
+      ],
+      [
+        "true",
+        "nonce_unused"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "approval-purpose-reject",
+    "contract": "HumanApprovalAssertionV2",
+    "trusted_test_state": {
+      "challenge_type": "ResolutionChallengeV1",
+      "expected_type": "ApprovalChallengeV2",
+      "nonce_unused": true
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "challenge_type",
+        "expected_type"
+      ],
+      [
+        "true",
+        "nonce_unused"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Valid authentication for another purpose cannot approve publication.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "approval-replay-accept",
+    "contract": "HumanApprovalAssertionV2",
+    "trusted_test_state": {
+      "nonce_unused": true,
+      "credential_active": true,
+      "generation": 3,
+      "current_generation": 3
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "nonce_unused"
+      ],
+      [
+        "true",
+        "credential_active"
+      ],
+      [
+        "eq",
+        "generation",
+        "current_generation"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "approval-replay-reject",
+    "contract": "HumanApprovalAssertionV2",
+    "trusted_test_state": {
+      "nonce_unused": false,
+      "credential_active": true,
+      "generation": 3,
+      "current_generation": 3
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "nonce_unused"
+      ],
+      [
+        "true",
+        "credential_active"
+      ],
+      [
+        "eq",
+        "generation",
+        "current_generation"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "One-use ceremony cannot mint a second parent operation.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "enrollment-new-key-accept",
+    "contract": "ApprovalEnrollmentAuthorizationV1",
+    "trusted_test_state": {
+      "registered_key": "key-A",
+      "action_key": "key-A",
+      "consent_action": "action-A",
+      "actual_action": "action-A",
+      "epoch": "current",
+      "current_epoch": "current"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "registered_key",
+        "action_key"
+      ],
+      [
+        "eq",
+        "consent_action",
+        "actual_action"
+      ],
+      [
+        "eq",
+        "epoch",
+        "current_epoch"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "enrollment-new-key-reject",
+    "contract": "ApprovalEnrollmentAuthorizationV1",
+    "trusted_test_state": {
+      "registered_key": "key-A",
+      "action_key": "key-B",
+      "consent_action": "action-A",
+      "actual_action": "action-A",
+      "epoch": "current",
+      "current_epoch": "current"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "registered_key",
+        "action_key"
+      ],
+      [
+        "eq",
+        "consent_action",
+        "actual_action"
+      ],
+      [
+        "eq",
+        "epoch",
+        "current_epoch"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Consent and create proof must bind exact newly registered key.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "enrollment-scope-accept",
+    "contract": "ApprovalEnrollmentAuthorizationV1",
+    "trusted_test_state": {
+      "new_scope": [
+        "repo1"
+      ],
+      "old_scope": [
+        "repo1"
+      ],
+      "owner_uv": true
+    },
+    "all_required_predicates": [
+      [
+        "subset",
+        "new_scope",
+        "old_scope"
+      ],
+      [
+        "true",
+        "owner_uv"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "enrollment-scope-reject",
+    "contract": "ApprovalEnrollmentAuthorizationV1",
+    "trusted_test_state": {
+      "new_scope": [
+        "repo1",
+        "repo2"
+      ],
+      "old_scope": [
+        "repo1"
+      ],
+      "owner_uv": true
+    },
+    "all_required_predicates": [
+      [
+        "subset",
+        "new_scope",
+        "old_scope"
+      ],
+      [
+        "true",
+        "owner_uv"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Routine ADD cannot expand scope without CHANGE_BINDING administrator quorum.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "enrollment-recovery-accept",
+    "contract": "ApprovalEnrollmentAuthorizationV1",
+    "trusted_test_state": {
+      "actor_ids": [
+        "adminA",
+        "adminB"
+      ],
+      "minimum_distinct": 2,
+      "current_roles": true,
+      "ordinary_login_only": false
+    },
+    "all_required_predicates": [
+      [
+        "distinct_at_least",
+        "actor_ids",
+        "minimum_distinct"
+      ],
+      [
+        "true",
+        "current_roles"
+      ],
+      [
+        "false",
+        "ordinary_login_only"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "enrollment-recovery-reject",
+    "contract": "ApprovalEnrollmentAuthorizationV1",
+    "trusted_test_state": {
+      "actor_ids": [
+        "adminA",
+        "adminA"
+      ],
+      "minimum_distinct": 2,
+      "current_roles": true,
+      "ordinary_login_only": false
+    },
+    "all_required_predicates": [
+      [
+        "distinct_at_least",
+        "actor_ids",
+        "minimum_distinct"
+      ],
+      [
+        "true",
+        "current_roles"
+      ],
+      [
+        "false",
+        "ordinary_login_only"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Two keys of same administrator do not satisfy independent recovery quorum.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "publication-tree-accept",
+    "contract": "VerifiedPublicationPlanV2",
+    "trusted_test_state": {
+      "verified_tree": "tree-A",
+      "approved_tree": "tree-A",
+      "provider_returned_tree": "tree-A",
+      "destination": "refs/heads/mastercoder/fix/publication-A",
+      "expected_destination": "refs/heads/mastercoder/fix/publication-A"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "verified_tree",
+        "approved_tree"
+      ],
+      [
+        "eq",
+        "provider_returned_tree",
+        "approved_tree"
+      ],
+      [
+        "eq",
+        "destination",
+        "expected_destination"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "publication-tree-reject",
+    "contract": "VerifiedPublicationPlanV2",
+    "trusted_test_state": {
+      "verified_tree": "tree-A",
+      "approved_tree": "tree-A",
+      "provider_returned_tree": "tree-B",
+      "destination": "refs/heads/mastercoder/fix/publication-A",
+      "expected_destination": "refs/heads/mastercoder/fix/publication-A"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "verified_tree",
+        "approved_tree"
+      ],
+      [
+        "eq",
+        "provider_returned_tree",
+        "approved_tree"
+      ],
+      [
+        "eq",
+        "destination",
+        "expected_destination"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Exact tree mismatch blocks commit/ref creation.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "publication-namespace-accept",
+    "contract": "GitPublicationCapabilityV2",
+    "trusted_test_state": {
+      "destination": "refs/heads/mastercoder/fix/publication-A",
+      "expected_destination": "refs/heads/mastercoder/fix/publication-A"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "destination",
+        "expected_destination"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "publication-namespace-reject",
+    "contract": "GitPublicationCapabilityV2",
+    "trusted_test_state": {
+      "destination": "refs/heads/main",
+      "expected_destination": "refs/heads/mastercoder/fix/publication-A"
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "destination",
+        "expected_destination"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Source/default ref mutation is outside positive capability.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "eligibility-accept",
+    "contract": "GitPublicationCapabilityV2",
+    "trusted_test_state": {
+      "eligible": true,
+      "linked_user": "userA",
+      "actor": "userA",
+      "membership_generation": 8,
+      "current_membership_generation": 8,
+      "proof_expiry": 201,
+      "db_now": 200
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "eligible"
+      ],
+      [
+        "eq",
+        "linked_user",
+        "actor"
+      ],
+      [
+        "eq",
+        "membership_generation",
+        "current_membership_generation"
+      ],
+      [
+        "gt",
+        "proof_expiry",
+        "db_now"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "eligibility-reject",
+    "contract": "GitPublicationCapabilityV2",
+    "trusted_test_state": {
+      "eligible": true,
+      "linked_user": "userA",
+      "actor": "userA",
+      "membership_generation": 7,
+      "current_membership_generation": 8,
+      "proof_expiry": 201,
+      "db_now": 200
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "eligible"
+      ],
+      [
+        "eq",
+        "linked_user",
+        "actor"
+      ],
+      [
+        "eq",
+        "membership_generation",
+        "current_membership_generation"
+      ],
+      [
+        "gt",
+        "proof_expiry",
+        "db_now"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Valid old signature cannot hide revoked membership.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "eligibility-actor-accept",
+    "contract": "ResourceEnvelopeV2",
+    "trusted_test_state": {
+      "eligible": true,
+      "linked_user": "userA",
+      "actor": "userA"
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "eligible"
+      ],
+      [
+        "eq",
+        "linked_user",
+        "actor"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "eligibility-actor-reject",
+    "contract": "ResourceEnvelopeV2",
+    "trusted_test_state": {
+      "eligible": true,
+      "linked_user": "userA",
+      "actor": "userB"
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "eligible"
+      ],
+      [
+        "eq",
+        "linked_user",
+        "actor"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "MY_PRS_ONLY cannot be replaced by broad repository approver scope.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "mandatory-analysis-accept",
+    "contract": "ExpectedAnalysisManifestV1",
+    "trusted_test_state": {
+      "required": [
+        "build",
+        "lint",
+        "test"
+      ],
+      "completed": [
+        "build",
+        "lint",
+        "test"
+      ],
+      "receipt_bundle": "pinned",
+      "expected_bundle": "pinned",
+      "zero_finding_unit_receipt": true
+    },
+    "all_required_predicates": [
+      [
+        "set_eq",
+        "required",
+        "completed"
+      ],
+      [
+        "eq",
+        "receipt_bundle",
+        "expected_bundle"
+      ],
+      [
+        "true",
+        "zero_finding_unit_receipt"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "mandatory-analysis-reject",
+    "contract": "ExpectedAnalysisManifestV1",
+    "trusted_test_state": {
+      "required": [
+        "build",
+        "lint",
+        "test"
+      ],
+      "completed": [
+        "build",
+        "test"
+      ],
+      "receipt_bundle": "pinned",
+      "expected_bundle": "pinned",
+      "zero_finding_unit_receipt": false
+    },
+    "all_required_predicates": [
+      [
+        "set_eq",
+        "required",
+        "completed"
+      ],
+      [
+        "eq",
+        "receipt_bundle",
+        "expected_bundle"
+      ],
+      [
+        "true",
+        "zero_finding_unit_receipt"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Missing analyzer receipt is not zero findings and cannot PASS.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "oracle-purpose-accept",
+    "contract": "OracleTrustClassV1",
+    "trusted_test_state": {
+      "approval_type": "ManualResolutionV1",
+      "expected_type": "ManualResolutionV1",
+      "decision": "PROVIDE_ORACLE",
+      "expected_decision": "PROVIDE_ORACLE",
+      "requirement_trusted": true
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "approval_type",
+        "expected_type"
+      ],
+      [
+        "eq",
+        "decision",
+        "expected_decision"
+      ],
+      [
+        "true",
+        "requirement_trusted"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "oracle-purpose-reject",
+    "contract": "OracleTrustClassV1",
+    "trusted_test_state": {
+      "approval_type": "HumanApprovalAssertionV2",
+      "expected_type": "ManualResolutionV1",
+      "decision": "PROVIDE_ORACLE",
+      "expected_decision": "PROVIDE_ORACLE",
+      "requirement_trusted": true
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "approval_type",
+        "expected_type"
+      ],
+      [
+        "eq",
+        "decision",
+        "expected_decision"
+      ],
+      [
+        "true",
+        "requirement_trusted"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "A publication signature cannot bless an agent expectation.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "oracle-validity-accept",
+    "contract": "OracleTrustClassV1",
+    "trusted_test_state": {
+      "base_pass_candidate_fail": true,
+      "independently_reproduced": true,
+      "requirement_trusted": true
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "base_pass_candidate_fail"
+      ],
+      [
+        "true",
+        "independently_reproduced"
+      ],
+      [
+        "true",
+        "requirement_trusted"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "oracle-validity-reject",
+    "contract": "OracleTrustClassV1",
+    "trusted_test_state": {
+      "base_pass_candidate_fail": true,
+      "independently_reproduced": true,
+      "requirement_trusted": false
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "base_pass_candidate_fail"
+      ],
+      [
+        "true",
+        "independently_reproduced"
+      ],
+      [
+        "true",
+        "requirement_trusted"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Causal reproduction does not establish correctness of the expectation.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "effect-witness-accept",
+    "contract": "EffectIntentV2",
+    "trusted_test_state": {
+      "durable_prepared": true,
+      "unique_send_armed": true,
+      "both_witnesses_confirmed": true,
+      "current_authorization": true
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "durable_prepared"
+      ],
+      [
+        "true",
+        "unique_send_armed"
+      ],
+      [
+        "true",
+        "both_witnesses_confirmed"
+      ],
+      [
+        "true",
+        "current_authorization"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "effect-witness-reject",
+    "contract": "EffectIntentV2",
+    "trusted_test_state": {
+      "durable_prepared": true,
+      "unique_send_armed": true,
+      "both_witnesses_confirmed": false,
+      "current_authorization": true
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "durable_prepared"
+      ],
+      [
+        "true",
+        "unique_send_armed"
+      ],
+      [
+        "true",
+        "both_witnesses_confirmed"
+      ],
+      [
+        "true",
+        "current_authorization"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Unconfirmed durability means DO NOT SEND.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "effect-child-revocation-accept",
+    "contract": "EffectIntentV2",
+    "trusted_test_state": {
+      "parent_started": true,
+      "this_child_current_authorization": true,
+      "child_not_previously_sent": true
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "this_child_current_authorization"
+      ],
+      [
+        "true",
+        "child_not_previously_sent"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "effect-child-revocation-reject",
+    "contract": "EffectIntentV2",
+    "trusted_test_state": {
+      "parent_started": true,
+      "this_child_current_authorization": false,
+      "child_not_previously_sent": true
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "this_child_current_authorization"
+      ],
+      [
+        "true",
+        "child_not_previously_sent"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Parent progress never authorizes later ref/PR after revocation.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "effect-no-absence-shortcut-accept",
+    "contract": "EffectStateV1",
+    "trusted_test_state": {
+      "provider_read_not_found": true,
+      "terminal_nonexecution_proved": true
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "terminal_nonexecution_proved"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "effect-no-absence-shortcut-reject",
+    "contract": "EffectStateV1",
+    "trusted_test_state": {
+      "provider_read_not_found": true,
+      "terminal_nonexecution_proved": false
+    },
+    "all_required_predicates": [
+      [
+        "true",
+        "terminal_nonexecution_proved"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Momentary not found is not proof of nonexecution; remain UNKNOWN.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "check-initial-accept",
+    "contract": "CheckWriteRequestV1",
+    "trusted_test_state": {
+      "conclusion": "IN_PROGRESS",
+      "allowed_without_proof": [
+        "IN_PROGRESS",
+        "FAILURE"
+      ],
+      "has_proof": false
+    },
+    "all_required_predicates": [
+      [
+        "member",
+        "conclusion",
+        "allowed_without_proof"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "check-initial-reject",
+    "contract": "CheckWriteRequestV1",
+    "trusted_test_state": {
+      "conclusion": "SUCCESS",
+      "allowed_without_proof": [
+        "IN_PROGRESS",
+        "FAILURE"
+      ],
+      "has_proof": false
+    },
+    "all_required_predicates": [
+      [
+        "member",
+        "conclusion",
+        "allowed_without_proof"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Absent pre-verdict proof is allowed only nonpermitting; never SUCCESS.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "manual-case-current-accept",
+    "contract": "ManualResolutionV1",
+    "trusted_test_state": {
+      "case_id": "C1",
+      "action_case_id": "C1",
+      "prior_revision": 3,
+      "current_revision": 3,
+      "nonce_unused": true
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "case_id",
+        "action_case_id"
+      ],
+      [
+        "eq",
+        "prior_revision",
+        "current_revision"
+      ],
+      [
+        "true",
+        "nonce_unused"
+      ]
+    ],
+    "expected": "ACCEPT_SPEC_PREDICATES",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  },
+  {
+    "id": "manual-case-current-reject",
+    "contract": "ManualResolutionV1",
+    "trusted_test_state": {
+      "case_id": "C1",
+      "action_case_id": "C1",
+      "prior_revision": 2,
+      "current_revision": 3,
+      "nonce_unused": true
+    },
+    "all_required_predicates": [
+      [
+        "eq",
+        "case_id",
+        "action_case_id"
+      ],
+      [
+        "eq",
+        "prior_revision",
+        "current_revision"
+      ],
+      [
+        "true",
+        "nonce_unused"
+      ]
+    ],
+    "expected": "REJECT_SPEC_PREDICATES",
+    "reason": "Fresh user verification cannot authorize a stale case revision.",
+    "scope": "SYNTHETIC_ARCHITECTURE_CONTRACT_NOT_RUNTIME_EVIDENCE"
+  }
+]

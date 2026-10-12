@@ -1,0 +1,18 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Placeholder for lane 04 CI, created by bootstrap_repo.sh.
+# `ws04-ci` is a REQUIRED check on main, so it must report on every PR (auto-merge waits for it).
+# The lane's scaffold task replaces this file with the real workflow and keeps the job name `ws04-ci`.
+name: ws04-ci
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  ws04-ci:
+    name: ws04-ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder (lane 04 scaffold not merged yet)
+        run: echo "ws04 workspace not scaffolded yet; nothing to test."

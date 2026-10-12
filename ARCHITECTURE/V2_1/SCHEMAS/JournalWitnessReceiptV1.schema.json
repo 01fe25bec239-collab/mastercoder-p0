@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "JournalWitnessReceiptV1.schema.json",
+  "title": "JournalWitnessReceiptV1",
+  "description": "Witness signs only after durable write of complete entry and retrievable referenced intent/request; configured recovery quorum policy must survive admitted failure model.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "JournalWitnessReceiptV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "journal_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "entry_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sequence": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "authority_epoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "witness_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "witness_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "durable_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "journal_id",
+    "entry_digest",
+    "sequence",
+    "authority_epoch",
+    "witness_id",
+    "witness_generation",
+    "durable_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "journal_id",
+    "entry_digest",
+    "sequence",
+    "authority_epoch",
+    "witness_id",
+    "witness_generation",
+    "durable_at"
+  ]
+}

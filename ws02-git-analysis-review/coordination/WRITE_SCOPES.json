@@ -1,0 +1,459 @@
+{
+ "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
+ "tasks": {
+  "W02-DEPENDENCY-UPDATE": {
+   "allow": [
+    "ws02-git-analysis-review/Cargo.toml",
+    "ws02-git-analysis-review/Cargo.lock",
+    "ws02-git-analysis-review/crates/*/Cargo.toml",
+    "ws02-git-analysis-review/doubles/*/v1/Cargo.toml",
+    "ws02-git-analysis-review/claims/*/harness/Cargo.toml",
+    "ws02-git-analysis-review/tools/*/Cargo.toml",
+    "ws02-git-analysis-review/docs/MODULES.md"
+   ],
+   "deny": [],
+   "standing": "DEPENDENCY_REQUEST resolution only (AGENTS.md \u00a73a dependency rule)"
+  },
+  "W02-LOCKFILE-SYNC": {
+   "allow": [
+    "ws02-git-analysis-review/Cargo.lock"
+   ],
+   "deny": [],
+   "standing": "lockfile regeneration only (AGENTS.md \u00a73a lockfile rule)"
+  },
+  "W02-RUN-P0-03A": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-03B": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03B/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-03C": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-03D": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03D/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-03E": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03E/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-04A": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-04A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-04B": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-04B/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-04C": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-04C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-07A": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-07A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-07C": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-07C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-07E": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-07E/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-RUN-P0-09E": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-09E/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W02-T000-WORKSPACE-SCAFFOLD": {
+   "allow": [
+    ".github/workflows/ws02-ci.yml",
+    "ws02-git-analysis-review/.env.example",
+    "ws02-git-analysis-review/.gitignore",
+    "ws02-git-analysis-review/Cargo.lock",
+    "ws02-git-analysis-review/Cargo.toml",
+    "ws02-git-analysis-review/README.md",
+    "ws02-git-analysis-review/claims/*/harness/Cargo.toml",
+    "ws02-git-analysis-review/claims/*/harness/src/main.rs",
+    "ws02-git-analysis-review/claims/README.md",
+    "ws02-git-analysis-review/compose.yaml",
+    "ws02-git-analysis-review/crates/*/Cargo.toml",
+    "ws02-git-analysis-review/crates/*/src/*.rs",
+    "ws02-git-analysis-review/crates/*/src/lib.rs",
+    "ws02-git-analysis-review/db/git/*/.keep",
+    "ws02-git-analysis-review/db/git/MODULES",
+    "ws02-git-analysis-review/docs/MODULES.md",
+    "ws02-git-analysis-review/docs/README.md",
+    "ws02-git-analysis-review/doubles/README.md",
+    "ws02-git-analysis-review/doubles/checkout-grant/v1/Cargo.toml",
+    "ws02-git-analysis-review/doubles/checkout-grant/v1/README.md",
+    "ws02-git-analysis-review/doubles/checkout-grant/v1/src/lib.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/Cargo.toml",
+    "ws02-git-analysis-review/doubles/fake-github/v1/README.md",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/lib.rs",
+    "ws02-git-analysis-review/doubles/reducer-table/v1/Cargo.toml",
+    "ws02-git-analysis-review/doubles/reducer-table/v1/README.md",
+    "ws02-git-analysis-review/doubles/reducer-table/v1/src/lib.rs"
+   ],
+   "deny": []
+  },
+  "W02-T001-STAGING-CONFIG-AS-CODE": {
+   "allow": [
+    "ws02-git-analysis-review/staging/**"
+   ],
+   "deny": []
+  },
+  "W02-T002-FAKE-GITHUB-CORE": {
+   "allow": [
+    "ws02-git-analysis-review/doubles/fake-github/v1/README.md",
+    "ws02-git-analysis-review/doubles/fake-github/v1/seed/**",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/counter.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/lib.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/main.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/routes.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/seed.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/state.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/tests/conformance.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/tests/unknown_routes.rs"
+   ],
+   "deny": []
+  },
+  "W02-T003-REDUCER-TABLE-DOUBLE": {
+   "allow": [
+    "ws02-git-analysis-review/doubles/reducer-table/v1/README.md",
+    "ws02-git-analysis-review/doubles/reducer-table/v1/src/**",
+    "ws02-git-analysis-review/doubles/reducer-table/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W02-T004-API-FREEZE": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-analysis-planner/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-analyzers/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-checkout-grant/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-eligibility/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-findings/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-gate-reducer/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-github/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-provider-normalizer/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/src/api.rs",
+    "ws02-git-analysis-review/crates/mc-verification/src/api.rs",
+    "ws02-git-analysis-review/docs/INTERFACES.md"
+   ],
+   "deny": []
+  },
+  "W02-T005-GIT-TEST-SUPPORT": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-git-test-support/src/**",
+    "ws02-git-analysis-review/crates/mc-git-test-support/tests/**"
+   ],
+   "deny": []
+  },
+  "W02-T006-CHECKOUT-GRANT-DOUBLE": {
+   "allow": [
+    "ws02-git-analysis-review/doubles/checkout-grant/v1/README.md",
+    "ws02-git-analysis-review/doubles/checkout-grant/v1/src/**",
+    "ws02-git-analysis-review/doubles/checkout-grant/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W02-T007-FAKE-GITHUB-FAULTS-RECORDING": {
+   "allow": [
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/faults.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/lib.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/main.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/record.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/replay.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/routes.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/scrub.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/src/webhooks.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/tests/faults.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/tests/scrub.rs",
+    "ws02-git-analysis-review/doubles/fake-github/v1/tests/webhooks.rs",
+    "ws02-git-analysis-review/fixtures/github-recordings/**"
+   ],
+   "deny": []
+  },
+  "W02-T008-GITHUB-CLIENT": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-github/src/auth.rs",
+    "ws02-git-analysis-review/crates/mc-github/src/client.rs",
+    "ws02-git-analysis-review/crates/mc-github/src/readback.rs",
+    "ws02-git-analysis-review/crates/mc-github/src/webhook.rs",
+    "ws02-git-analysis-review/crates/mc-github/tests/**"
+   ],
+   "deny": []
+  },
+  "W02-T009-GATE-REDUCER": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-gate-reducer/src/precedence.rs",
+    "ws02-git-analysis-review/crates/mc-gate-reducer/src/reduce.rs",
+    "ws02-git-analysis-review/crates/mc-gate-reducer/tests/**"
+   ],
+   "deny": []
+  },
+  "W02-T010-FINDINGS-NORMALIZE": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-findings/src/dedupe.rs",
+    "ws02-git-analysis-review/crates/mc-findings/src/fingerprint.rs",
+    "ws02-git-analysis-review/crates/mc-findings/src/normalize.rs",
+    "ws02-git-analysis-review/crates/mc-findings/src/novelty.rs",
+    "ws02-git-analysis-review/crates/mc-findings/tests/**",
+    "ws02-git-analysis-review/fixtures/findings/**"
+   ],
+   "deny": []
+  },
+  "W02-T011-ANALYZER-REGISTRY": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-analyzers/src/distribution.rs",
+    "ws02-git-analysis-review/crates/mc-analyzers/src/registry.rs",
+    "ws02-git-analysis-review/crates/mc-analyzers/tests/distribution.rs",
+    "ws02-git-analysis-review/crates/mc-analyzers/tests/registry.rs"
+   ],
+   "deny": []
+  },
+  "W02-T012-ANALYSIS-PLANNER-PLAN": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-analysis-planner/src/plan.rs",
+    "ws02-git-analysis-review/crates/mc-analysis-planner/src/policy.rs",
+    "ws02-git-analysis-review/crates/mc-analysis-planner/src/units.rs",
+    "ws02-git-analysis-review/crates/mc-analysis-planner/tests/plan.rs",
+    "ws02-git-analysis-review/crates/mc-analysis-planner/tests/policy.rs"
+   ],
+   "deny": []
+  },
+  "W02-T013-ORACLE-VALIDATOR": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-verification/src/oracle.rs",
+    "ws02-git-analysis-review/crates/mc-verification/tests/oracle.rs"
+   ],
+   "deny": []
+  },
+  "W02-T014-PROVIDER-NORMALIZER": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-provider-normalizer/src/candidate.rs",
+    "ws02-git-analysis-review/crates/mc-provider-normalizer/src/ingest.rs",
+    "ws02-git-analysis-review/crates/mc-provider-normalizer/src/subject.rs",
+    "ws02-git-analysis-review/crates/mc-provider-normalizer/tests/**",
+    "ws02-git-analysis-review/db/git/candidate/**"
+   ],
+   "deny": []
+  },
+  "W02-T015-ANALYZER-ADAPTERS": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-analyzers/src/adapters.rs",
+    "ws02-git-analysis-review/crates/mc-analyzers/src/adapters/**",
+    "ws02-git-analysis-review/crates/mc-analyzers/src/cache.rs",
+    "ws02-git-analysis-review/crates/mc-analyzers/tests/adapters.rs",
+    "ws02-git-analysis-review/crates/mc-analyzers/tests/cache.rs",
+    "ws02-git-analysis-review/fixtures/analysis/**"
+   ],
+   "deny": []
+  },
+  "W02-T016-MANIFEST-SEALING": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-analysis-planner/src/seal.rs",
+    "ws02-git-analysis-review/crates/mc-analysis-planner/tests/seal.rs",
+    "ws02-git-analysis-review/db/git/analysis/**"
+   ],
+   "deny": []
+  },
+  "W02-T017-VERIFICATION-AUTHORITY": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-verification/src/receipts.rs",
+    "ws02-git-analysis-review/crates/mc-verification/src/reproduction.rs",
+    "ws02-git-analysis-review/crates/mc-verification/src/set.rs",
+    "ws02-git-analysis-review/crates/mc-verification/tests/receipts.rs",
+    "ws02-git-analysis-review/crates/mc-verification/tests/reproduction.rs",
+    "ws02-git-analysis-review/crates/mc-verification/tests/set.rs",
+    "ws02-git-analysis-review/db/git/verification/**"
+   ],
+   "deny": []
+  },
+  "W02-T018-ELIGIBILITY-AUTHORITY": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-eligibility/src/identity.rs",
+    "ws02-git-analysis-review/crates/mc-eligibility/src/proof.rs",
+    "ws02-git-analysis-review/crates/mc-eligibility/src/transfer.rs",
+    "ws02-git-analysis-review/crates/mc-eligibility/src/verify.rs",
+    "ws02-git-analysis-review/crates/mc-eligibility/tests/**",
+    "ws02-git-analysis-review/db/git/eligibility/**"
+   ],
+   "deny": []
+  },
+  "W02-T019-P0-09E-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-09E/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-09E/harness/Cargo.toml"
+   ]
+  },
+  "W02-T020-P0-03B-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03B/**",
+    "ws02-git-analysis-review/docs/check-conclusion-mapping.md"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-03B/harness/Cargo.toml"
+   ]
+  },
+  "W02-T021-CHECK-PROJECTION-STORE": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-review-broker/src/association.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/src/slot.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/src/state.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/tests/association.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/tests/slot.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/tests/state.rs",
+    "ws02-git-analysis-review/db/git/projection/**"
+   ],
+   "deny": []
+  },
+  "W02-T022-P0-03A-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03A/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-03A/harness/Cargo.toml"
+   ]
+  },
+  "W02-T023-P0-04A-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-04A/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-04A/harness/Cargo.toml"
+   ]
+  },
+  "W02-T024-P0-04B-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-04B/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-04B/harness/Cargo.toml"
+   ]
+  },
+  "W02-T025-P0-04C-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-04C/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-04C/harness/Cargo.toml"
+   ]
+  },
+  "W02-T026-P0-07A-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-07A/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-07A/harness/Cargo.toml"
+   ]
+  },
+  "W02-T027-P0-07C-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-07C/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-07C/harness/Cargo.toml"
+   ]
+  },
+  "W02-T028-P0-07E-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-07E/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-07E/harness/Cargo.toml"
+   ]
+  },
+  "W02-T029-CHECKOUT-GRANT-ISSUER": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-checkout-grant/src/issue.rs",
+    "ws02-git-analysis-review/crates/mc-checkout-grant/src/terminate.rs",
+    "ws02-git-analysis-review/crates/mc-checkout-grant/tests/**",
+    "ws02-git-analysis-review/db/git/grant/**"
+   ],
+   "deny": []
+  },
+  "W02-T030-CHECK-PROJECTION-DISPATCH": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-review-broker/src/discovery.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/src/dispatch.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/tests/concurrency.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/tests/discovery.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/tests/dispatch.rs"
+   ],
+   "deny": []
+  },
+  "W02-T031-P0-03C-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03C/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-03C/harness/Cargo.toml"
+   ]
+  },
+  "W02-T032-P0-03E-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03E/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-03E/harness/Cargo.toml"
+   ]
+  },
+  "W02-T033-EMERGENCY-FREEZE": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-review-broker/src/dispatch.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/src/freeze.rs",
+    "ws02-git-analysis-review/crates/mc-review-broker/tests/freeze.rs",
+    "ws02-git-analysis-review/docs/enforcement-registration-runbook.md"
+   ],
+   "deny": []
+  },
+  "W02-T034-FAST-WITHOUT-MODELS-SMOKE": {
+   "allow": [
+    "ws02-git-analysis-review/crates/mc-fast-smoke/src/**",
+    "ws02-git-analysis-review/crates/mc-fast-smoke/tests/**",
+    "ws02-git-analysis-review/docs/fast-without-models.md"
+   ],
+   "deny": []
+  },
+  "W02-T035-P0-03D-HARNESS": {
+   "allow": [
+    "ws02-git-analysis-review/claims/P0-03D/**"
+   ],
+   "deny": [
+    "ws02-git-analysis-review/claims/P0-03D/harness/Cargo.toml"
+   ]
+  }
+ },
+ "workstream": "W02"
+}

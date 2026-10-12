@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateCommitRequestV1.schema.json",
+  "title": "CreateCommitRequestV1",
+  "description": "POST /git/commits with exactly one verified parent; exact UTF8 message, identities and dates; no signature field unless new approved schema. Verify returned object, tree and expected SHA.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CreateCommitRequestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "publication_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "parent": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "author": {
+      "$ref": "CommitIdentityV1.schema.json"
+    },
+    "committer": {
+      "$ref": "CommitIdentityV1.schema.json"
+    },
+    "message": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})*$",
+      "maxLength": 2097152
+    },
+    "expected_commit": {
+      "$ref": "GitOidV1.schema.json"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "tree",
+    "parent",
+    "author",
+    "committer",
+    "message",
+    "expected_commit"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "publication_id",
+    "tree",
+    "parent",
+    "author",
+    "committer",
+    "message",
+    "expected_commit"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ExpectedAnalysisManifestV1.schema.json",
+  "title": "ExpectedAnalysisManifestV1",
+  "description": "Nonempty required_units with unique unit_id; commit before any unit execution. PASS requires exactly one accepted successful completion for every unit, with matching digests and policy coverage; finding_count=0 still requires a receipt.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ExpectedAnalysisManifestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "attempt_binding_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "analysis_plan_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "required_units": {
+      "type": "array",
+      "items": {
+        "$ref": "AnalysisUnitV1.schema.json"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "issuer_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "issued_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "manifest_id",
+    "attempt_binding_digest",
+    "candidate_tree",
+    "policy_digest",
+    "analysis_plan_digest",
+    "required_units",
+    "issuer_id",
+    "issued_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "manifest_id",
+    "attempt_binding_digest",
+    "candidate_tree",
+    "policy_digest",
+    "analysis_plan_digest",
+    "required_units",
+    "issuer_id",
+    "issued_at"
+  ]
+}

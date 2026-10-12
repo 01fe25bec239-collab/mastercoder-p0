@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CapabilityProfileV1.schema.json",
+  "title": "CapabilityProfileV1",
+  "description": "Approved profile signed by capability/trust authority. Production requires all applicable accepted unexpired prototype evidence. Empty model set permitted FAST only; no C3 without independently registered administrative domains.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CapabilityProfileV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "protocol_registry_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mode": {
+      "enum": [
+        "FAST",
+        "AI",
+        "HYBRID",
+        "DEEP"
+      ],
+      "x-cbor-enum-codes": {
+        "FAST": 0,
+        "AI": 1,
+        "HYBRID": 2,
+        "DEEP": 3
+      }
+    },
+    "sandbox_tier": {
+      "enum": [
+        "S0",
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "x-cbor-enum-codes": {
+        "S0": 0,
+        "S1": 1,
+        "S2": 2,
+        "S3": 3
+      }
+    },
+    "minimum_independence": {
+      "enum": [
+        "C0",
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "x-cbor-enum-codes": {
+        "C0": 0,
+        "C1": 1,
+        "C2": 2,
+        "C3": 3,
+        "C4": 4
+      }
+    },
+    "qualified_claim_evidence_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "analyzer_bundle_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "model_cell_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "resource_policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "profile_id",
+    "generation",
+    "protocol_registry_digest",
+    "mode",
+    "sandbox_tier",
+    "minimum_independence",
+    "qualified_claim_evidence_digests",
+    "analyzer_bundle_digests",
+    "model_cell_digests",
+    "resource_policy_digest",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "profile_id",
+    "generation",
+    "protocol_registry_digest",
+    "mode",
+    "sandbox_tier",
+    "minimum_independence",
+    "qualified_claim_evidence_digests",
+    "analyzer_bundle_digests",
+    "model_cell_digests",
+    "resource_policy_digest",
+    "expires_at"
+  ]
+}

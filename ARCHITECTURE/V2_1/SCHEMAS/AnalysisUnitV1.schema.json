@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AnalysisUnitV1.schema.json",
+  "title": "AnalysisUnitV1",
+  "description": "Referenced descriptors are canonical ManifestDescriptorV1 records pinned before execution; complete file/symbol sets cannot be supplied solely by hostile repository configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "AnalysisUnitV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "unit_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "analyzer_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "analyzer_bundle_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "effective_configuration_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "scopes_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "required_files_symbols_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "allowed_exclusions_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sandbox_requirements_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mandatory_build_test_units": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "coverage_expectations_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "unit_id",
+    "analyzer_id",
+    "analyzer_bundle_digest",
+    "effective_configuration_digest",
+    "scopes_digest",
+    "required_files_symbols_digest",
+    "allowed_exclusions_digest",
+    "sandbox_requirements_digest",
+    "mandatory_build_test_units",
+    "coverage_expectations_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "unit_id",
+    "analyzer_id",
+    "analyzer_bundle_digest",
+    "effective_configuration_digest",
+    "scopes_digest",
+    "required_files_symbols_digest",
+    "allowed_exclusions_digest",
+    "sandbox_requirements_digest",
+    "mandatory_build_test_units",
+    "coverage_expectations_digest"
+  ]
+}

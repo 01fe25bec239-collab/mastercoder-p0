@@ -1,0 +1,13 @@
+# Normalize text to LF on every OS (including the Windows lab host); scripts must stay LF to run.
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+# The architecture snapshot is verified byte-for-byte against its SHA-256 manifest: never convert it.
+ARCHITECTURE/** -text
+# Binary artifacts
+*.zip binary
+*.png binary
+*.jpg binary
+*.pdf binary
+*.bin binary
+*.pcap binary

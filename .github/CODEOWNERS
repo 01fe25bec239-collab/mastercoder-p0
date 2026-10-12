@@ -1,0 +1,4 @@
+# mastercoder-p0 CODEOWNERS — one operator (master) owns every path (COMMON/WRITE_OWNERSHIP_MATRIX.md lists the lane for each path).
+# Code-owner review is NOT required by branch protection (an author cannot approve their own PR); this file documents ownership
+# and keeps GitHub's review routing correct if a second reviewer is ever added. Placeholders are filled by bootstrap_repo.sh.
+*                                         @01fe25bec239-collab

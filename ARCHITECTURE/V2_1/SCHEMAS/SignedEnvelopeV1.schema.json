@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SignedEnvelopeV1.schema.json",
+  "title": "SignedEnvelopeV1",
+  "description": "Ed25519 detached signature; exact signature input defined in ENCODING.md. Signer key is authorized for payload type and authenticated scope/current epoch, not merely cryptographically valid.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "SignedEnvelopeV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "contract_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "payload_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signer_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "key_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "credential_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "contract_type",
+    "payload_digest",
+    "signer_id",
+    "key_id",
+    "credential_generation",
+    "signature"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "contract_type",
+    "payload_digest",
+    "signer_id",
+    "key_id",
+    "credential_generation",
+    "signature"
+  ]
+}

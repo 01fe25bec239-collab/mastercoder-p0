@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ManifestDescriptorV1.schema.json",
+  "title": "ManifestDescriptorV1",
+  "description": "Entries use policy-owned keys; unknown key rejects for the pinned analyzer configuration schema digest in PolicyVersionV1. These records are retained with the manifest.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ManifestDescriptorV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "kind": {
+      "enum": [
+        "SCOPES",
+        "FILES_SYMBOLS",
+        "EXCLUSIONS",
+        "SANDBOX_REQUIREMENTS",
+        "COVERAGE_EXPECTATIONS",
+        "ANALYZER_CONFIGURATION"
+      ],
+      "x-cbor-enum-codes": {
+        "SCOPES": 0,
+        "FILES_SYMBOLS": 1,
+        "EXCLUSIONS": 2,
+        "SANDBOX_REQUIREMENTS": 3,
+        "COVERAGE_EXPECTATIONS": 4,
+        "ANALYZER_CONFIGURATION": 5
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "DescriptorEntryV1.schema.json"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "kind",
+    "entries"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "kind",
+    "entries"
+  ]
+}

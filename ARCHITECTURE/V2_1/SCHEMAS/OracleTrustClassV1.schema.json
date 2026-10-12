@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "OracleTrustClassV1.schema.json",
+  "title": "OracleTrustClassV1",
+  "description": "Origin asserted by runner is untrusted. Policy/evidence authority validates independently trusted source and applicability. MAINTAINER_APPROVED requires both options; UNTRUSTED_AGENT_EXPECTATION never blocks regardless of reproduction.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "OracleTrustClassV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "origin": {
+      "enum": [
+        "TRUSTED_REPOSITORY_TEST",
+        "TRUSTED_SPECIFICATION",
+        "SECURITY_INVARIANT",
+        "STANDARDS_REQUIREMENT",
+        "MAINTAINER_APPROVED",
+        "DETERMINISTIC_EXPLOIT",
+        "UNTRUSTED_AGENT_EXPECTATION"
+      ],
+      "x-cbor-enum-codes": {
+        "TRUSTED_REPOSITORY_TEST": 0,
+        "TRUSTED_SPECIFICATION": 1,
+        "SECURITY_INVARIANT": 2,
+        "STANDARDS_REQUIREMENT": 3,
+        "MAINTAINER_APPROVED": 4,
+        "DETERMINISTIC_EXPLOIT": 5,
+        "UNTRUSTED_AGENT_EXPECTATION": 6
+      }
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "applicability_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "approval_authority_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "approval_record_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "origin",
+    "source_digest",
+    "applicability_digest",
+    "approval_authority_id",
+    "approval_record_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "origin",
+    "source_digest",
+    "applicability_digest",
+    "approval_authority_id",
+    "approval_record_digest"
+  ]
+}

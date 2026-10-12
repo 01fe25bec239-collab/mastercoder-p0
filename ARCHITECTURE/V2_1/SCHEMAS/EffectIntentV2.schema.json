@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "EffectIntentV2.schema.json",
+  "title": "EffectIntentV2",
+  "description": "Immutable per provider call; state remains initial PENDING in this hashed intent. Runtime state is EffectStateV1. No transparent HTTP retry/redirect; new call requires own intent and provider-specific safe-retry proof. Provider = OTHER only for model/dependency allowed profile, never Git effects.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "EffectIntentV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "effect_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "logical_operation_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "parent_operation_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "predecessor_effect_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "call_attempt": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "effect_kind": {
+      "enum": [
+        "CREATE_BLOB",
+        "CREATE_TREE",
+        "CREATE_COMMIT",
+        "CREATE_REF",
+        "CREATE_FIX_PR",
+        "CREATE_CHECK",
+        "UPDATE_CHECK",
+        "MODEL_REQUEST",
+        "CHECKOUT_FETCH",
+        "DEPENDENCY_FETCH"
+      ]
+    },
+    "provider": {
+      "enum": [
+        "GITHUB",
+        "OTHER"
+      ]
+    },
+    "account_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "canonical_request_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "request_custody_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "authorization_proof_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "dispatch_deadline": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "request_deadline": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "idempotency_token": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "state": {
+      "enum": [
+        "PENDING"
+      ],
+      "x-cbor-enum-codes": {
+        "PENDING": 0
+      }
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "effect_id",
+    "logical_operation_id",
+    "parent_operation_id",
+    "predecessor_effect_ids",
+    "call_attempt",
+    "effect_kind",
+    "provider",
+    "account_id",
+    "canonical_request_digest",
+    "request_custody_digest",
+    "authorization_proof_digest",
+    "created_at",
+    "dispatch_deadline",
+    "request_deadline",
+    "idempotency_token",
+    "state"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "effect_id",
+    "logical_operation_id",
+    "parent_operation_id",
+    "predecessor_effect_ids",
+    "call_attempt",
+    "effect_kind",
+    "provider",
+    "account_id",
+    "canonical_request_digest",
+    "request_custody_digest",
+    "authorization_proof_digest",
+    "created_at",
+    "dispatch_deadline",
+    "request_deadline",
+    "idempotency_token",
+    "state"
+  ]
+}

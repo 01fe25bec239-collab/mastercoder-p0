@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "GateProofV2.schema.json",
+  "title": "GateProofV2",
+  "description": "Protected gate signer independently validates all trusted inputs against authority/write matrix, mandatory coverage, oracle qualification and current subject. PASS is disallowed for missing/untrusted work; signature is not sufficient without currentness checks.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "GateProofV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "identity": {
+      "$ref": "EvaluationIdentityV2.schema.json"
+    },
+    "conclusion": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "HUMAN_REVIEW_REQUIRED",
+        "PARTIALLY_AVAILABLE",
+        "STALE",
+        "REVOKED",
+        "INVALID"
+      ],
+      "x-cbor-enum-codes": {
+        "PASS": 0,
+        "FAIL": 1,
+        "BLOCKED": 2,
+        "HUMAN_REVIEW_REQUIRED": 3,
+        "PARTIALLY_AVAILABLE": 4,
+        "STALE": 5,
+        "REVOKED": 6,
+        "INVALID": 7
+      }
+    },
+    "completion_receipt_digests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+      },
+      "maxItems": 65536,
+      "uniqueItems": true,
+      "x-order": "lexicographic canonical encoded element bytes"
+    },
+    "gate_authority_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "gate_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "issued_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "identity",
+    "conclusion",
+    "completion_receipt_digests",
+    "reason_codes",
+    "gate_authority_id",
+    "gate_generation",
+    "issued_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "identity",
+    "conclusion",
+    "completion_receipt_digests",
+    "reason_codes",
+    "gate_authority_id",
+    "gate_generation",
+    "issued_at",
+    "expires_at"
+  ]
+}

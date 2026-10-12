@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CheckWriteRequestV1.schema.json",
+  "title": "CheckWriteRequestV1",
+  "description": "Dedicated Review Broker only. POST check-runs if ID absent, PATCH exact check-run if present. Name=Mastercoder Review; external_id binds projection UUID and generation. SUCCESS requires present current PASS GateProofV2. IN_PROGRESS or withdrawal FAILURE may omit proof and must bind current authorized CheckProjectionV2. Missing proof never permits SUCCESS; output is exact metadata-only CheckOutputV1.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "CheckWriteRequestV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "projection_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "provider_app_id": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "check_run_id": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(0|[1-9][0-9]*)$",
+        "x-minimum": "0",
+        "x-maximum": "18446744073709551615"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "head_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "external_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "conclusion": {
+      "enum": [
+        "IN_PROGRESS",
+        "SUCCESS",
+        "FAILURE",
+        "CANCELLED",
+        "ACTION_REQUIRED"
+      ],
+      "x-cbor-enum-codes": {
+        "IN_PROGRESS": 0,
+        "SUCCESS": 1,
+        "FAILURE": 2,
+        "CANCELLED": 3,
+        "ACTION_REQUIRED": 4
+      }
+    },
+    "gate_proof_digest": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    },
+    "output_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "projection_id",
+    "generation",
+    "provider_app_id",
+    "check_run_id",
+    "name",
+    "head_commit",
+    "external_id",
+    "conclusion",
+    "gate_proof_digest",
+    "output_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "projection_id",
+    "generation",
+    "provider_app_id",
+    "check_run_id",
+    "name",
+    "head_commit",
+    "external_id",
+    "conclusion",
+    "gate_proof_digest",
+    "output_digest"
+  ]
+}

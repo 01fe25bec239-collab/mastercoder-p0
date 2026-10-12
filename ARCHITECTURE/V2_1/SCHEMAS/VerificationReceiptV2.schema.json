@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "VerificationReceiptV2.schema.json",
+  "title": "VerificationReceiptV2",
+  "description": "C3 requires independently registered administrative domain from producer and other required runs, not a self-declared string. Expired attempt cannot submit authoritative results.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "VerificationReceiptV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "attempt_binding_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "evidence_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "verifier_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "verifier_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "administrative_domain_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "environment_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "subject_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "oracle": {
+      "$ref": "OracleTrustClassV1.schema.json"
+    },
+    "independence_class": {
+      "enum": [
+        "C0",
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "x-cbor-enum-codes": {
+        "C0": 0,
+        "C1": 1,
+        "C2": 2,
+        "C3": 3,
+        "C4": 4
+      }
+    },
+    "outcome": {
+      "enum": [
+        "CONFIRMED",
+        "REJECTED",
+        "UNSUPPORTED",
+        "INCONCLUSIVE"
+      ],
+      "x-cbor-enum-codes": {
+        "CONFIRMED": 0,
+        "REJECTED": 1,
+        "UNSUPPORTED": 2,
+        "INCONCLUSIVE": 3
+      }
+    },
+    "started_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "completed_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "lease_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "receipt_id",
+    "attempt_binding_digest",
+    "evidence_digest",
+    "verifier_id",
+    "verifier_generation",
+    "administrative_domain_id",
+    "environment_digest",
+    "subject_digest",
+    "policy_digest",
+    "oracle",
+    "independence_class",
+    "outcome",
+    "started_at",
+    "completed_at",
+    "lease_generation"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "receipt_id",
+    "attempt_binding_digest",
+    "evidence_digest",
+    "verifier_id",
+    "verifier_generation",
+    "administrative_domain_id",
+    "environment_digest",
+    "subject_digest",
+    "policy_digest",
+    "oracle",
+    "independence_class",
+    "outcome",
+    "started_at",
+    "completed_at",
+    "lease_generation"
+  ]
+}

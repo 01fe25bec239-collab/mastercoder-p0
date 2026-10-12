@@ -1,0 +1,450 @@
+{
+ "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
+ "tasks": {
+  "W03-DEPENDENCY-UPDATE": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/Cargo.lock",
+    "ws03-runner-sandbox-acquisition/crates/*/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/doubles/*/v1/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/claims/*/harness/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/tools/*/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/docs/MODULES.md"
+   ],
+   "deny": [],
+   "standing": "DEPENDENCY_REQUEST resolution only (AGENTS.md \u00a73a dependency rule)"
+  },
+  "W03-LOCKFILE-SYNC": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/Cargo.lock"
+   ],
+   "deny": [],
+   "standing": "lockfile regeneration only (AGENTS.md \u00a73a lockfile rule)"
+  },
+  "W03-RUN-P0-02A-LINUX": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/cells/linux/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02A-MACOS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/cells/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02A-WINDOWS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/cells/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02B-LINUX": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/cells/linux/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02B-MACOS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/cells/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02B-WINDOWS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/cells/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02C-LINUX": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/cells/linux/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02C-MACOS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/cells/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02C-WINDOWS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/cells/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02D-LINUX": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02D/cells/linux/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02D-MACOS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02D/cells/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-02D-WINDOWS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02D/cells/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-05A": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-05B": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05B/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-05C": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-05D": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05D/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W03-RUN-P0-05H": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05H/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W03-T000-WORKSPACE-SCAFFOLD": {
+   "allow": [
+    ".github/workflows/ws03-ci.yml",
+    "ws03-runner-sandbox-acquisition/.env.example",
+    "ws03-runner-sandbox-acquisition/.gitignore",
+    "ws03-runner-sandbox-acquisition/Cargo.lock",
+    "ws03-runner-sandbox-acquisition/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/README.md",
+    "ws03-runner-sandbox-acquisition/claims/*/harness/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/claims/*/harness/src/main.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/cells/linux.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/cells/macos.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/cells/mod.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/cells/windows.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/cells/linux.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/cells/macos.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/cells/mod.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/cells/windows.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/cells/linux.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/cells/macos.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/cells/mod.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/cells/windows.rs",
+    "ws03-runner-sandbox-acquisition/claims/README.md",
+    "ws03-runner-sandbox-acquisition/compose.yaml",
+    "ws03-runner-sandbox-acquisition/crates/*/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/crates/*/src/*.rs",
+    "ws03-runner-sandbox-acquisition/crates/*/src/lib.rs",
+    "ws03-runner-sandbox-acquisition/docs/MODULES.md",
+    "ws03-runner-sandbox-acquisition/docs/README.md",
+    "ws03-runner-sandbox-acquisition/doubles/README.md",
+    "ws03-runner-sandbox-acquisition/doubles/fake-runner/v1/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/doubles/fake-runner/v1/README.md",
+    "ws03-runner-sandbox-acquisition/doubles/fake-runner/v1/src/lib.rs",
+    "ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1/README.md",
+    "ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1/src/lib.rs"
+   ],
+   "deny": []
+  },
+  "W03-T003-API-FREEZE": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/src/api.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-pack-parser/src/api.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/src/api.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/src/limits.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/src/unit.rs",
+    "ws03-runner-sandbox-acquisition/docs/INTERFACES.md"
+   ],
+   "deny": []
+  },
+  "W03-T004-RUNNER-TEST-SUPPORT": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-runner-test-support/src/**",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner-test-support/tests/**"
+   ],
+   "deny": []
+  },
+  "W03-T006-FAKE-SANDBOX-DOUBLE": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1/README.md",
+    "ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1/src/**",
+    "ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W03-T007-RUNNER-ENROLLMENT-CAPABILITY": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/src/enroll.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/src/probe.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/tests/enroll.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/tests/probe.rs"
+   ],
+   "deny": []
+  },
+  "W03-T008-EGRESS-PROXY": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-egress-proxy/src/**",
+    "ws03-runner-sandbox-acquisition/crates/mc-egress-proxy/tests/**"
+   ],
+   "deny": []
+  },
+  "W03-T009-PACK-PARSER": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-pack-parser/src/main.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-pack-parser/src/materialize.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-pack-parser/src/parse.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-pack-parser/src/process.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-pack-parser/src/verify.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-pack-parser/tests/**"
+   ],
+   "deny": []
+  },
+  "W03-T010-CAPABILITY-MATCH": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/src/capability_match.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/tests/capability_match.rs"
+   ],
+   "deny": []
+  },
+  "W03-T013-LINUX-BACKEND-DECISION": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/docs/U-001-linux-decision.md",
+    "ws03-runner-sandbox-acquisition/spikes/linux/**"
+   ],
+   "deny": []
+  },
+  "W03-T014-RUNNER-LEASE-LOOP": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/src/cancel.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/src/client.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/src/lease_loop.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/src/main.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/src/negotiate.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/tests/cancel.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/tests/lifecycle.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-runner/tests/negotiate.rs",
+    "ws03-runner-sandbox-acquisition/docs/runner-install-prototype.md"
+   ],
+   "deny": []
+  },
+  "W03-T015-LINUX-S2-BACKEND": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-linux/src/**",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-linux/tests/**",
+    "ws03-runner-sandbox-acquisition/images/linux/**"
+   ],
+   "deny": []
+  },
+  "W03-T016-CHECKOUT-DIALER": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/src/counters.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/src/dialer.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/src/effects.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/tests/counters.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/tests/dialer.rs"
+   ],
+   "deny": []
+  },
+  "W03-T019-MACOS-BACKEND": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-macos/src/**",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-macos/tests/**",
+    "ws03-runner-sandbox-acquisition/docs/U-001-macos-decision.md",
+    "ws03-runner-sandbox-acquisition/images/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-T020-WINDOWS-BACKEND": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-windows/src/**",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-windows/tests/**",
+    "ws03-runner-sandbox-acquisition/docs/U-001-windows-decision.md",
+    "ws03-runner-sandbox-acquisition/images/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-T021-P0-02D-HARNESS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02D/**"
+   ],
+   "deny": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02D/harness/Cargo.toml"
+   ]
+  },
+  "W03-T022-FAKE-RUNNER-DOUBLE": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/doubles/fake-runner/v1/README.md",
+    "ws03-runner-sandbox-acquisition/doubles/fake-runner/v1/src/**",
+    "ws03-runner-sandbox-acquisition/doubles/fake-runner/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W03-T023-P0-05A-HARNESS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05A/**"
+   ],
+   "deny": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05A/harness/Cargo.toml"
+   ]
+  },
+  "W03-T024-P0-05B-HARNESS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05B/**"
+   ],
+   "deny": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05B/harness/Cargo.toml"
+   ]
+  },
+  "W03-T025-LFS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/src/lfs.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/tests/lfs.rs"
+   ],
+   "deny": []
+  },
+  "W03-T026-SUBMODULES": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/src/submodule.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/tests/submodule.rs"
+   ],
+   "deny": []
+  },
+  "W03-T029-P0-02A-HARNESS-LINUX": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/README.md",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/fixture-digests.json",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/cells/**",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/main.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/report.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/scenarios.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/linux/**",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/run-manifest.draft.json"
+   ],
+   "deny": []
+  },
+  "W03-T030-P0-02B-HARNESS-LINUX": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/README.md",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/fixture-digests.json",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/cells/**",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/main.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/report.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/scenarios.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/linux/**",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/run-manifest.draft.json"
+   ],
+   "deny": []
+  },
+  "W03-T031-P0-02C-HARNESS-LINUX": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/README.md",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/fixture-digests.json",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/cells/**",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/main.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/report.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/scenarios.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/linux/**",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/run-manifest.draft.json"
+   ],
+   "deny": []
+  },
+  "W03-T033-OFFLINE-INSTALL": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/src/offline_install.rs",
+    "ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/tests/offline_install.rs"
+   ],
+   "deny": []
+  },
+  "W03-T034-P0-05C-HARNESS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05C/**"
+   ],
+   "deny": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05C/harness/Cargo.toml"
+   ]
+  },
+  "W03-T035-P0-05D-HARNESS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05D/**"
+   ],
+   "deny": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05D/harness/Cargo.toml"
+   ]
+  },
+  "W03-T036-P0-02A-HARNESS-MACOS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/cells/macos.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-T037-P0-02B-HARNESS-MACOS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/cells/macos.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-T038-P0-02C-HARNESS-MACOS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/cells/macos.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/macos/**"
+   ],
+   "deny": []
+  },
+  "W03-T039-P0-02A-HARNESS-WINDOWS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/harness/src/cells/windows.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02A/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-T040-P0-02B-HARNESS-WINDOWS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/harness/src/cells/windows.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02B/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-T041-P0-02C-HARNESS-WINDOWS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/harness/src/cells/windows.rs",
+    "ws03-runner-sandbox-acquisition/claims/P0-02C/windows/**"
+   ],
+   "deny": []
+  },
+  "W03-T043-P0-05H-HARNESS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05H/**"
+   ],
+   "deny": [
+    "ws03-runner-sandbox-acquisition/claims/P0-05H/harness/Cargo.toml"
+   ]
+  },
+  "W03-T044-CROSS-WORKSPACE-DEPS": {
+   "allow": [
+    "ws03-runner-sandbox-acquisition/Cargo.lock",
+    "ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/Cargo.toml",
+    "ws03-runner-sandbox-acquisition/docs/MODULES.md"
+   ],
+   "deny": []
+  }
+ },
+ "workstream": "W03"
+}

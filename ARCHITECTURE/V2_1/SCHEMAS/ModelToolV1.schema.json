@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ModelToolV1.schema.json",
+  "title": "ModelToolV1",
+  "description": "Approved exact tool schema digest; a tool cannot mint authority beyond root envelope.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ModelToolV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "tool_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "input_schema_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "capability_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "tool_id",
+    "input_schema_digest",
+    "capability_digest"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "tool_id",
+    "input_schema_digest",
+    "capability_digest"
+  ]
+}

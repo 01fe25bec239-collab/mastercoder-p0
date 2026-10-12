@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "JournalEpochFenceV1.schema.json",
+  "title": "JournalEpochFenceV1",
+  "description": "Same ordered witnessed chain as ExternalEffectJournalV1, distinguished by exact type. New epoch is random UUID, compared only by equality. Both witness acknowledgments required; previous epoch never becomes current again. No invented effect ID.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "JournalEpochFenceV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "journal_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "sequence": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "previous_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "previous_epoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "current_epoch": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "old_sender_fencing_evidence_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "recorded_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "journal_id",
+    "sequence",
+    "previous_digest",
+    "tenant_id",
+    "previous_epoch",
+    "current_epoch",
+    "old_sender_fencing_evidence_digest",
+    "recorded_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "journal_id",
+    "sequence",
+    "previous_digest",
+    "tenant_id",
+    "previous_epoch",
+    "current_epoch",
+    "old_sender_fencing_evidence_digest",
+    "recorded_at"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PatchCandidateV2.schema.json",
+  "title": "PatchCandidateV2",
+  "description": "Advisory; candidate tree and publication plan are independently verified.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "PatchCandidateV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "patch_revision_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "attempt_binding_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "base_commit": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "base_tree": {
+      "$ref": "GitOidV1.schema.json"
+    },
+    "patch_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "manifest_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "producer_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "patch_revision_id",
+    "attempt_binding_digest",
+    "base_commit",
+    "base_tree",
+    "patch_digest",
+    "manifest_digest",
+    "producer_id",
+    "created_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "patch_revision_id",
+    "attempt_binding_digest",
+    "base_commit",
+    "base_tree",
+    "patch_digest",
+    "manifest_digest",
+    "producer_id",
+    "created_at"
+  ]
+}

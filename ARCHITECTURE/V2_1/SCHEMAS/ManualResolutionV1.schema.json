@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ManualResolutionV1.schema.json",
+  "title": "ManualResolutionV1",
+  "description": "Fresh UV challenge binds D(ManualResolutionActionV1,action) and challenge_nonce via ResolutionChallengeV1, never the final ManualResolutionV1 containing ceremony digest. One-use challenge consumed under case/current scope locks. No action digest cycle. Ceremony independently authorizes resolver scope; ordinary account recovery cannot grant it.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ManualResolutionV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "action": {
+      "$ref": "ManualResolutionActionV1.schema.json"
+    },
+    "authentication_ceremony_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "challenge_nonce": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "resolution_authority_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "resolution_authority_generation": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "committed_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "action",
+    "authentication_ceremony_digest",
+    "challenge_nonce",
+    "resolution_authority_id",
+    "resolution_authority_generation",
+    "committed_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "action",
+    "authentication_ceremony_digest",
+    "challenge_nonce",
+    "resolution_authority_id",
+    "resolution_authority_generation",
+    "committed_at"
+  ]
+}

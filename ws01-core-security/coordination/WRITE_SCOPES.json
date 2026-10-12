@@ -1,0 +1,613 @@
+{
+ "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
+ "tasks": {
+  "W01-DEPENDENCY-UPDATE": {
+   "allow": [
+    "ws01-core-security/Cargo.toml",
+    "ws01-core-security/Cargo.lock",
+    "ws01-core-security/crates/*/Cargo.toml",
+    "ws01-core-security/doubles/*/v1/Cargo.toml",
+    "ws01-core-security/claims/*/harness/Cargo.toml",
+    "ws01-core-security/tools/*/Cargo.toml",
+    "ws01-core-security/docs/MODULES.md"
+   ],
+   "deny": [],
+   "standing": "DEPENDENCY_REQUEST resolution only (AGENTS.md \u00a73a dependency rule)"
+  },
+  "W01-LOCKFILE-SYNC": {
+   "allow": [
+    "ws01-core-security/Cargo.lock"
+   ],
+   "deny": [],
+   "standing": "lockfile regeneration only (AGENTS.md \u00a73a lockfile rule)"
+  },
+  "W01-RUN-P0-06C": {
+   "allow": [
+    "ws01-core-security/claims/P0-06C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-06D": {
+   "allow": [
+    "ws01-core-security/claims/P0-06D/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-07B": {
+   "allow": [
+    "ws01-core-security/claims/P0-07B/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-08A": {
+   "allow": [
+    "ws01-core-security/claims/P0-08A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-09B": {
+   "allow": [
+    "ws01-core-security/claims/P0-09B/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-09C": {
+   "allow": [
+    "ws01-core-security/claims/P0-09C/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-09D": {
+   "allow": [
+    "ws01-core-security/claims/P0-09D/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-09F": {
+   "allow": [
+    "ws01-core-security/claims/P0-09F/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-09G": {
+   "allow": [
+    "ws01-core-security/claims/P0-09G/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-09H": {
+   "allow": [
+    "ws01-core-security/claims/P0-09H/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-10A": {
+   "allow": [
+    "ws01-core-security/claims/P0-10A/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-10I": {
+   "allow": [
+    "ws01-core-security/claims/P0-10I/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-RUN-P0-10J": {
+   "allow": [
+    "ws01-core-security/claims/P0-10J/cells/default/**"
+   ],
+   "deny": []
+  },
+  "W01-T000-WORKSPACE-SCAFFOLD": {
+   "allow": [
+    ".github/workflows/ws01-ci.yml",
+    "ws01-core-security/.env.example",
+    "ws01-core-security/.gitignore",
+    "ws01-core-security/Cargo.lock",
+    "ws01-core-security/Cargo.toml",
+    "ws01-core-security/README.md",
+    "ws01-core-security/claims/*/harness/Cargo.toml",
+    "ws01-core-security/claims/*/harness/src/main.rs",
+    "ws01-core-security/claims/README.md",
+    "ws01-core-security/compose.yaml",
+    "ws01-core-security/crates/*/Cargo.toml",
+    "ws01-core-security/crates/*/src/*.rs",
+    "ws01-core-security/crates/*/src/lib.rs",
+    "ws01-core-security/crates/mc-resolution/src/flows/mod.rs",
+    "ws01-core-security/db/authority/*/.keep",
+    "ws01-core-security/db/authority/MODULES",
+    "ws01-core-security/docs/MODULES.md",
+    "ws01-core-security/docs/README.md",
+    "ws01-core-security/doubles/README.md",
+    "ws01-core-security/doubles/custody/v1/Cargo.toml",
+    "ws01-core-security/doubles/custody/v1/README.md",
+    "ws01-core-security/doubles/custody/v1/src/lib.rs",
+    "ws01-core-security/doubles/effects-journal/v1/Cargo.toml",
+    "ws01-core-security/doubles/effects-journal/v1/README.md",
+    "ws01-core-security/doubles/effects-journal/v1/src/lib.rs",
+    "ws01-core-security/doubles/gate-authority/v1/Cargo.toml",
+    "ws01-core-security/doubles/gate-authority/v1/README.md",
+    "ws01-core-security/doubles/gate-authority/v1/src/lib.rs",
+    "ws01-core-security/doubles/lease/v1/Cargo.toml",
+    "ws01-core-security/doubles/lease/v1/README.md",
+    "ws01-core-security/doubles/lease/v1/src/lib.rs",
+    "ws01-core-security/doubles/runner-control/v1/Cargo.toml",
+    "ws01-core-security/doubles/runner-control/v1/README.md",
+    "ws01-core-security/doubles/runner-control/v1/src/lib.rs",
+    "ws01-core-security/doubles/wire-vector-table/v1/Cargo.toml",
+    "ws01-core-security/doubles/wire-vector-table/v1/README.md",
+    "ws01-core-security/doubles/wire-vector-table/v1/src/lib.rs",
+    "ws01-core-security/tools/codegen/Cargo.toml",
+    "ws01-core-security/tools/codegen/src/main.rs"
+   ],
+   "deny": []
+  },
+  "W01-T001-AA-API-OPENAPI": {
+   "allow": [
+    "ws01-core-security/doubles/aa-api/v1/README.md",
+    "ws01-core-security/doubles/aa-api/v1/openapi.yaml"
+   ],
+   "deny": []
+  },
+  "W01-T002-RESOLUTION-API-OPENAPI": {
+   "allow": [
+    "ws01-core-security/doubles/resolution-api/v1/README.md",
+    "ws01-core-security/doubles/resolution-api/v1/openapi.yaml"
+   ],
+   "deny": []
+  },
+  "W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC": {
+   "allow": [
+    "ws01-core-security/doubles/runner-control/v1/PROTOCOL.md",
+    "ws01-core-security/doubles/runner-control/v1/openapi.yaml"
+   ],
+   "deny": []
+  },
+  "W01-T004-CONTRACT-TYPES-CODEGEN": {
+   "allow": [
+    "ws01-core-security/crates/mc-contracts/src/**",
+    "ws01-core-security/crates/mc-contracts/tests/**",
+    "ws01-core-security/tools/codegen/src/**"
+   ],
+   "deny": []
+  },
+  "W01-T005-CBOR-CORE": {
+   "allow": [
+    "ws01-core-security/crates/mc-cbor/src/**",
+    "ws01-core-security/crates/mc-cbor/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T006-WIRE-VECTOR-DOUBLE": {
+   "allow": [
+    "ws01-core-security/doubles/wire-vector-table/v1/README.md",
+    "ws01-core-security/doubles/wire-vector-table/v1/src/**",
+    "ws01-core-security/doubles/wire-vector-table/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T007-DB-ROLES-SCHEMA": {
+   "allow": [
+    "ws01-core-security/crates/mc-authority-db/src/**",
+    "ws01-core-security/crates/mc-authority-db/tests/**",
+    "ws01-core-security/db/authority/base/**",
+    "ws01-core-security/db/authority/roles/**"
+   ],
+   "deny": []
+  },
+  "W01-T008-TEST-SUPPORT": {
+   "allow": [
+    "ws01-core-security/crates/mc-test-support/src/**",
+    "ws01-core-security/crates/mc-test-support/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T009-WEBAUTHN-VERIFY": {
+   "allow": [
+    "ws01-core-security/crates/mc-webauthn-verify/src/**",
+    "ws01-core-security/crates/mc-webauthn-verify/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T010-CUSTODY-MANIFEST-STORE": {
+   "allow": [
+    "ws01-core-security/crates/mc-custody/src/manifest*",
+    "ws01-core-security/crates/mc-custody/src/store*",
+    "ws01-core-security/crates/mc-custody/tests/manifest*",
+    "ws01-core-security/crates/mc-custody/tests/store*"
+   ],
+   "deny": []
+  },
+  "W01-T011-API-FREEZE": {
+   "allow": [
+    "ws01-core-security/crates/mc-approval-authority/src/api.rs",
+    "ws01-core-security/crates/mc-bootstrap/src/api.rs",
+    "ws01-core-security/crates/mc-credential-lifecycle/src/api.rs",
+    "ws01-core-security/crates/mc-custody/src/api.rs",
+    "ws01-core-security/crates/mc-effects/src/api.rs",
+    "ws01-core-security/crates/mc-gate-authority/src/api.rs",
+    "ws01-core-security/crates/mc-git-gateway/src/api.rs",
+    "ws01-core-security/crates/mc-ingestion/src/api.rs",
+    "ws01-core-security/crates/mc-journal/src/api.rs",
+    "ws01-core-security/crates/mc-lease/src/api.rs",
+    "ws01-core-security/crates/mc-negotiation/src/api.rs",
+    "ws01-core-security/crates/mc-plan-verifier/src/api.rs",
+    "ws01-core-security/crates/mc-publication-planner/src/api.rs",
+    "ws01-core-security/crates/mc-resolution/src/api.rs",
+    "ws01-core-security/docs/INTERFACES.md"
+   ],
+   "deny": []
+  },
+  "W01-T012-WIRE-CANONICAL": {
+   "allow": [
+    "ws01-core-security/crates/mc-wire/src/**",
+    "ws01-core-security/crates/mc-wire/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T013-P0-10A-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-10A/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-10A/harness/Cargo.toml"
+   ]
+  },
+  "W01-T014-LEASE-CORE": {
+   "allow": [
+    "ws01-core-security/crates/mc-lease/src/**",
+    "ws01-core-security/crates/mc-lease/tests/**",
+    "ws01-core-security/db/authority/lease/**"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-lease/src/api.rs"
+   ]
+  },
+  "W01-T015-LEASE-DOUBLE": {
+   "allow": [
+    "ws01-core-security/doubles/lease/v1/README.md",
+    "ws01-core-security/doubles/lease/v1/src/**",
+    "ws01-core-security/doubles/lease/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T016-EFFECTS-STORE": {
+   "allow": [
+    "ws01-core-security/crates/mc-effects/src/store*",
+    "ws01-core-security/crates/mc-effects/tests/store*",
+    "ws01-core-security/db/authority/effects/**"
+   ],
+   "deny": []
+  },
+  "W01-T017-JOURNAL-WITNESS": {
+   "allow": [
+    "ws01-core-security/crates/mc-journal/src/**",
+    "ws01-core-security/crates/mc-journal/tests/**",
+    "ws01-core-security/db/authority/journal/**"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-journal/src/api.rs"
+   ]
+  },
+  "W01-T018-EFFECTS-JOURNAL-DOUBLE": {
+   "allow": [
+    "ws01-core-security/doubles/effects-journal/v1/README.md",
+    "ws01-core-security/doubles/effects-journal/v1/src/**",
+    "ws01-core-security/doubles/effects-journal/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T019-EVIDENCE-INGESTION": {
+   "allow": [
+    "ws01-core-security/crates/mc-ingestion/src/**",
+    "ws01-core-security/crates/mc-ingestion/tests/**",
+    "ws01-core-security/db/authority/ingestion/**"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-ingestion/src/api.rs"
+   ]
+  },
+  "W01-T020-GATE-AUTHORITY-DOUBLE": {
+   "allow": [
+    "ws01-core-security/doubles/gate-authority/v1/README.md",
+    "ws01-core-security/doubles/gate-authority/v1/src/**",
+    "ws01-core-security/doubles/gate-authority/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T021-CUSTODY-PINS": {
+   "allow": [
+    "ws01-core-security/crates/mc-custody/src/pins*",
+    "ws01-core-security/crates/mc-custody/src/reader*",
+    "ws01-core-security/crates/mc-custody/src/retention*",
+    "ws01-core-security/crates/mc-custody/src/service*",
+    "ws01-core-security/crates/mc-custody/src/snapshot*",
+    "ws01-core-security/crates/mc-custody/tests/pins*",
+    "ws01-core-security/crates/mc-custody/tests/reader*",
+    "ws01-core-security/crates/mc-custody/tests/retention*",
+    "ws01-core-security/crates/mc-custody/tests/snapshot*",
+    "ws01-core-security/db/authority/custody/**"
+   ],
+   "deny": []
+  },
+  "W01-T022-CUSTODY-DOUBLE": {
+   "allow": [
+    "ws01-core-security/doubles/custody/v1/README.md",
+    "ws01-core-security/doubles/custody/v1/src/**",
+    "ws01-core-security/doubles/custody/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T023-VERSION-NEGOTIATION": {
+   "allow": [
+    "ws01-core-security/crates/mc-negotiation/src/**",
+    "ws01-core-security/crates/mc-negotiation/tests/**"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-negotiation/src/api.rs"
+   ]
+  },
+  "W01-T024-P0-06C-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-06C/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-06C/harness/Cargo.toml"
+   ]
+  },
+  "W01-T025-AA-PREPARE": {
+   "allow": [
+    "ws01-core-security/crates/mc-approval-authority/src/challenge*",
+    "ws01-core-security/crates/mc-approval-authority/src/display*",
+    "ws01-core-security/crates/mc-approval-authority/src/http_prepare*",
+    "ws01-core-security/crates/mc-approval-authority/src/prepare*",
+    "ws01-core-security/crates/mc-approval-authority/tests/prepare*",
+    "ws01-core-security/db/authority/approval/0001_*",
+    "ws01-core-security/db/authority/approval/0002_*"
+   ],
+   "deny": []
+  },
+  "W01-T026-RUNNER-CONTROL-DOUBLE": {
+   "allow": [
+    "ws01-core-security/doubles/runner-control/v1/README.md",
+    "ws01-core-security/doubles/runner-control/v1/src/**",
+    "ws01-core-security/doubles/runner-control/v1/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T027-RESOLUTION-CORE": {
+   "allow": [
+    "ws01-core-security/crates/mc-resolution/src/action*",
+    "ws01-core-security/crates/mc-resolution/src/case*",
+    "ws01-core-security/crates/mc-resolution/src/challenge*",
+    "ws01-core-security/crates/mc-resolution/src/commit*",
+    "ws01-core-security/crates/mc-resolution/src/http*",
+    "ws01-core-security/crates/mc-resolution/tests/core*",
+    "ws01-core-security/db/authority/resolution/**"
+   ],
+   "deny": []
+  },
+  "W01-T028-CREDENTIAL-ENROLLMENT": {
+   "allow": [
+    "ws01-core-security/crates/mc-credential-lifecycle/src/chain*",
+    "ws01-core-security/crates/mc-credential-lifecycle/src/operations*",
+    "ws01-core-security/crates/mc-credential-lifecycle/src/registry*",
+    "ws01-core-security/crates/mc-credential-lifecycle/tests/chain*",
+    "ws01-core-security/db/authority/credential/**"
+   ],
+   "deny": []
+  },
+  "W01-T029-RUNNER-CONTROL-SERVER": {
+   "allow": [
+    "ws01-core-security/crates/mc-runner-control/src/**",
+    "ws01-core-security/crates/mc-runner-control/tests/**"
+   ],
+   "deny": []
+  },
+  "W01-T030-EFFECT-DISPATCH": {
+   "allow": [
+    "ws01-core-security/crates/mc-effects/src/authority*",
+    "ws01-core-security/crates/mc-effects/src/dispatch*",
+    "ws01-core-security/crates/mc-effects/tests/crash_matrix*",
+    "ws01-core-security/crates/mc-effects/tests/dispatch*"
+   ],
+   "deny": []
+  },
+  "W01-T031-GATE-COMMIT": {
+   "allow": [
+    "ws01-core-security/crates/mc-gate-authority/src/**",
+    "ws01-core-security/crates/mc-gate-authority/tests/**",
+    "ws01-core-security/db/authority/gate/**"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-gate-authority/src/api.rs"
+   ]
+  },
+  "W01-T032-AA-FINISH": {
+   "allow": [
+    "ws01-core-security/crates/mc-approval-authority/src/anomaly*",
+    "ws01-core-security/crates/mc-approval-authority/src/consume*",
+    "ws01-core-security/crates/mc-approval-authority/src/finish*",
+    "ws01-core-security/crates/mc-approval-authority/src/http_finish*",
+    "ws01-core-security/crates/mc-approval-authority/tests/finish*",
+    "ws01-core-security/db/authority/approval/0003_*",
+    "ws01-core-security/db/authority/approval/0004_*"
+   ],
+   "deny": []
+  },
+  "W01-T033-PLAN-VERIFIER": {
+   "allow": [
+    "ws01-core-security/crates/mc-plan-verifier/src/**",
+    "ws01-core-security/crates/mc-plan-verifier/tests/**",
+    "ws01-core-security/db/authority/publication/0001_*"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-plan-verifier/src/api.rs"
+   ]
+  },
+  "W01-T034-P0-09F-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-09F/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-09F/harness/Cargo.toml"
+   ]
+  },
+  "W01-T035-RESOLUTION-FLOWS": {
+   "allow": [
+    "ws01-core-security/crates/mc-resolution/src/flows/**",
+    "ws01-core-security/crates/mc-resolution/tests/flows*"
+   ],
+   "deny": []
+  },
+  "W01-T036-CREDENTIAL-OPERATIONS": {
+   "allow": [
+    "ws01-core-security/crates/mc-credential-lifecycle/src/break_glass*",
+    "ws01-core-security/crates/mc-credential-lifecycle/src/operations*",
+    "ws01-core-security/crates/mc-credential-lifecycle/src/recovery*",
+    "ws01-core-security/crates/mc-credential-lifecycle/tests/operations*"
+   ],
+   "deny": []
+  },
+  "W01-T037-EPOCH-FENCE-DENY": {
+   "allow": [
+    "ws01-core-security/crates/mc-bootstrap/src/deny*",
+    "ws01-core-security/crates/mc-bootstrap/src/fence*",
+    "ws01-core-security/crates/mc-bootstrap/tests/deny*",
+    "ws01-core-security/crates/mc-bootstrap/tests/fence*",
+    "ws01-core-security/db/authority/bootstrap/0001_*"
+   ],
+   "deny": []
+  },
+  "W01-T038-P0-06D-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-06D/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-06D/harness/Cargo.toml"
+   ]
+  },
+  "W01-T039-P0-08A-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-08A/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-08A/harness/Cargo.toml"
+   ]
+  },
+  "W01-T040-P0-07B-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-07B/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-07B/harness/Cargo.toml"
+   ]
+  },
+  "W01-T041-P0-09C-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-09C/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-09C/harness/Cargo.toml"
+   ]
+  },
+  "W01-T042-PUBLICATION-PLANNER": {
+   "allow": [
+    "ws01-core-security/crates/mc-publication-planner/src/**",
+    "ws01-core-security/crates/mc-publication-planner/tests/**",
+    "ws01-core-security/db/authority/publication/0002_*"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-publication-planner/src/api.rs"
+   ]
+  },
+  "W01-T043-GIT-GATEWAY": {
+   "allow": [
+    "ws01-core-security/crates/mc-git-gateway/src/**",
+    "ws01-core-security/crates/mc-git-gateway/tests/**",
+    "ws01-core-security/db/authority/publication/0003_*"
+   ],
+   "deny": [
+    "ws01-core-security/crates/mc-git-gateway/src/api.rs",
+    "ws01-core-security/crates/mc-git-gateway/src/reconcile*",
+    "ws01-core-security/crates/mc-git-gateway/tests/reconcile*"
+   ]
+  },
+  "W01-T044-P0-10J-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-10J/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-10J/harness/Cargo.toml"
+   ]
+  },
+  "W01-T045-P0-09B-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-09B/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-09B/harness/Cargo.toml"
+   ]
+  },
+  "W01-T046-FRESH-BOOTSTRAP-FLOW": {
+   "allow": [
+    "ws01-core-security/crates/mc-bootstrap/src/bootstrap*",
+    "ws01-core-security/crates/mc-bootstrap/src/unfreeze*",
+    "ws01-core-security/crates/mc-bootstrap/tests/bootstrap*",
+    "ws01-core-security/crates/mc-bootstrap/tests/unfreeze*",
+    "ws01-core-security/db/authority/bootstrap/0002_*"
+   ],
+   "deny": []
+  },
+  "W01-T047-GATEWAY-RECONCILE": {
+   "allow": [
+    "ws01-core-security/crates/mc-git-gateway/src/reconcile*",
+    "ws01-core-security/crates/mc-git-gateway/tests/reconcile*"
+   ],
+   "deny": []
+  },
+  "W01-T048-P0-09D-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-09D/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-09D/harness/Cargo.toml"
+   ]
+  },
+  "W01-T049-P0-09G-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-09G/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-09G/harness/Cargo.toml"
+   ]
+  },
+  "W01-T050-P0-10I-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-10I/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-10I/harness/Cargo.toml"
+   ]
+  },
+  "W01-T051-P0-09H-HARNESS": {
+   "allow": [
+    "ws01-core-security/claims/P0-09H/**"
+   ],
+   "deny": [
+    "ws01-core-security/claims/P0-09H/harness/Cargo.toml"
+   ]
+  },
+  "W01-T052-CROSS-WORKSPACE-DEPS": {
+   "allow": [
+    "ws01-core-security/Cargo.lock",
+    "ws01-core-security/crates/mc-gate-authority/Cargo.toml",
+    "ws01-core-security/docs/MODULES.md",
+    "ws01-core-security/doubles/gate-authority/v1/Cargo.toml"
+   ],
+   "deny": []
+  }
+ },
+ "workstream": "W01"
+}

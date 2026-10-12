@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TreeEntryV1.schema.json",
+  "title": "TreeEntryV1",
+  "description": "Mode closed to 100644/100755/120000. Missing oid means deletion; Gitlink unsupported unless new qualified schema revision. Request translator maps missing option to provider JSON null only, never canonical null.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "TreeEntryV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})+$",
+      "maxLength": 8192
+    },
+    "mode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "oid": {
+      "type": "array",
+      "items": {
+        "$ref": "GitOidV1.schema.json"
+      },
+      "minItems": 0,
+      "maxItems": 1
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "path",
+    "mode",
+    "oid"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "path",
+    "mode",
+    "oid"
+  ]
+}

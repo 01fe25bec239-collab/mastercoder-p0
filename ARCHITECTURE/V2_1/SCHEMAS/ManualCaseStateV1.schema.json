@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ManualCaseStateV1.schema.json",
+  "title": "ManualCaseStateV1",
+  "description": "Resolution Authority immutable case-state snapshot; subject_type names one registered exact record. ManualResolutionActionV1.prior_state_digest references this snapshot, case_id/subject/scope must agree, and commit CAS checks exact current revision. No prior-case digest may be substituted for an effect-state payload.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ManualCaseStateV1"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "case_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "subject_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+ -]*$"
+    },
+    "subject_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "state": {
+      "enum": [
+        "OPEN",
+        "EVIDENCE_PENDING",
+        "RESOLVED_CONFIRMED",
+        "RESOLVED_NOT_EXECUTED",
+        "RESOLVED_REEVALUATE",
+        "ACCEPTED_RISK",
+        "REJECTED",
+        "CLOSED_UNRESOLVED",
+        "EXPIRED"
+      ],
+      "x-cbor-enum-codes": {
+        "OPEN": 0,
+        "EVIDENCE_PENDING": 1,
+        "RESOLVED_CONFIRMED": 2,
+        "RESOLVED_NOT_EXECUTED": 3,
+        "RESOLVED_REEVALUATE": 4,
+        "ACCEPTED_RISK": 5,
+        "REJECTED": 6,
+        "CLOSED_UNRESOLVED": 7,
+        "EXPIRED": 8
+      }
+    },
+    "recorded_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "case_id",
+    "subject_type",
+    "subject_digest",
+    "revision",
+    "state",
+    "recorded_at",
+    "expires_at"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "case_id",
+    "subject_type",
+    "subject_digest",
+    "revision",
+    "state",
+    "recorded_at",
+    "expires_at"
+  ]
+}

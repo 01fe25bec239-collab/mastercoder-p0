@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ResourceEnvelopeV2.schema.json",
+  "title": "ResourceEnvelopeV2",
+  "description": "Every descendant charges one protected root ledger; reservations serializable, no child budget creation. Native hidden-agent mode limited by measured outer envelope, no claimed internal accounting.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "ResourceEnvelopeV2"
+    },
+    "wire_revision": {
+      "const": 1
+    },
+    "scope": {
+      "$ref": "ScopeV1.schema.json"
+    },
+    "root_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "maximum_cpu_ms": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_memory_bytes": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_wall_ms": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_model_tokens": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_spend_microunits": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "maximum_nodes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "maximum_depth": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "maximum_concurrency": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "maximum_artifact_bytes": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$",
+      "x-minimum": "-9223372036854775808",
+      "x-maximum": "9223372036854775807"
+    },
+    "eligibility_proof_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "maximum_model_calls": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_events": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_dependency_packages": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_dependency_bytes": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    },
+    "maximum_dependency_requests": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "x-minimum": "0",
+      "x-maximum": "18446744073709551615"
+    }
+  },
+  "required": [
+    "type",
+    "wire_revision",
+    "scope",
+    "root_id",
+    "maximum_cpu_ms",
+    "maximum_memory_bytes",
+    "maximum_wall_ms",
+    "maximum_model_tokens",
+    "maximum_spend_microunits",
+    "currency",
+    "maximum_nodes",
+    "maximum_depth",
+    "maximum_concurrency",
+    "maximum_artifact_bytes",
+    "expires_at",
+    "eligibility_proof_digest",
+    "maximum_model_calls",
+    "maximum_events",
+    "maximum_dependency_packages",
+    "maximum_dependency_bytes",
+    "maximum_dependency_requests"
+  ],
+  "x-cbor-order": [
+    "type",
+    "wire_revision",
+    "scope",
+    "root_id",
+    "maximum_cpu_ms",
+    "maximum_memory_bytes",
+    "maximum_wall_ms",
+    "maximum_model_tokens",
+    "maximum_spend_microunits",
+    "currency",
+    "maximum_nodes",
+    "maximum_depth",
+    "maximum_concurrency",
+    "maximum_artifact_bytes",
+    "expires_at",
+    "eligibility_proof_digest",
+    "maximum_model_calls",
+    "maximum_events",
+    "maximum_dependency_packages",
+    "maximum_dependency_bytes",
+    "maximum_dependency_requests"
+  ]
+}
