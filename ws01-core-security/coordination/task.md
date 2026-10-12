@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W01-T000-WORKSPACE-SCAFFOLD | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r0 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | task EXACT WRITE SCOPE; see dispatch | 2026-10-12T18:13:11Z | fresh preliminary A3 review; actual PR CI pending |
+| W01-T000-WORKSPACE-SCAFFOLD | r1 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r1 | 30f4813838fa779ec55af45cb2892f417e4205b4 | five narrowed F-1/F-2 repair paths | 2026-10-12T23:10:55Z | fresh A2 repair / RETURN; no acceptance |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -29,7 +29,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W01-T000-WORKSPACE-SCAFFOLD | BUILD | IN_REVIEW | r0 | 30f4813838fa779ec55af45cb2892f417e4205b4 | NONE | NONE | RETURN verified; owner approved baseline grep clarification; preliminary A3 request prepared, final PR CI pending |
+| W01-T000-WORKSPACE-SCAFFOLD | BUILD | REPAIR | r1 | NONE | NONE | NONE | r0 30f4813838fa779ec55af45cb2892f417e4205b4 REPAIR_REQUIRED F-1/F-2; new r1 stacked on reviewed SHA, remote evidence pending |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |

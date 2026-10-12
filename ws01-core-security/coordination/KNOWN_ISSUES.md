@@ -9,3 +9,7 @@ Living log of problems already solved in this workstream. **Agents read this bef
 ## KI-001 — password grep matches its own baseline task (TEST)
 
 2026-10-13 IST. Original recursive POSTGRES_PASSWORD= grep returns3matches before and after scaffold: productplaceholder, coordinationplaceholder, taskquotation. Root cause is baseline coordination copied into product lane, not a new literal password. Master approved classification rule in NOTICES/W01-T000-PASSWORD-CHECK-CLARIFICATION.md: preserveallmatches, requiretwo unchanged coordination files, requireonly productplaceholder and inspectcompose. Originaltask unchanged; anynewmatch fails. No secretcheckwaived.
+
+## W01-T000-r0-F1-F2 — OPEN, preliminary review repairs
+
+2026-10-13 IST. F-1: floating actions/checkout@v6 lacks immutable full-SHA/version comment; narrowed workflow repair required. F-2: wire-vector-table-double package default library wire_vector_table_double conflicts with T006 mandated wire-vector-table/wire_vector_table identity; A1 reproduced selector exit101 through wrapper. New r1 starts at reviewed30f4813838fa779ec55af45cb2892f417e4205b4 and may edit only five dispatch-listed files. Original A3 findings remain verbatim in review/dispatch. No repair or final acceptance yet.
