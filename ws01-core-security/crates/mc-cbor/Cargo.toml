@@ -1,0 +1,13 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "mc-cbor"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+unicode-normalization.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
