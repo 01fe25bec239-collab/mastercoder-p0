@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — |
+| W01-T000-WORKSPACE-SCAFFOLD | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r0 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | task EXACT WRITE SCOPE; see dispatch | 2026-10-12T18:13:11Z | fresh A2 launch / RETURN |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -29,7 +29,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W01-T000-WORKSPACE-SCAFFOLD | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
+| W01-T000-WORKSPACE-SCAFFOLD | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | A2 launch prepared; see DISPATCHES/W01-T000-WORKSPACE-SCAFFOLD-r0-DISPATCH.md |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
