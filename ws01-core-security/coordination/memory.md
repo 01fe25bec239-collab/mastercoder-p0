@@ -69,3 +69,6 @@ P0-06C, P0-06D, P0-07B, P0-08A, P0-09B, P0-09C, P0-09D, P0-09F, P0-09G, P0-09H, 
 - Global scheduling: max3 active A2 tasks, max1 per lane, max1 active build until Docker about4GiB verified; compiler jobs2, cache5G; stop dispatch below20GiB free. Shared cap covers all six lanes together.
 - Scoped PRESTART signed by Omkar (master) via explicit chat approval. Unchecked access/manual/knowledge and future-resource items retain per-task/phase prerequisites. Lane A1 completes mandatory reads on launch.
 - G2 NOT_PASSED; G3 none; all claims NOT_RUN; production NOT_AUTHORIZED.
+
+## Scaffold fallback image pin — 2026-10-12
+- Read-only local image inspection: postgres:16.14-alpine3.24 RepoDigest postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777; image ID sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777. Permitted W01-T000 fallback until I-14 is published; no unrelated database/container/data reuse. /deny.toml belongs to W06-T007.
