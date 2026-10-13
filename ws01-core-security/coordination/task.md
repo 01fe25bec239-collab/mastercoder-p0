@@ -8,6 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
+| W01-DEPENDENCY-UPDATE | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-DEPENDENCY-UPDATE-r0 | c87dea0a5fa5439f127830a88d19bbb1d3bd499d | mc-contracts/Cargo.toml; Cargo.lock; docs/MODULES.md | NOT_STARTED (reserved 2026-10-13T13:01:06.559058+00:00) | Fresh A2 launch; runs alone |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -29,10 +30,11 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
 | W01-T000-WORKSPACE-SCAFFOLD | BUILD | INTEGRATED | r1 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | 9a7922bf29c0a6689903b96896dab8851d1eeeeb | Completed independent local A3 plus all real CI and owner A1 disposition; normal PR2 merge and actual main checks verified |
+| W01-DEPENDENCY-UPDATE | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | Prepared, not launched; minimal NFC direct dependency before T004; standing task runs alone |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
+| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | NOT_STARTED | — | NONE | NONE | NONE | Preflight dependency request; standing update must integrate before dispatch |
 | W01-T005-CBOR-CORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
@@ -1569,3 +1571,27 @@ States: NOT_STARTED · DISPATCHED · RETURNED · IN_REVIEW · REPAIR · ACCEPTED
 - Original A2 return NOT_READY:REMOTE_CI_PENDING_AND_BASELINE_NEGATIVE_CHECK_MISMATCH retained verbatim. Candidate 30f4813838fa779ec55af45cb2892f417e4205b4, tree cc6722e79d5219c3f804ba4d75be1f9e7b176442, sole parent 58b6ab38b0a514d94d8851679ad66ef9bf696c9e; signed and clean verified by A1.
 - Master explicitly approved the grep clarification; NOTICES/W01-T000-PASSWORD-CHECK-CLARIFICATION.md preserves the actual three unchanged recursive matches and requires one product placeholder/no literal compose secret. Task fields remain unchanged.
 - Fresh preliminary review worktree /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r0-review-a at exact candidate. Request REVIEWS/W01-T000-WORKSPACE-SCAFFOLD-r0-a-A3_REQUEST.md; not launched by A1. No final acceptance with remote CI missing; no dependency unlocked.
+
+## Standing dependency task — first use r0
+
+### W01-DEPENDENCY-UPDATE
+- **TASK_ID:** W01-DEPENDENCY-UPDATE
+- **OBJECTIVE:** In plain words: Give mc-contracts access to the already pinned Unicode normalization library, so the next contract-generation task can reject non-NFC text exactly as ENCODING requires. Precisely: add unicode-normalization.workspace = true to mc-contracts normal dependencies, synchronize its Cargo.lock package dependency entry, and document this dependency ownership; implement no contract code.
+- **WHY IT EXISTS:** A1 read-only preflight found that T004 must validate Unicode refs/NFC but cannot edit manifests. Resolve this concrete dependency request through the pre-registered standing route before T004.
+- **ARCHITECTURE REQUIREMENTS:** SCHEMAS/ENCODING.md text/NFC rule; SCHEMAS/REGISTRY.json exact primitives and ref grammar; frozen Rust stack and pinned lockfile rules.
+- **P0 CLAIMS:** None executed; enables future T004 BUILD only.
+- **INPUT CONTRACTS:** Exact REGISTRY.json hash b516004c690dd86860c263334d9f32f79a6c935ac82f2b801d3117223ed8d787; existing workspace unicode-normalization =0.1.25.
+- **OUTPUT CONTRACTS:** mc-contracts direct normal dependency unicode-normalization at existing exact workspace pin =0.1.25, coherent lockfile, MODULES dependency note. No new API.
+- **EXACT WRITE SCOPE:** ws01-core-security/crates/mc-contracts/Cargo.toml; ws01-core-security/Cargo.lock; ws01-core-security/docs/MODULES.md only. This narrows the existing standing scope; do not edit workspace Cargo.toml because its exact pin already exists.
+- **READ-ONLY DEPENDENCIES:** Root rust-toolchain.toml; ws01-core-security/Cargo.toml; all other manifests/source; ARCHITECTURE/V2_1/SCHEMAS/**; authoritative live coordination AGENTS/SKILLS/memory/task and this dispatch.
+- **PRECONDITIONS:** Signed phased G0/G1 BUILD authorization; W01-T000 INTEGRATED and its merge 9a7922bf29c0a6689903b96896dab8851d1eeeeb is ancestor of BASE_SHA; no other in-flight A2. Standing dependency task runs alone.
+- **IMPLEMENTATION STEPS:** 1. Verify base, clean status, scopes, exact pin and dependency request. 2. Add only unicode-normalization.workspace = true under mc-contracts [dependencies]. 3. Synchronize lockfile with the smallest Cargo resolution; no upgrades, downgrades or unrelated feature changes. 4. Add a concise MODULES note binding this dependency to T004 non-NFC rejection; preserve module ownership. 5. Verify locked dependency closure and all required commands below. 6. Inspect whole diff and active hooks; make signed scoped local commit(s), verify signature and clean status. 7. Write original RETURN with exact SHA/tree/parents/check exit codes/evidence hashes and MEMORY_UPDATES. Stop.
+- **SECURITY INVARIANTS:** Reject non-NFC rather than normalizing authenticated input; no ASCII-only substitute. No credentials/logged secrets; no bypass of hooks/checks, exact version pins and protected scopes.
+- **FAILURE CASES:** T004 stuck on an inaccessible transitive crate; Unicode behavior silently deferred; broad lockfile regeneration upgrades unrelated packages; any source-code or architecture edits.
+- **TESTS REQUIRED:** Through the single-build wrapper: cargo metadata --locked --format-version 1; cargo tree -p mc-contracts --locked; cargo fmt --all --check; cargo check --workspace --locked; cargo clippy --workspace --all-targets --locked -- -D warnings; cargo test --workspace --locked; root python3 ARCHITECTURE/V2_1/TEST_VECTORS/check_spec.py (p0_executed must remain false). Validate dependency metadata before/after: exact same workspace members, package versions/sources/checksums and every unrelated dependency; only mc-contracts gains unicode-normalization. Preserve command output as hashed local evidence. This is dependency closure validation, not T004 implementation or proof of its not-yet-written behavior.
+- **NEGATIVE TESTS:** Assert that any out-of-scope path, changed pre-existing package version/source/checksum, added unexpected package, removed dependency, unrelated dependency/feature drift, or unpinned unicode-normalization version fails the scope/closure verification. Use isolated scratch controls if needed; commit no permanent tests outside this manifest-only standing scope.
+- **ACCEPTANCE CRITERIA:** Exact direct dependency =0.1.25 resolves under --locked; no unrelated drift; all applicable required commands succeed; only three authorized product paths changed; signed local candidate and clean task worktree; fresh independent A3 plus actual authorized remote CI/integration required before T004 starts.
+- **EVIDENCE TO RETURN:** Before/after metadata comparison, dependency tree, exact lockfile delta, all required exit codes and hashed evidence, scoped diff, signature output, SHA/tree/parents. Use COMMON/A2_RETURN_TEMPLATE.md; preliminary local readiness is not final acceptance.
+- **OUT-OF-SCOPE:** All Rust source and new production behavior; generating contract types; CBOR; semantics; other manifests or lanes; coordination edits except this RETURN; paid API/cloud/security keys; outward actions.
+- **BLOCKERS:** Preserve and return NOT_READY if dependency synchronization needs scope expansion/unrelated changes, required tool/check fails, source ambiguity, foreign dirt, cap violation, or secret/provider/claim action. Remote push/PR/CI/merge authorization is not granted for this new task.
+- **A3 REVIEW FOCUS:** Exact minimal direct dependency and lock closure; no source/API changes or drift; pinned normalization library accessible to mc-contracts; scope/signature/base/clean status; real local validation with no invented NFC/product/remote results.
