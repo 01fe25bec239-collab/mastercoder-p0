@@ -62,7 +62,7 @@ Every named public peer/type has a direct import. Standard-library types need no
 | mc-authority-db | mc-contracts, sqlx, thiserror, tokio, uuid | T007 migrations, PgPool and verified context |
 | mc-bootstrap | async-trait, mc-authority-db, mc-contracts, mc-credential-lifecycle, mc-effects, mc-journal, mc-wire, sqlx, thiserror, tokio, tracing, uuid | T011 entitlement/epoch API; T037 JournalSequencer; T046 CredentialRegistry/EffectAuthority |
 | mc-cbor | thiserror, unicode-normalization | T005 typed errors and NFC checks |
-| mc-contracts | hex, serde, serde_json, sha2, thiserror, uuid | T004 Serde primitives/projections, UUIDs and registry SHA-256 |
+| mc-contracts | hex, serde, serde_json, sha2, thiserror, unicode-normalization, uuid | T004 Serde primitives/projections, UUIDs and registry SHA-256; W01-DEPENDENCY-UPDATE supplies the existing =0.1.25 Unicode pin for T004 to reject non-NFC text rather than normalize it (ENCODING.md, Exact bytes) |
 | mc-credential-lifecycle | async-trait, mc-authority-db, mc-contracts, mc-webauthn-verify, mc-wire, sqlx, thiserror, tokio, tracing, uuid | T011 lifecycle contract chain; T028 WebAuthn registration |
 | mc-custody | async-trait, hex, mc-authority-db, mc-contracts, mc-effects, mc-wire, sha2, sqlx, thiserror, tokio, tracing, uuid | T011 contract bundles/Uuid; T010 raw object SHA-256; T021 EffectAuthority |
 | mc-effects | async-trait, mc-authority-db, mc-contracts, mc-journal, mc-lease, mc-wire, sqlx, thiserror, tokio, tracing, uuid | T011 LeaseRef, contract effects/certificates; T030 JournalSequencer |
