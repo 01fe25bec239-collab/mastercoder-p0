@@ -8,7 +8,6 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W01-T004-CONTRACT-TYPES-CODEGEN | r1 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T004-CONTRACT-TYPES-CODEGEN-r1 | b83f1a9be066c8fe577c5d71ae25cf38563f5265 | codegen/main.rs; generated.rs; enum_codes.rs; reject_vectors.rs | NOT_STARTED (reserved 2026-10-13T18:00:17.940982+00:00) | Fresh r1 A2 launch, close F-1 then fresh A3 |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -34,7 +33,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | REPAIR_DISPATCHED | r1 | b83f1a9be066c8fe577c5d71ae25cf38563f5265 (r0 reviewed) | NONE | NONE | A3 F-1 HIGH; fresh r1 prepared/not launched on r0, four-file repair; final CI/acceptance/consumer unlock held |
+| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | REVIEW_PENDING | r1 | 9f40fae0db8fc6f6b9fc20e4b7f56cc8a56e1174 | NONE | NONE | A2 returned; signature/scope/retained hashes and key spotcheck verified; fresh independent A3 prepared/not launched; real CI pending |
 | W01-T005-CBOR-CORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
