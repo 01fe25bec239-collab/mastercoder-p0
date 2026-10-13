@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W01-T000-WORKSPACE-SCAFFOLD | r1 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r1 | 30f4813838fa779ec55af45cb2892f417e4205b4 | five narrowed F-1/F-2 repair paths | 2026-10-12T23:10:55Z | preliminary independent A3 SATISFACTORY processed; PR2 positive/PR3 formatter-negative in progress; owner-directed A1 CI disposition; no additional W01 A3 |
+| W01-T000-WORKSPACE-SCAFFOLD | r1 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T000-WORKSPACE-SCAFFOLD-r1 | 30f4813838fa779ec55af45cb2892f417e4205b4 | five narrowed F-1/F-2 repair paths | 2026-10-12T23:10:55Z | ACCEPTED under owner sequence; PR2 normal exact-head merge/main checks pending; PR3 verified and closed unmerged |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -29,7 +29,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W01-T000-WORKSPACE-SCAFFOLD | BUILD | IN_REVIEW | r1 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | NONE | NONE | preliminary SATISFACTORY; F-1/F-2 CLOSED_LOCALLY; PR2 CI/PR3 format-negative pending; owner authorizes A1 final CI disposition without extra A3 |
+| W01-T000-WORKSPACE-SCAFFOLD | BUILD | ACCEPTED | r1 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | NONE | independent local A3 plus real8CI/formatter-negative and owner A1 disposition decision; PR2 normal merge/main integration pending |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |

@@ -17,6 +17,7 @@ Durable workstream memory. Facts only; no secrets; no chat logs. Only the A1 wri
 ## Task / SHA ledger (mirror of task.md; accepted and integrated only)
 | TASK_ID | ACCEPTED_SHA | MERGED_SHA | A3 review file |
 |---|---|---|---|
+| W01-T000-WORKSPACE-SCAFFOLD | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | NONE | REVIEWS/W01-T000-WORKSPACE-SCAFFOLD-r1-a-A3_REVIEW.md (local preliminary; owner A1 CI decision governs final disposition) |
 
 ## Interface pins
 | Interface | Provider | Pinned version | Pinned SHA |
@@ -137,3 +138,9 @@ P0-06C, P0-06D, P0-07B, P0-08A, P0-09B, P0-09C, P0-09D, P0-09F, P0-09G, P0-09H, 
 - Single authorized formatter-negativePR3 https://github.com/01fe25bec239-collab/mastercoder-p0/pull/3 at signed8cea74b9d70e8b02b938faeaeda233bb9513c5c3/tree45f14b108eaec5b7a279a507d9770adedc0dc5fc/parentcandidate; onlymc-contracts/src/lib.rs adds deliberatelymisformattedvalidRust. Syntheticws01/w01-t000-workspace-scaffold-r9001 isnotrepairattempt. Nevermerge; preserveactualformatterreason/guards/logs beforeclosingandonlysyntheticbranchdeletion. Existingcandidate/r0/reviews untouched.
 - Quota read-only UI: GitHubPro119/3000minutesused/2881available,0/2GBstorage,$0billable; no billing/settingschange. Retainedremoteevidence /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/STARTUP_CHECKS/W01-T000-WORKSPACE-SCAFFOLD-remote-ci. Newisolatedbarefixturestore WORKSPACE/w01-ci-format-negative.git; no existinghookdisabled. FixtureUnicodebytes parseerror correctedbeforeexecution; mixedbotrollupname parser correctedtoactualActionscheckobjects; neitherisproductfailure/evidencewaiver.
 - Required8CI/meaningfulformat-negative/comments/protections/exactsubjects/mainprovenance stillmandatory; allActionscontexts bind15368. Finalremoteverificationpending; ACCEPTED/MERGED NONE. G2NOT_PASSED/G3none/allclaimsNOT_RUN/productionunauthorized.
+
+## W01-T000 accepted before authorized normal merge — 2026-10-13 IST
+
+- ACCEPTED_SHA d926be555e86ad2f382fa2d3f73ab6d6998c8e41, treee3024c237e6fdf3762a1bd874b8e67732f4a3012; basis completed independent r1-a localA3 + A1 verified actual8PR2CI/meaningfulPR3formatternegative + explicitowner noextraW01A3 decision. Originalpreliminaryreport unchanged, not finalPASS; no A1 product author/self-A3. Disposition /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/COORD-ws01/ws01-core-security/coordination/DISPOSITIONS/20261013-W01-T000-WORKSPACE-SCAFFOLD-r1-ACCEPTANCE.md. Actualmerge/mainintegrationpending.
+- PR2all8Actions15368/exacthead/runPRassociation success; actualPostgres/fmt/workspace/Clippy/tests/specsteps success run38350698476. PR3exactformatterdiff/exit1 run38350833343, other7success, thenclosedunmerged/onlyr9001branchdeleted; fixtureobject/logs retained. PR2CImergetree preserves162candidateblobs/modes and9W06paths. Realall-pageeffectgates zeroactualreviews/inline/unresolvedthreads; soleCodeRabbit150file/freequota skip nonactionable, notPASS, no paidupgrade.
+- No baseline scan suppression, P0/runtime claim, budget/protection/sourcechange. Root retainedCIevidence /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/STARTUP_CHECKS/W01-T000-WORKSPACE-SCAFFOLD-remote-ci; allmandatory taskcriteria met through existingindependentlocalreview and actualremoteCI; conditionalnormalmergegrant applies, no repeatpermissionneeded.
