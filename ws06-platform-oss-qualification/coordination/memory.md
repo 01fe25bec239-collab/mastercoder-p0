@@ -17,6 +17,7 @@ Durable workstream memory. Facts only; no secrets; no chat logs. Only the A1 wri
 ## Task / SHA ledger (mirror of task.md; accepted and integrated only)
 | TASK_ID | ACCEPTED_SHA | MERGED_SHA | A3 review file |
 |---|---|---|---|
+| W06-T000-ROOT-HARDENING | b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03 | 5f92752cac8d9ba39ef20a6caf4c1c95227d7036 | REVIEWS/W06-T000-ROOT-HARDENING-r1-d-A3_REVIEW.md |
 
 ## Interface pins
 | Interface | Provider | Pinned version | Pinned SHA |
@@ -163,3 +164,21 @@ P0-06A, P0-06B, P0-07D, P0-10B, P0-10C, P0-10D, P0-10E, P0-10F, P0-10G, P0-10H: 
 - FinalA3caught A1mutablecanonical-latest-status projection refresh afterphase1manifest: current3448bytes/07c70a... differs initial3362bytes/b2312a... becausewaitingsweepaddednumber/state/mergeable/reviewDecisionfields. Immutablecase/check/log artifactsunchanged. Originalmanifestnotedited; currentcopypreserved/status-projection-audit.jsonrecordsdrift. Five-field originalprojectionreconstruction matchesexactstoredhash andbytesretained separately. FreshAPI/premerge/actualmerge/mainobjects remaintruth, neverhistoricalopenprojection.
 
 - r1-c final reviewer stopped at usage limit before a final report/verdict; no PASS inferred. Its session is unavailable after resume. After the reported10:34IST reset, fresh independent Sol/high r1-d review request/worktree prepared at exact candidate/tree, no credential symlink. Originalc retained; all acceptance remains pending.
+
+## W06-T000 integrated — 2026-10-13 IST
+
+- Fresh independent final r1-d A3 PASS_WITH_NONBLOCKING_FINDINGS; report hash2645d97f5b01719f8e62f3afda11da9759d715796b414eea28652b0b0d7aef0d. ACCEPTED_SHA b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03; MERGED_SHA 5f92752cac8d9ba39ef20a6caf4c1c95227d7036. All original criteria and actual new canonical-main activation independently verified under owner commissioning decision; no invented c verdict.
+- A1 reverified signatures, five clean exactcandidate/review worktrees, actual merge parents/tree, genuine8PR/7main Actions15368 successes and unchanged protections. Current main 9a7922bf29c0a6689903b96896dab8851d1eeeeb retains all9W06blob/mode identities by ancestry. Retained final report and fresh root API verification at /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/STARTUP_CHECKS/W06-T000-ROOT-HARDENING-r1-final-review-processing. Review command results/classifications are in report/tool transcript; reviewer temporary fixtures removed, not claimed as retained raw artifacts.
+- N-1 aggregate resource bounds remain nonblocking/unqualified; N-2 projection current78/79 and postmerge10/10 retained honestly in KNOWN_ISSUES/W06-T000-NONBLOCKING.md. Old reports/requests/r0/source preserved. Qualification repo has1positive/9intendednegative PRs, allclosedunmerged. Canonical PR1alreadymerged; no repeatmerge/recreation/paidreview.
+- Disposition DISPOSITIONS/20261013-W06-T000-ROOT-HARDENING-r1-INTEGRATION.md; no active A2/A3 for completed task. Later tasks still require their own preconditions; W06-T001 needs W02/W03/W04 scaffolds too. G2NOT_PASSED/G3none/allclaimsNOT_RUN/productionunauthorized; no runtime/performance/P0 interface claim.
+
+### Final independent A3 durable facts
+
+- Later separately authorized W01 main advance9a7922bf29c0a6689903b96896dab8851d1eeeeb/tree7398980054601175ff63d8395cb3bca802c1548e independently verified live before return:W06merge is direct parent/all9W06blob-mode-type identities unchanged. Original W06 activation CI remains historical/exact merge5f92752cac8d9ba39ef20a6caf4c1c95227d7036;no W01review/CI disposition inferred.
+- Fresh independent final r1-d verdict PASS_WITH_NONBLOCKING_FINDINGS binds original candidateb780a3f4fa4f550b76a79bc9483c1f94cd7f2d03/treeaf193b0df3b88e64f0616b8d04d61799ba0d5045,normal actual merge5f92752cac8d9ba39ef20a6caf4c1c95227d7036/ordered import+candidate parents/same tree/all9bytes/candidate reachable.
+- Alloriginal criteria/localrequired controls and genuinepositive/nineintended-red qualificationCI verified independently. All8original canonicalPR contexts and7applicable canonicalmain contexts App15368/SUCCESS/exact subjects. Actual new main lint/extraction/verifier/trusted candidate-data checker eachSUCCESS/p0false;PR-only guard has no main run. Six lane placeholders are not build/P0 evidence.
+- Fresh full-history gitleaks exit1/89scanned commits/56findings/28affected commits;all findings individually equal imported W01 INPUT CONTRACTS lists at822/932. Range/staged exit0. No suppression/history-clean claim. Python3.14.6 used through clean wrapper;disk48.94GiB/no env.local/credential-shaped inherited environment.
+- Phase1current78/79 due only documented mutable canonical-latest-status drift. Original snapshot3362bytes/b2312a5d… matches stored manifest;refreshed/current3448bytes/07c70a7f…;postmerge10/10. Originalmanifest/candidate/r0/r1/reviewa/b/c preserved. N-2 is bookkeeping hygiene, not invented79/79 proof.
+- Actual current closed/merged run association arrays are empty; bind immutable live PR/head/base/commit/tree/check/job/run/suite/log and preserved precleanup association, never assert populated arrays from older snapshots. Positive has10success records/8unique contexts with duplicated common event contexts.
+- All6Rust1.97.1 notices identical and committed before merge;exact toolchain digest verified. Current protections/private/read-only/zero secrets/environments/self-hosted runners verified unchanged for both repos;no actionable reviews/threads;CodeRabbit quota is not approval.
+- N-1 aggregate resource bounds remain independently assessed nonblocking/unqualified;no production/performance claim. Ownercommissioning final-review gate now supported;A1 alone recordsACCEPTED/INTEGRATED. G2NOT_PASSED/G3none/allclaimsNOT_RUN/productionunauthorized persist.
