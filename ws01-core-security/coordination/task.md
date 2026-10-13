@@ -8,6 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
+| W01-T004-CONTRACT-TYPES-CODEGEN | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T004-CONTRACT-TYPES-CODEGEN-r0 | a217d94ff1ac1262e21cf9b2e9f713666a830a18 | mc-contracts/src/**; mc-contracts/tests/**; tools/codegen/src/** | NOT_STARTED (reserved 2026-10-13T16:30:10.256015+00:00) | Fresh A2 launch |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -29,11 +30,11 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
 | W01-T000-WORKSPACE-SCAFFOLD | BUILD | INTEGRATED | r1 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | 9a7922bf29c0a6689903b96896dab8851d1eeeeb | Completed independent local A3 plus all real CI and owner A1 disposition; normal PR2 merge and actual main checks verified |
-| W01-DEPENDENCY-UPDATE | BUILD | BLOCKED | r0 | 72410409afd609bd98eb9d8742592287d8b1cb6a | NONE | NONE | Independent preliminary A3 SATISFACTORY; PR6 normally merged a217d94ff1ac1262e21cf9b2e9f713666a830a18; actual main CI pending; T004 held |
+| W01-DEPENDENCY-UPDATE | BUILD | INTEGRATED | r0 | 72410409afd609bd98eb9d8742592287d8b1cb6a | 72410409afd609bd98eb9d8742592287d8b1cb6a | a217d94ff1ac1262e21cf9b2e9f713666a830a18 | Independent local A3 + owner A1 CI disposition; actual 8 PR/7 main checks and source/provenance verified, no extra A3 |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | NOT_STARTED | — | NONE | NONE | NONE | Preflight dependency request; standing update must integrate before dispatch |
+| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | Fresh A2 prepared/not launched at integrated dependency main; exact JSON/type/codegen scope; no outward grant |
 | W01-T005-CBOR-CORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
