@@ -1,6 +1,5 @@
-# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Placeholder for lane 01 CI, created by bootstrap_repo.sh.
-# `ws01-ci` is a REQUIRED check on main, so it must report on every PR (auto-merge waits for it).
-# The lane's scaffold task replaces this file with the real workflow and keeps the job name `ws01-ci`.
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. CI for the W01 Rust workspace.
+# This database is an isolated, disposable test service; it contains no reusable or sensitive data.
 name: ws01-ci
 on:
   pull_request:
@@ -13,6 +12,94 @@ jobs:
   ws01-ci:
     name: ws01-ci
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: postgres
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - name: Placeholder (lane 01 scaffold not merged yet)
-        run: echo "ws01 workspace not scaffolded yet; nothing to test."
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Decide whether W01 checks are required
+        id: change_gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+            if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+              BASE_SHA="$(git rev-parse HEAD^)"
+            else
+              BASE_SHA=""
+            fi
+          fi
+
+          changed_paths="$RUNNER_TEMP/ws01-ci-changed-paths"
+          if [[ -n "$BASE_SHA" ]]; then
+            git cat-file -e "${BASE_SHA}^{commit}"
+            merge_base="$(git merge-base "$BASE_SHA" HEAD)"
+            git diff --name-only --no-renames -z "$merge_base" HEAD > "$changed_paths"
+          else
+            empty_tree="$(git hash-object -t tree /dev/null)"
+            git diff --name-only --no-renames -z "$empty_tree" HEAD > "$changed_paths"
+          fi
+
+          relevant=false
+          while IFS= read -r -d '' path; do
+            case "$path" in
+              ws01-core-security|ws01-core-security/*|.github/workflows/ws01-ci.yml|rust-toolchain.toml|deny.toml|ARCHITECTURE/V2_1/*)
+                relevant=true
+                echo "W01 CI input changed: $path"
+                break
+                ;;
+            esac
+          done < "$changed_paths"
+
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          if [[ "$relevant" == false ]]; then
+            echo "No W01 or upstream CI inputs changed; remaining checks are skipped."
+          fi
+      - name: Configure the ephemeral PostgreSQL URL
+        if: steps.change_gate.outputs.relevant == 'true'
+        env:
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$POSTGRES_PORT" =~ ^[0-9]+$ ]]; then
+            echo "::error::GitHub Actions did not provide the PostgreSQL service port."
+            exit 1
+          fi
+          printf 'DATABASE_URL=postgresql://postgres@127.0.0.1:%s/postgres\n' "$POSTGRES_PORT" >> "$GITHUB_ENV"
+      - name: Check formatting
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws01-core-security
+        # cargo fmt does not support --locked; it does not resolve or modify dependencies.
+        run: cargo fmt --all --check
+      - name: Check workspace
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws01-core-security
+        run: cargo check --locked --workspace --all-targets
+      - name: Run Clippy
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws01-core-security
+        run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+      - name: Run workspace tests
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws01-core-security
+        run: cargo test --locked --workspace
+      - name: Check architecture vectors
+        if: steps.change_gate.outputs.relevant == 'true'
+        run: python3 ARCHITECTURE/V2_1/TEST_VECTORS/check_spec.py
