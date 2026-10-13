@@ -254,4 +254,3 @@ MEMORY_UPDATES (A1 alone merges accepted items):
 - Known pitfalls — Null diagnostics carry expected kind, not a field path. Derive expectations from the named frozen descriptor and change only that field against a valid full control; do not fabricate runtime path metadata.
 - Environment — Current candidate/staged/ranges0; history118 individually classified/nonzero; earlier68/86/96/102counts and393artifacts preserved. No suppression or ignored-target cleanliness claim.
 - Failed approaches — Corrected numeric-vector field mapping fromrepository_id tolease_generation after one retained assertion failure; final immutable candidate checks all0. Helper launches yielded no usable results; main performed verification without silent substitution.
-
