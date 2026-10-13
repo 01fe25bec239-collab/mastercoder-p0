@@ -175,12 +175,34 @@ fn pascal(name: &str) -> Result<String> {
     Ok(result)
 }
 
+fn emit_string_deserialize(
+    out: &mut String,
+    name: &str,
+    variants: &[(&str, String)],
+) -> Result<()> {
+    // JSON schemas admit literal strings, never Serde's externally tagged unit maps.
+    writeln!(
+        out,
+        "impl<'de> Deserialize<'de> for {name} {{\nfn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {{\nlet value = String::deserialize(deserializer)?;\nmatch value.as_str() {{"
+    )?;
+    for (literal, variant) in variants {
+        writeln!(out, "{literal:?} => Ok(Self::{variant}),")?;
+    }
+    let literals: Vec<_> = variants.iter().map(|(literal, _)| *literal).collect();
+    writeln!(
+        out,
+        "_ => Err(serde::de::Error::unknown_variant(&value, &{literals:?})),\n}}\n}}\n}}"
+    )?;
+    Ok(())
+}
+
 fn emit_enum(out: &mut String, name: &str, values: &[Value]) -> Result<()> {
     writeln!(
         out,
-        "#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\npub enum {name} {{"
+        "#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]\npub enum {name} {{"
     )?;
     let mut variants = BTreeSet::new();
+    let mut literal_variants = Vec::new();
     for value in values {
         let literal = string(value)?;
         let variant = pascal(literal)?;
@@ -188,10 +210,13 @@ fn emit_enum(out: &mut String, name: &str, values: &[Value]) -> Result<()> {
             return Err(format!("Rust enum variant collision: {name}.{variant}").into());
         }
         writeln!(out, "#[serde(rename = {literal:?})]\n{variant},")?;
+        literal_variants.push((literal, variant));
     }
+    writeln!(out, "}}")?;
+    emit_string_deserialize(out, name, &literal_variants)?;
     writeln!(
         out,
-        "}}\nimpl {name} {{\npub fn code(&self) -> u64 {{ match self {{"
+        "impl {name} {{\npub fn code(&self) -> u64 {{ match self {{"
     )?;
     for (index, value) in values.iter().enumerate() {
         writeln!(out, "Self::{} => {index},", pascal(string(value)?)?)?;
@@ -279,7 +304,16 @@ fn generate(registry: &Value) -> Result<String> {
         }
         writeln!(
             out,
-            "#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]\npub enum {name}Type {{ #[serde(rename = {name:?})] Value }}\n#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n#[serde(deny_unknown_fields, try_from = \"crate::primitives::ObjectOnly<{name}Fields>\")]\npub struct {name} {{\npub r#type: {name}Type,\npub wire_revision: WireRevision,"
+            "#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]\npub enum {name}Type {{ #[serde(rename = {name:?})] Value }}"
+        )?;
+        emit_string_deserialize(
+            &mut out,
+            &format!("{name}Type"),
+            &[(name, "Value".to_owned())],
+        )?;
+        writeln!(
+            out,
+            "#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]\n#[serde(deny_unknown_fields, try_from = \"crate::primitives::ObjectOnly<{name}Fields>\")]\npub struct {name} {{\npub r#type: {name}Type,\npub wire_revision: WireRevision,"
         )?;
         for (field, ty, _) in &fields {
             writeln!(out, "pub {field}: {ty},")?;

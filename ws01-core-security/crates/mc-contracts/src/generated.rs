@@ -7,7 +7,7 @@ use std::cmp::Ordering;
 // ENCODING.md §Registry identity: SHA-256 of the frozen raw registry bytes.
 pub const REGISTRY_SHA256: &str =
     "b516004c690dd86860c263334d9f32f79a6c935ac82f2b801d3117223ed8d787";
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EffectKind {
     #[serde(rename = "CREATE_BLOB")]
     CreateBlob,
@@ -29,6 +29,38 @@ pub enum EffectKind {
     CheckoutFetch,
     #[serde(rename = "DEPENDENCY_FETCH")]
     DependencyFetch,
+}
+impl<'de> Deserialize<'de> for EffectKind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CREATE_BLOB" => Ok(Self::CreateBlob),
+            "CREATE_TREE" => Ok(Self::CreateTree),
+            "CREATE_COMMIT" => Ok(Self::CreateCommit),
+            "CREATE_REF" => Ok(Self::CreateRef),
+            "CREATE_FIX_PR" => Ok(Self::CreateFixPr),
+            "CREATE_CHECK" => Ok(Self::CreateCheck),
+            "UPDATE_CHECK" => Ok(Self::UpdateCheck),
+            "MODEL_REQUEST" => Ok(Self::ModelRequest),
+            "CHECKOUT_FETCH" => Ok(Self::CheckoutFetch),
+            "DEPENDENCY_FETCH" => Ok(Self::DependencyFetch),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "CREATE_BLOB",
+                    "CREATE_TREE",
+                    "CREATE_COMMIT",
+                    "CREATE_REF",
+                    "CREATE_FIX_PR",
+                    "CREATE_CHECK",
+                    "UPDATE_CHECK",
+                    "MODEL_REQUEST",
+                    "CHECKOUT_FETCH",
+                    "DEPENDENCY_FETCH",
+                ],
+            )),
+        }
+    }
 }
 impl EffectKind {
     pub fn code(&self) -> u64 {
@@ -72,12 +104,25 @@ impl CanonicalOrder for EffectKind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum Provider {
     #[serde(rename = "GITHUB")]
     Github,
     #[serde(rename = "OTHER")]
     Other,
+}
+impl<'de> Deserialize<'de> for Provider {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "GITHUB" => Ok(Self::Github),
+            "OTHER" => Ok(Self::Other),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["GITHUB", "OTHER"],
+            )),
+        }
+    }
 }
 impl Provider {
     pub fn code(&self) -> u64 {
@@ -105,12 +150,25 @@ impl CanonicalOrder for Provider {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AcquisitionRequestV1EffectKind {
     #[serde(rename = "CHECKOUT_FETCH")]
     CheckoutFetch,
     #[serde(rename = "DEPENDENCY_FETCH")]
     DependencyFetch,
+}
+impl<'de> Deserialize<'de> for AcquisitionRequestV1EffectKind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CHECKOUT_FETCH" => Ok(Self::CheckoutFetch),
+            "DEPENDENCY_FETCH" => Ok(Self::DependencyFetch),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CHECKOUT_FETCH", "DEPENDENCY_FETCH"],
+            )),
+        }
+    }
 }
 impl AcquisitionRequestV1EffectKind {
     pub fn code(&self) -> u64 {
@@ -138,12 +196,22 @@ impl CanonicalOrder for AcquisitionRequestV1EffectKind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AcquisitionRequestV1Method {
     #[serde(rename = "GET")]
     Get,
     #[serde(rename = "POST")]
     Post,
+}
+impl<'de> Deserialize<'de> for AcquisitionRequestV1Method {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "GET" => Ok(Self::Get),
+            "POST" => Ok(Self::Post),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["GET", "POST"])),
+        }
+    }
 }
 impl AcquisitionRequestV1Method {
     pub fn code(&self) -> u64 {
@@ -171,10 +239,22 @@ impl CanonicalOrder for AcquisitionRequestV1Method {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AcquisitionRequestV1Type {
     #[serde(rename = "AcquisitionRequestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for AcquisitionRequestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AcquisitionRequestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AcquisitionRequestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -332,7 +412,7 @@ impl CanonicalOrder for AcquisitionRequestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AnalysisCompletionReceiptV1Outcome {
     #[serde(rename = "COMPLETED")]
     Completed,
@@ -342,6 +422,21 @@ pub enum AnalysisCompletionReceiptV1Outcome {
     Unsupported,
     #[serde(rename = "CANCELLED")]
     Cancelled,
+}
+impl<'de> Deserialize<'de> for AnalysisCompletionReceiptV1Outcome {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "COMPLETED" => Ok(Self::Completed),
+            "FAILED" => Ok(Self::Failed),
+            "UNSUPPORTED" => Ok(Self::Unsupported),
+            "CANCELLED" => Ok(Self::Cancelled),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["COMPLETED", "FAILED", "UNSUPPORTED", "CANCELLED"],
+            )),
+        }
+    }
 }
 impl AnalysisCompletionReceiptV1Outcome {
     pub fn code(&self) -> u64 {
@@ -373,10 +468,22 @@ impl CanonicalOrder for AnalysisCompletionReceiptV1Outcome {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AnalysisCompletionReceiptV1Type {
     #[serde(rename = "AnalysisCompletionReceiptV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for AnalysisCompletionReceiptV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AnalysisCompletionReceiptV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AnalysisCompletionReceiptV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -599,10 +706,22 @@ impl CanonicalOrder for AnalysisCompletionReceiptV1 {
         Some(self.unit_id.0.as_bytes().to_vec())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AnalysisPlanV1Type {
     #[serde(rename = "AnalysisPlanV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for AnalysisPlanV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AnalysisPlanV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AnalysisPlanV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -741,10 +860,22 @@ impl CanonicalOrder for AnalysisPlanV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AnalysisUnitV1Type {
     #[serde(rename = "AnalysisUnitV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for AnalysisUnitV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AnalysisUnitV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AnalysisUnitV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -935,10 +1066,22 @@ impl CanonicalOrder for AnalysisUnitV1 {
         Some(self.unit_id.0.as_bytes().to_vec())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalChallengeV2Type {
     #[serde(rename = "ApprovalChallengeV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalChallengeV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalChallengeV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalChallengeV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -1107,7 +1250,7 @@ impl CanonicalOrder for ApprovalChallengeV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalCredentialBindingV1State {
     #[serde(rename = "ACTIVE")]
     Active,
@@ -1115,6 +1258,20 @@ pub enum ApprovalCredentialBindingV1State {
     Suspended,
     #[serde(rename = "REVOKED")]
     Revoked,
+}
+impl<'de> Deserialize<'de> for ApprovalCredentialBindingV1State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ACTIVE" => Ok(Self::Active),
+            "SUSPENDED" => Ok(Self::Suspended),
+            "REVOKED" => Ok(Self::Revoked),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ACTIVE", "SUSPENDED", "REVOKED"],
+            )),
+        }
+    }
 }
 impl ApprovalCredentialBindingV1State {
     pub fn code(&self) -> u64 {
@@ -1144,10 +1301,22 @@ impl CanonicalOrder for ApprovalCredentialBindingV1State {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalCredentialBindingV1Type {
     #[serde(rename = "ApprovalCredentialBindingV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalCredentialBindingV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalCredentialBindingV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalCredentialBindingV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -1363,10 +1532,22 @@ impl CanonicalOrder for ApprovalCredentialBindingV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalEnrollmentActionV1Type {
     #[serde(rename = "ApprovalEnrollmentActionV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalEnrollmentActionV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalEnrollmentActionV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalEnrollmentActionV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -1535,10 +1716,22 @@ impl CanonicalOrder for ApprovalEnrollmentActionV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalEnrollmentAuthorizationV1Type {
     #[serde(rename = "ApprovalEnrollmentAuthorizationV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalEnrollmentAuthorizationV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalEnrollmentAuthorizationV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalEnrollmentAuthorizationV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -1675,10 +1868,22 @@ impl CanonicalOrder for ApprovalEnrollmentAuthorizationV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalEnrollmentChallengeV1Type {
     #[serde(rename = "ApprovalEnrollmentChallengeV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalEnrollmentChallengeV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalEnrollmentChallengeV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalEnrollmentChallengeV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -1840,7 +2045,7 @@ impl CanonicalOrder for ApprovalEnrollmentChallengeV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalEnrollmentIntentV1Operation {
     #[serde(rename = "INITIAL_BOOTSTRAP")]
     InitialBootstrap,
@@ -1858,6 +2063,34 @@ pub enum ApprovalEnrollmentIntentV1Operation {
     InitialRegistration,
     #[serde(rename = "SUSPEND")]
     Suspend,
+}
+impl<'de> Deserialize<'de> for ApprovalEnrollmentIntentV1Operation {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "INITIAL_BOOTSTRAP" => Ok(Self::InitialBootstrap),
+            "ADD" => Ok(Self::Add),
+            "REPLACE" => Ok(Self::Replace),
+            "REVOKE" => Ok(Self::Revoke),
+            "RECOVER" => Ok(Self::Recover),
+            "CHANGE_BINDING" => Ok(Self::ChangeBinding),
+            "INITIAL_REGISTRATION" => Ok(Self::InitialRegistration),
+            "SUSPEND" => Ok(Self::Suspend),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "INITIAL_BOOTSTRAP",
+                    "ADD",
+                    "REPLACE",
+                    "REVOKE",
+                    "RECOVER",
+                    "CHANGE_BINDING",
+                    "INITIAL_REGISTRATION",
+                    "SUSPEND",
+                ],
+            )),
+        }
+    }
 }
 impl ApprovalEnrollmentIntentV1Operation {
     pub fn code(&self) -> u64 {
@@ -1897,10 +2130,22 @@ impl CanonicalOrder for ApprovalEnrollmentIntentV1Operation {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalEnrollmentIntentV1Type {
     #[serde(rename = "ApprovalEnrollmentIntentV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalEnrollmentIntentV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalEnrollmentIntentV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalEnrollmentIntentV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -2082,7 +2327,7 @@ impl CanonicalOrder for ApprovalEnrollmentIntentV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalLifecycleChallengeV1Purpose {
     #[serde(rename = "OWNER_CONSENT")]
     OwnerConsent,
@@ -2090,6 +2335,20 @@ pub enum ApprovalLifecycleChallengeV1Purpose {
     AdminConsent,
     #[serde(rename = "SECURITY_SUSPEND")]
     SecuritySuspend,
+}
+impl<'de> Deserialize<'de> for ApprovalLifecycleChallengeV1Purpose {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "OWNER_CONSENT" => Ok(Self::OwnerConsent),
+            "ADMIN_CONSENT" => Ok(Self::AdminConsent),
+            "SECURITY_SUSPEND" => Ok(Self::SecuritySuspend),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["OWNER_CONSENT", "ADMIN_CONSENT", "SECURITY_SUSPEND"],
+            )),
+        }
+    }
 }
 impl ApprovalLifecycleChallengeV1Purpose {
     pub fn code(&self) -> u64 {
@@ -2119,10 +2378,22 @@ impl CanonicalOrder for ApprovalLifecycleChallengeV1Purpose {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalLifecycleChallengeV1Type {
     #[serde(rename = "ApprovalLifecycleChallengeV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalLifecycleChallengeV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalLifecycleChallengeV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalLifecycleChallengeV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -2298,7 +2569,7 @@ impl CanonicalOrder for ApprovalLifecycleChallengeV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalLifecycleConsentV1Purpose {
     #[serde(rename = "OWNER_CONSENT")]
     OwnerConsent,
@@ -2306,6 +2577,20 @@ pub enum ApprovalLifecycleConsentV1Purpose {
     AdminConsent,
     #[serde(rename = "SECURITY_SUSPEND")]
     SecuritySuspend,
+}
+impl<'de> Deserialize<'de> for ApprovalLifecycleConsentV1Purpose {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "OWNER_CONSENT" => Ok(Self::OwnerConsent),
+            "ADMIN_CONSENT" => Ok(Self::AdminConsent),
+            "SECURITY_SUSPEND" => Ok(Self::SecuritySuspend),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["OWNER_CONSENT", "ADMIN_CONSENT", "SECURITY_SUSPEND"],
+            )),
+        }
+    }
 }
 impl ApprovalLifecycleConsentV1Purpose {
     pub fn code(&self) -> u64 {
@@ -2335,10 +2620,22 @@ impl CanonicalOrder for ApprovalLifecycleConsentV1Purpose {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalLifecycleConsentV1Type {
     #[serde(rename = "ApprovalLifecycleConsentV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalLifecycleConsentV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalLifecycleConsentV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalLifecycleConsentV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -2517,12 +2814,25 @@ impl CanonicalOrder for ApprovalLifecycleConsentV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalRecoveryPolicyV1Profile {
     #[serde(rename = "DUAL_ADMIN")]
     DualAdmin,
     #[serde(rename = "INDIVIDUAL_OFFLINE")]
     IndividualOffline,
+}
+impl<'de> Deserialize<'de> for ApprovalRecoveryPolicyV1Profile {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "DUAL_ADMIN" => Ok(Self::DualAdmin),
+            "INDIVIDUAL_OFFLINE" => Ok(Self::IndividualOffline),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["DUAL_ADMIN", "INDIVIDUAL_OFFLINE"],
+            )),
+        }
+    }
 }
 impl ApprovalRecoveryPolicyV1Profile {
     pub fn code(&self) -> u64 {
@@ -2550,10 +2860,22 @@ impl CanonicalOrder for ApprovalRecoveryPolicyV1Profile {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ApprovalRecoveryPolicyV1Type {
     #[serde(rename = "ApprovalRecoveryPolicyV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ApprovalRecoveryPolicyV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ApprovalRecoveryPolicyV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ApprovalRecoveryPolicyV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -2717,10 +3039,22 @@ impl CanonicalOrder for ApprovalRecoveryPolicyV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ArtifactCustodyEntryV1Type {
     #[serde(rename = "ArtifactCustodyEntryV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ArtifactCustodyEntryV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ArtifactCustodyEntryV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ArtifactCustodyEntryV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -2837,7 +3171,7 @@ impl CanonicalOrder for ArtifactCustodyEntryV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AttemptBindingV2SandboxTier {
     #[serde(rename = "S0")]
     S0,
@@ -2847,6 +3181,21 @@ pub enum AttemptBindingV2SandboxTier {
     S2,
     #[serde(rename = "S3")]
     S3,
+}
+impl<'de> Deserialize<'de> for AttemptBindingV2SandboxTier {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "S0" => Ok(Self::S0),
+            "S1" => Ok(Self::S1),
+            "S2" => Ok(Self::S2),
+            "S3" => Ok(Self::S3),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["S0", "S1", "S2", "S3"],
+            )),
+        }
+    }
 }
 impl AttemptBindingV2SandboxTier {
     pub fn code(&self) -> u64 {
@@ -2878,10 +3227,22 @@ impl CanonicalOrder for AttemptBindingV2SandboxTier {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AttemptBindingV2Type {
     #[serde(rename = "AttemptBindingV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for AttemptBindingV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AttemptBindingV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AttemptBindingV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -3123,10 +3484,22 @@ impl CanonicalOrder for AttemptBindingV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AttemptEventV2Type {
     #[serde(rename = "AttemptEventV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for AttemptEventV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AttemptEventV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AttemptEventV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -3295,10 +3668,22 @@ impl CanonicalOrder for AttemptEventV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AuditEnvelopeV1Type {
     #[serde(rename = "AuditEnvelopeV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for AuditEnvelopeV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AuditEnvelopeV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AuditEnvelopeV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -3469,10 +3854,22 @@ impl CanonicalOrder for AuditEnvelopeV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum AuthorityScopeV1Type {
     #[serde(rename = "AuthorityScopeV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for AuthorityScopeV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AuthorityScopeV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AuthorityScopeV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -3576,7 +3973,7 @@ impl CanonicalOrder for AuthorityScopeV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CapabilityProfileV1Mode {
     #[serde(rename = "FAST")]
     Fast,
@@ -3586,6 +3983,21 @@ pub enum CapabilityProfileV1Mode {
     Hybrid,
     #[serde(rename = "DEEP")]
     Deep,
+}
+impl<'de> Deserialize<'de> for CapabilityProfileV1Mode {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "FAST" => Ok(Self::Fast),
+            "AI" => Ok(Self::Ai),
+            "HYBRID" => Ok(Self::Hybrid),
+            "DEEP" => Ok(Self::Deep),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["FAST", "AI", "HYBRID", "DEEP"],
+            )),
+        }
+    }
 }
 impl CapabilityProfileV1Mode {
     pub fn code(&self) -> u64 {
@@ -3617,7 +4029,7 @@ impl CanonicalOrder for CapabilityProfileV1Mode {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CapabilityProfileV1SandboxTier {
     #[serde(rename = "S0")]
     S0,
@@ -3627,6 +4039,21 @@ pub enum CapabilityProfileV1SandboxTier {
     S2,
     #[serde(rename = "S3")]
     S3,
+}
+impl<'de> Deserialize<'de> for CapabilityProfileV1SandboxTier {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "S0" => Ok(Self::S0),
+            "S1" => Ok(Self::S1),
+            "S2" => Ok(Self::S2),
+            "S3" => Ok(Self::S3),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["S0", "S1", "S2", "S3"],
+            )),
+        }
+    }
 }
 impl CapabilityProfileV1SandboxTier {
     pub fn code(&self) -> u64 {
@@ -3658,7 +4085,7 @@ impl CanonicalOrder for CapabilityProfileV1SandboxTier {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CapabilityProfileV1MinimumIndependence {
     #[serde(rename = "C0")]
     C0,
@@ -3670,6 +4097,22 @@ pub enum CapabilityProfileV1MinimumIndependence {
     C3,
     #[serde(rename = "C4")]
     C4,
+}
+impl<'de> Deserialize<'de> for CapabilityProfileV1MinimumIndependence {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "C0" => Ok(Self::C0),
+            "C1" => Ok(Self::C1),
+            "C2" => Ok(Self::C2),
+            "C3" => Ok(Self::C3),
+            "C4" => Ok(Self::C4),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["C0", "C1", "C2", "C3", "C4"],
+            )),
+        }
+    }
 }
 impl CapabilityProfileV1MinimumIndependence {
     pub fn code(&self) -> u64 {
@@ -3703,10 +4146,22 @@ impl CanonicalOrder for CapabilityProfileV1MinimumIndependence {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CapabilityProfileV1Type {
     #[serde(rename = "CapabilityProfileV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CapabilityProfileV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CapabilityProfileV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CapabilityProfileV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -3887,7 +4342,7 @@ impl CanonicalOrder for CapabilityProfileV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ChangedObjectV1Mode {
     #[serde(rename = "REGULAR")]
     Regular,
@@ -3897,6 +4352,21 @@ pub enum ChangedObjectV1Mode {
     Symlink,
     #[serde(rename = "DELETE")]
     Delete,
+}
+impl<'de> Deserialize<'de> for ChangedObjectV1Mode {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "REGULAR" => Ok(Self::Regular),
+            "EXECUTABLE" => Ok(Self::Executable),
+            "SYMLINK" => Ok(Self::Symlink),
+            "DELETE" => Ok(Self::Delete),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["REGULAR", "EXECUTABLE", "SYMLINK", "DELETE"],
+            )),
+        }
+    }
 }
 impl ChangedObjectV1Mode {
     pub fn code(&self) -> u64 {
@@ -3928,10 +4398,22 @@ impl CanonicalOrder for ChangedObjectV1Mode {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ChangedObjectV1Type {
     #[serde(rename = "ChangedObjectV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ChangedObjectV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ChangedObjectV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ChangedObjectV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -4046,10 +4528,22 @@ impl CanonicalOrder for ChangedObjectV1 {
         Some(self.path.0.clone())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckOutputV1Type {
     #[serde(rename = "CheckOutputV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CheckOutputV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CheckOutputV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CheckOutputV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -4167,7 +4661,7 @@ impl CanonicalOrder for CheckOutputV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckProjectionV2ProjectedConclusion {
     #[serde(rename = "UNCONFIRMED")]
     Unconfirmed,
@@ -4181,6 +4675,30 @@ pub enum CheckProjectionV2ProjectedConclusion {
     Cancelled,
     #[serde(rename = "ACTION_REQUIRED")]
     ActionRequired,
+}
+impl<'de> Deserialize<'de> for CheckProjectionV2ProjectedConclusion {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "UNCONFIRMED" => Ok(Self::Unconfirmed),
+            "IN_PROGRESS" => Ok(Self::InProgress),
+            "SUCCESS" => Ok(Self::Success),
+            "FAILURE" => Ok(Self::Failure),
+            "CANCELLED" => Ok(Self::Cancelled),
+            "ACTION_REQUIRED" => Ok(Self::ActionRequired),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "UNCONFIRMED",
+                    "IN_PROGRESS",
+                    "SUCCESS",
+                    "FAILURE",
+                    "CANCELLED",
+                    "ACTION_REQUIRED",
+                ],
+            )),
+        }
+    }
 }
 impl CheckProjectionV2ProjectedConclusion {
     pub fn code(&self) -> u64 {
@@ -4216,7 +4734,7 @@ impl CanonicalOrder for CheckProjectionV2ProjectedConclusion {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckProjectionV2DesiredConclusion {
     #[serde(rename = "IN_PROGRESS")]
     InProgress,
@@ -4228,6 +4746,28 @@ pub enum CheckProjectionV2DesiredConclusion {
     Cancelled,
     #[serde(rename = "ACTION_REQUIRED")]
     ActionRequired,
+}
+impl<'de> Deserialize<'de> for CheckProjectionV2DesiredConclusion {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "IN_PROGRESS" => Ok(Self::InProgress),
+            "SUCCESS" => Ok(Self::Success),
+            "FAILURE" => Ok(Self::Failure),
+            "CANCELLED" => Ok(Self::Cancelled),
+            "ACTION_REQUIRED" => Ok(Self::ActionRequired),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "IN_PROGRESS",
+                    "SUCCESS",
+                    "FAILURE",
+                    "CANCELLED",
+                    "ACTION_REQUIRED",
+                ],
+            )),
+        }
+    }
 }
 impl CheckProjectionV2DesiredConclusion {
     pub fn code(&self) -> u64 {
@@ -4261,7 +4801,7 @@ impl CanonicalOrder for CheckProjectionV2DesiredConclusion {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckProjectionV2State {
     #[serde(rename = "PENDING")]
     Pending,
@@ -4275,6 +4815,30 @@ pub enum CheckProjectionV2State {
     Unknown,
     #[serde(rename = "MANUAL_RECONCILIATION")]
     ManualReconciliation,
+}
+impl<'de> Deserialize<'de> for CheckProjectionV2State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PENDING" => Ok(Self::Pending),
+            "WRITING" => Ok(Self::Writing),
+            "CONFIRMED" => Ok(Self::Confirmed),
+            "WITHDRAWAL_PENDING" => Ok(Self::WithdrawalPending),
+            "UNKNOWN" => Ok(Self::Unknown),
+            "MANUAL_RECONCILIATION" => Ok(Self::ManualReconciliation),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "PENDING",
+                    "WRITING",
+                    "CONFIRMED",
+                    "WITHDRAWAL_PENDING",
+                    "UNKNOWN",
+                    "MANUAL_RECONCILIATION",
+                ],
+            )),
+        }
+    }
 }
 impl CheckProjectionV2State {
     pub fn code(&self) -> u64 {
@@ -4310,7 +4874,7 @@ impl CanonicalOrder for CheckProjectionV2State {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckProjectionV2FreezeState {
     #[serde(rename = "NONE")]
     None,
@@ -4320,6 +4884,21 @@ pub enum CheckProjectionV2FreezeState {
     Confirmed,
     #[serde(rename = "FAILED")]
     Failed,
+}
+impl<'de> Deserialize<'de> for CheckProjectionV2FreezeState {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "NONE" => Ok(Self::None),
+            "REQUESTED" => Ok(Self::Requested),
+            "CONFIRMED" => Ok(Self::Confirmed),
+            "FAILED" => Ok(Self::Failed),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["NONE", "REQUESTED", "CONFIRMED", "FAILED"],
+            )),
+        }
+    }
 }
 impl CheckProjectionV2FreezeState {
     pub fn code(&self) -> u64 {
@@ -4351,10 +4930,22 @@ impl CanonicalOrder for CheckProjectionV2FreezeState {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckProjectionV2Type {
     #[serde(rename = "CheckProjectionV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for CheckProjectionV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CheckProjectionV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CheckProjectionV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -4612,7 +5203,7 @@ impl CanonicalOrder for CheckProjectionV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckWriteRequestV1Conclusion {
     #[serde(rename = "IN_PROGRESS")]
     InProgress,
@@ -4624,6 +5215,28 @@ pub enum CheckWriteRequestV1Conclusion {
     Cancelled,
     #[serde(rename = "ACTION_REQUIRED")]
     ActionRequired,
+}
+impl<'de> Deserialize<'de> for CheckWriteRequestV1Conclusion {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "IN_PROGRESS" => Ok(Self::InProgress),
+            "SUCCESS" => Ok(Self::Success),
+            "FAILURE" => Ok(Self::Failure),
+            "CANCELLED" => Ok(Self::Cancelled),
+            "ACTION_REQUIRED" => Ok(Self::ActionRequired),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "IN_PROGRESS",
+                    "SUCCESS",
+                    "FAILURE",
+                    "CANCELLED",
+                    "ACTION_REQUIRED",
+                ],
+            )),
+        }
+    }
 }
 impl CheckWriteRequestV1Conclusion {
     pub fn code(&self) -> u64 {
@@ -4657,10 +5270,22 @@ impl CanonicalOrder for CheckWriteRequestV1Conclusion {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckWriteRequestV1Type {
     #[serde(rename = "CheckWriteRequestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CheckWriteRequestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CheckWriteRequestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CheckWriteRequestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -4823,10 +5448,22 @@ impl CanonicalOrder for CheckWriteRequestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CheckoutGrantV2Type {
     #[serde(rename = "CheckoutGrantV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for CheckoutGrantV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CheckoutGrantV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CheckoutGrantV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -4984,10 +5621,22 @@ impl CanonicalOrder for CheckoutGrantV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CommitIdentityV1Type {
     #[serde(rename = "CommitIdentityV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CommitIdentityV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CommitIdentityV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CommitIdentityV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -5094,10 +5743,22 @@ impl CanonicalOrder for CommitIdentityV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CreateBlobRequestV1Type {
     #[serde(rename = "CreateBlobRequestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CreateBlobRequestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CreateBlobRequestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CreateBlobRequestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -5223,10 +5884,22 @@ impl CanonicalOrder for CreateBlobRequestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CreateCommitRequestV1Type {
     #[serde(rename = "CreateCommitRequestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CreateCommitRequestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CreateCommitRequestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CreateCommitRequestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -5362,10 +6035,22 @@ impl CanonicalOrder for CreateCommitRequestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CreateFixPrRequestV1Type {
     #[serde(rename = "CreateFixPrRequestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CreateFixPrRequestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CreateFixPrRequestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CreateFixPrRequestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -5504,10 +6189,22 @@ impl CanonicalOrder for CreateFixPrRequestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CreateRefRequestV1Type {
     #[serde(rename = "CreateRefRequestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CreateRefRequestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CreateRefRequestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CreateRefRequestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -5611,10 +6308,22 @@ impl CanonicalOrder for CreateRefRequestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CreateTreeRequestV1Type {
     #[serde(rename = "CreateTreeRequestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CreateTreeRequestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CreateTreeRequestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CreateTreeRequestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -5726,10 +6435,22 @@ impl CanonicalOrder for CreateTreeRequestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum CurrentCandidateV1Type {
     #[serde(rename = "CurrentCandidateV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for CurrentCandidateV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CurrentCandidateV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CurrentCandidateV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -5863,10 +6584,22 @@ impl CanonicalOrder for CurrentCandidateV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum DbStartCertificateV1Type {
     #[serde(rename = "DbStartCertificateV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for DbStartCertificateV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "DbStartCertificateV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["DbStartCertificateV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -6022,10 +6755,22 @@ impl CanonicalOrder for DbStartCertificateV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum DependencyAcquisitionGrantV1Type {
     #[serde(rename = "DependencyAcquisitionGrantV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for DependencyAcquisitionGrantV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "DependencyAcquisitionGrantV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["DependencyAcquisitionGrantV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -6242,10 +6987,22 @@ impl CanonicalOrder for DependencyAcquisitionGrantV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum DependencyPackageV1Type {
     #[serde(rename = "DependencyPackageV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for DependencyPackageV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "DependencyPackageV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["DependencyPackageV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -6387,10 +7144,22 @@ impl CanonicalOrder for DependencyPackageV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum DescriptorEntryV1Type {
     #[serde(rename = "DescriptorEntryV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for DescriptorEntryV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "DescriptorEntryV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["DescriptorEntryV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -6473,10 +7242,19 @@ impl CanonicalOrder for DescriptorEntryV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EffectIntentV2State {
     #[serde(rename = "PENDING")]
     Pending,
+}
+impl<'de> Deserialize<'de> for EffectIntentV2State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PENDING" => Ok(Self::Pending),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["PENDING"])),
+        }
+    }
 }
 impl EffectIntentV2State {
     pub fn code(&self) -> u64 {
@@ -6502,10 +7280,22 @@ impl CanonicalOrder for EffectIntentV2State {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EffectIntentV2Type {
     #[serde(rename = "EffectIntentV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for EffectIntentV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "EffectIntentV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["EffectIntentV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -6740,10 +7530,22 @@ impl CanonicalOrder for EffectIntentV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EffectPlanEntryV1Type {
     #[serde(rename = "EffectPlanEntryV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for EffectPlanEntryV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "EffectPlanEntryV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["EffectPlanEntryV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -6853,7 +7655,7 @@ impl CanonicalOrder for EffectPlanEntryV1 {
         Some(self.step_id.0.as_bytes().to_vec())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EffectStateV1State {
     #[serde(rename = "PENDING")]
     Pending,
@@ -6867,6 +7669,30 @@ pub enum EffectStateV1State {
     Unknown,
     #[serde(rename = "MANUAL_RECONCILIATION")]
     ManualReconciliation,
+}
+impl<'de> Deserialize<'de> for EffectStateV1State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PENDING" => Ok(Self::Pending),
+            "STARTED" => Ok(Self::Started),
+            "CONFIRMED" => Ok(Self::Confirmed),
+            "FAILED_TERMINAL" => Ok(Self::FailedTerminal),
+            "UNKNOWN" => Ok(Self::Unknown),
+            "MANUAL_RECONCILIATION" => Ok(Self::ManualReconciliation),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "PENDING",
+                    "STARTED",
+                    "CONFIRMED",
+                    "FAILED_TERMINAL",
+                    "UNKNOWN",
+                    "MANUAL_RECONCILIATION",
+                ],
+            )),
+        }
+    }
 }
 impl EffectStateV1State {
     pub fn code(&self) -> u64 {
@@ -6902,10 +7728,22 @@ impl CanonicalOrder for EffectStateV1State {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EffectStateV1Type {
     #[serde(rename = "EffectStateV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for EffectStateV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "EffectStateV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["EffectStateV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -7077,10 +7915,22 @@ impl CanonicalOrder for EffectStateV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EligibilityProofV2Type {
     #[serde(rename = "EligibilityProofV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for EligibilityProofV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "EligibilityProofV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["EligibilityProofV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -7273,10 +8123,22 @@ impl CanonicalOrder for EligibilityProofV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EvaluationIdentityV2Type {
     #[serde(rename = "EvaluationIdentityV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for EvaluationIdentityV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "EvaluationIdentityV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["EvaluationIdentityV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -7429,7 +8291,7 @@ impl CanonicalOrder for EvaluationIdentityV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EvidenceReceiptV2Grade {
     #[serde(rename = "E0")]
     E0,
@@ -7441,6 +8303,22 @@ pub enum EvidenceReceiptV2Grade {
     E3,
     #[serde(rename = "E4")]
     E4,
+}
+impl<'de> Deserialize<'de> for EvidenceReceiptV2Grade {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "E0" => Ok(Self::E0),
+            "E1" => Ok(Self::E1),
+            "E2" => Ok(Self::E2),
+            "E3" => Ok(Self::E3),
+            "E4" => Ok(Self::E4),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["E0", "E1", "E2", "E3", "E4"],
+            )),
+        }
+    }
 }
 impl EvidenceReceiptV2Grade {
     pub fn code(&self) -> u64 {
@@ -7474,10 +8352,22 @@ impl CanonicalOrder for EvidenceReceiptV2Grade {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum EvidenceReceiptV2Type {
     #[serde(rename = "EvidenceReceiptV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for EvidenceReceiptV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "EvidenceReceiptV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["EvidenceReceiptV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -7665,10 +8555,22 @@ impl CanonicalOrder for EvidenceReceiptV2 {
         Some(self.unit_id.0.as_bytes().to_vec())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ExpectedAnalysisManifestV1Type {
     #[serde(rename = "ExpectedAnalysisManifestV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ExpectedAnalysisManifestV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ExpectedAnalysisManifestV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ExpectedAnalysisManifestV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -7820,7 +8722,7 @@ impl CanonicalOrder for ExpectedAnalysisManifestV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ExternalEffectJournalV1EntryKind {
     #[serde(rename = "PREPARED")]
     Prepared,
@@ -7830,6 +8732,21 @@ pub enum ExternalEffectJournalV1EntryKind {
     Observed,
     #[serde(rename = "RESOLVED")]
     Resolved,
+}
+impl<'de> Deserialize<'de> for ExternalEffectJournalV1EntryKind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PREPARED" => Ok(Self::Prepared),
+            "SEND_ARMED" => Ok(Self::SendArmed),
+            "OBSERVED" => Ok(Self::Observed),
+            "RESOLVED" => Ok(Self::Resolved),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["PREPARED", "SEND_ARMED", "OBSERVED", "RESOLVED"],
+            )),
+        }
+    }
 }
 impl ExternalEffectJournalV1EntryKind {
     pub fn code(&self) -> u64 {
@@ -7861,10 +8778,22 @@ impl CanonicalOrder for ExternalEffectJournalV1EntryKind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ExternalEffectJournalV1Type {
     #[serde(rename = "ExternalEffectJournalV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ExternalEffectJournalV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ExternalEffectJournalV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ExternalEffectJournalV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -8046,10 +8975,22 @@ impl CanonicalOrder for ExternalEffectJournalV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum FindingCandidateV2Type {
     #[serde(rename = "FindingCandidateV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for FindingCandidateV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "FindingCandidateV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["FindingCandidateV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -8199,7 +9140,7 @@ impl CanonicalOrder for FindingCandidateV2 {
         Some(self.unit_id.0.as_bytes().to_vec())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum GateProofV2Conclusion {
     #[serde(rename = "PASS")]
     Pass,
@@ -8217,6 +9158,34 @@ pub enum GateProofV2Conclusion {
     Revoked,
     #[serde(rename = "INVALID")]
     Invalid,
+}
+impl<'de> Deserialize<'de> for GateProofV2Conclusion {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PASS" => Ok(Self::Pass),
+            "FAIL" => Ok(Self::Fail),
+            "BLOCKED" => Ok(Self::Blocked),
+            "HUMAN_REVIEW_REQUIRED" => Ok(Self::HumanReviewRequired),
+            "PARTIALLY_AVAILABLE" => Ok(Self::PartiallyAvailable),
+            "STALE" => Ok(Self::Stale),
+            "REVOKED" => Ok(Self::Revoked),
+            "INVALID" => Ok(Self::Invalid),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "PASS",
+                    "FAIL",
+                    "BLOCKED",
+                    "HUMAN_REVIEW_REQUIRED",
+                    "PARTIALLY_AVAILABLE",
+                    "STALE",
+                    "REVOKED",
+                    "INVALID",
+                ],
+            )),
+        }
+    }
 }
 impl GateProofV2Conclusion {
     pub fn code(&self) -> u64 {
@@ -8256,10 +9225,19 @@ impl CanonicalOrder for GateProofV2Conclusion {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum GateProofV2Type {
     #[serde(rename = "GateProofV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for GateProofV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "GateProofV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["GateProofV2"])),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -8404,12 +9382,25 @@ impl CanonicalOrder for GateProofV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum GitOidV1Algorithm {
     #[serde(rename = "SHA1")]
     Sha1,
     #[serde(rename = "SHA256")]
     Sha256,
+}
+impl<'de> Deserialize<'de> for GitOidV1Algorithm {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "SHA1" => Ok(Self::Sha1),
+            "SHA256" => Ok(Self::Sha256),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["SHA1", "SHA256"],
+            )),
+        }
+    }
 }
 impl GitOidV1Algorithm {
     pub fn code(&self) -> u64 {
@@ -8437,10 +9428,19 @@ impl CanonicalOrder for GitOidV1Algorithm {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum GitOidV1Type {
     #[serde(rename = "GitOidV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for GitOidV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "GitOidV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["GitOidV1"])),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -8521,7 +9521,7 @@ impl CanonicalOrder for GitOidV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum GitPublicationCapabilityV2EffectKind {
     #[serde(rename = "CREATE_BLOB")]
     CreateBlob,
@@ -8533,6 +9533,28 @@ pub enum GitPublicationCapabilityV2EffectKind {
     CreateRef,
     #[serde(rename = "CREATE_FIX_PR")]
     CreateFixPr,
+}
+impl<'de> Deserialize<'de> for GitPublicationCapabilityV2EffectKind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CREATE_BLOB" => Ok(Self::CreateBlob),
+            "CREATE_TREE" => Ok(Self::CreateTree),
+            "CREATE_COMMIT" => Ok(Self::CreateCommit),
+            "CREATE_REF" => Ok(Self::CreateRef),
+            "CREATE_FIX_PR" => Ok(Self::CreateFixPr),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "CREATE_BLOB",
+                    "CREATE_TREE",
+                    "CREATE_COMMIT",
+                    "CREATE_REF",
+                    "CREATE_FIX_PR",
+                ],
+            )),
+        }
+    }
 }
 impl GitPublicationCapabilityV2EffectKind {
     pub fn code(&self) -> u64 {
@@ -8566,10 +9588,22 @@ impl CanonicalOrder for GitPublicationCapabilityV2EffectKind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum GitPublicationCapabilityV2Type {
     #[serde(rename = "GitPublicationCapabilityV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for GitPublicationCapabilityV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "GitPublicationCapabilityV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["GitPublicationCapabilityV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -8788,10 +9822,22 @@ impl CanonicalOrder for GitPublicationCapabilityV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum HumanApprovalAssertionV2Type {
     #[serde(rename = "HumanApprovalAssertionV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for HumanApprovalAssertionV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "HumanApprovalAssertionV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["HumanApprovalAssertionV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -9054,10 +10100,22 @@ impl CanonicalOrder for HumanApprovalAssertionV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum JournalEpochFenceV1Type {
     #[serde(rename = "JournalEpochFenceV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for JournalEpochFenceV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "JournalEpochFenceV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["JournalEpochFenceV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -9199,10 +10257,22 @@ impl CanonicalOrder for JournalEpochFenceV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum JournalWitnessReceiptV1Type {
     #[serde(rename = "JournalWitnessReceiptV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for JournalWitnessReceiptV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "JournalWitnessReceiptV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["JournalWitnessReceiptV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -9335,7 +10405,7 @@ impl CanonicalOrder for JournalWitnessReceiptV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManifestDescriptorV1Kind {
     #[serde(rename = "SCOPES")]
     Scopes,
@@ -9349,6 +10419,30 @@ pub enum ManifestDescriptorV1Kind {
     CoverageExpectations,
     #[serde(rename = "ANALYZER_CONFIGURATION")]
     AnalyzerConfiguration,
+}
+impl<'de> Deserialize<'de> for ManifestDescriptorV1Kind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "SCOPES" => Ok(Self::Scopes),
+            "FILES_SYMBOLS" => Ok(Self::FilesSymbols),
+            "EXCLUSIONS" => Ok(Self::Exclusions),
+            "SANDBOX_REQUIREMENTS" => Ok(Self::SandboxRequirements),
+            "COVERAGE_EXPECTATIONS" => Ok(Self::CoverageExpectations),
+            "ANALYZER_CONFIGURATION" => Ok(Self::AnalyzerConfiguration),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "SCOPES",
+                    "FILES_SYMBOLS",
+                    "EXCLUSIONS",
+                    "SANDBOX_REQUIREMENTS",
+                    "COVERAGE_EXPECTATIONS",
+                    "ANALYZER_CONFIGURATION",
+                ],
+            )),
+        }
+    }
 }
 impl ManifestDescriptorV1Kind {
     pub fn code(&self) -> u64 {
@@ -9384,10 +10478,22 @@ impl CanonicalOrder for ManifestDescriptorV1Kind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManifestDescriptorV1Type {
     #[serde(rename = "ManifestDescriptorV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ManifestDescriptorV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ManifestDescriptorV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ManifestDescriptorV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -9470,7 +10576,7 @@ impl CanonicalOrder for ManifestDescriptorV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManualCaseStateV1State {
     #[serde(rename = "OPEN")]
     Open,
@@ -9490,6 +10596,36 @@ pub enum ManualCaseStateV1State {
     ClosedUnresolved,
     #[serde(rename = "EXPIRED")]
     Expired,
+}
+impl<'de> Deserialize<'de> for ManualCaseStateV1State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "OPEN" => Ok(Self::Open),
+            "EVIDENCE_PENDING" => Ok(Self::EvidencePending),
+            "RESOLVED_CONFIRMED" => Ok(Self::ResolvedConfirmed),
+            "RESOLVED_NOT_EXECUTED" => Ok(Self::ResolvedNotExecuted),
+            "RESOLVED_REEVALUATE" => Ok(Self::ResolvedReevaluate),
+            "ACCEPTED_RISK" => Ok(Self::AcceptedRisk),
+            "REJECTED" => Ok(Self::Rejected),
+            "CLOSED_UNRESOLVED" => Ok(Self::ClosedUnresolved),
+            "EXPIRED" => Ok(Self::Expired),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "OPEN",
+                    "EVIDENCE_PENDING",
+                    "RESOLVED_CONFIRMED",
+                    "RESOLVED_NOT_EXECUTED",
+                    "RESOLVED_REEVALUATE",
+                    "ACCEPTED_RISK",
+                    "REJECTED",
+                    "CLOSED_UNRESOLVED",
+                    "EXPIRED",
+                ],
+            )),
+        }
+    }
 }
 impl ManualCaseStateV1State {
     pub fn code(&self) -> u64 {
@@ -9531,10 +10667,22 @@ impl CanonicalOrder for ManualCaseStateV1State {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManualCaseStateV1Type {
     #[serde(rename = "ManualCaseStateV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ManualCaseStateV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ManualCaseStateV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ManualCaseStateV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -9670,7 +10818,7 @@ impl CanonicalOrder for ManualCaseStateV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManualResolutionActionV1Kind {
     #[serde(rename = "DISPUTED_FINDING")]
     DisputedFinding,
@@ -9684,6 +10832,30 @@ pub enum ManualResolutionActionV1Kind {
     ApprovalRecovery,
     #[serde(rename = "UNTRUSTED_ORACLE")]
     UntrustedOracle,
+}
+impl<'de> Deserialize<'de> for ManualResolutionActionV1Kind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "DISPUTED_FINDING" => Ok(Self::DisputedFinding),
+            "FALSE_POSITIVE" => Ok(Self::FalsePositive),
+            "UNSUPPORTED_VERIFICATION" => Ok(Self::UnsupportedVerification),
+            "EXTERNAL_EFFECT_UNCERTAINTY" => Ok(Self::ExternalEffectUncertainty),
+            "APPROVAL_RECOVERY" => Ok(Self::ApprovalRecovery),
+            "UNTRUSTED_ORACLE" => Ok(Self::UntrustedOracle),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "DISPUTED_FINDING",
+                    "FALSE_POSITIVE",
+                    "UNSUPPORTED_VERIFICATION",
+                    "EXTERNAL_EFFECT_UNCERTAINTY",
+                    "APPROVAL_RECOVERY",
+                    "UNTRUSTED_ORACLE",
+                ],
+            )),
+        }
+    }
 }
 impl ManualResolutionActionV1Kind {
     pub fn code(&self) -> u64 {
@@ -9719,7 +10891,7 @@ impl CanonicalOrder for ManualResolutionActionV1Kind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManualResolutionActionV1Decision {
     #[serde(rename = "REQUEST_FRESH_EVALUATION")]
     RequestFreshEvaluation,
@@ -9739,6 +10911,36 @@ pub enum ManualResolutionActionV1Decision {
     CloseUnresolved,
     #[serde(rename = "CREATE_POLICY_EXCLUSION")]
     CreatePolicyExclusion,
+}
+impl<'de> Deserialize<'de> for ManualResolutionActionV1Decision {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "REQUEST_FRESH_EVALUATION" => Ok(Self::RequestFreshEvaluation),
+            "PROVIDE_ORACLE" => Ok(Self::ProvideOracle),
+            "CONFIRM_EFFECT" => Ok(Self::ConfirmEffect),
+            "PROVE_TERMINAL_NONEXECUTION" => Ok(Self::ProveTerminalNonexecution),
+            "REMAIN_BLOCKED" => Ok(Self::RemainBlocked),
+            "REVOKE" => Ok(Self::Revoke),
+            "ACCEPT_RISK" => Ok(Self::AcceptRisk),
+            "CLOSE_UNRESOLVED" => Ok(Self::CloseUnresolved),
+            "CREATE_POLICY_EXCLUSION" => Ok(Self::CreatePolicyExclusion),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "REQUEST_FRESH_EVALUATION",
+                    "PROVIDE_ORACLE",
+                    "CONFIRM_EFFECT",
+                    "PROVE_TERMINAL_NONEXECUTION",
+                    "REMAIN_BLOCKED",
+                    "REVOKE",
+                    "ACCEPT_RISK",
+                    "CLOSE_UNRESOLVED",
+                    "CREATE_POLICY_EXCLUSION",
+                ],
+            )),
+        }
+    }
 }
 impl ManualResolutionActionV1Decision {
     pub fn code(&self) -> u64 {
@@ -9780,10 +10982,22 @@ impl CanonicalOrder for ManualResolutionActionV1Decision {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManualResolutionActionV1Type {
     #[serde(rename = "ManualResolutionActionV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ManualResolutionActionV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ManualResolutionActionV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ManualResolutionActionV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -9975,10 +11189,22 @@ impl CanonicalOrder for ManualResolutionActionV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ManualResolutionV1Type {
     #[serde(rename = "ManualResolutionV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ManualResolutionV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ManualResolutionV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ManualResolutionV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -10113,7 +11339,7 @@ impl CanonicalOrder for ManualResolutionV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum MergeSubjectV2CandidateKind {
     #[serde(rename = "HEAD_ONLY_NONMERGE")]
     HeadOnlyNonmerge,
@@ -10123,6 +11349,26 @@ pub enum MergeSubjectV2CandidateKind {
     MergeGroup,
     #[serde(rename = "PROVIDER_EQUIVALENT")]
     ProviderEquivalent,
+}
+impl<'de> Deserialize<'de> for MergeSubjectV2CandidateKind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "HEAD_ONLY_NONMERGE" => Ok(Self::HeadOnlyNonmerge),
+            "TEST_MERGE" => Ok(Self::TestMerge),
+            "MERGE_GROUP" => Ok(Self::MergeGroup),
+            "PROVIDER_EQUIVALENT" => Ok(Self::ProviderEquivalent),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "HEAD_ONLY_NONMERGE",
+                    "TEST_MERGE",
+                    "MERGE_GROUP",
+                    "PROVIDER_EQUIVALENT",
+                ],
+            )),
+        }
+    }
 }
 impl MergeSubjectV2CandidateKind {
     pub fn code(&self) -> u64 {
@@ -10154,7 +11400,7 @@ impl CanonicalOrder for MergeSubjectV2CandidateKind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum MergeSubjectV2MergeMethod {
     #[serde(rename = "MERGE")]
     Merge,
@@ -10166,6 +11412,22 @@ pub enum MergeSubjectV2MergeMethod {
     Queue,
     #[serde(rename = "ADVISORY")]
     Advisory,
+}
+impl<'de> Deserialize<'de> for MergeSubjectV2MergeMethod {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "MERGE" => Ok(Self::Merge),
+            "SQUASH" => Ok(Self::Squash),
+            "REBASE" => Ok(Self::Rebase),
+            "QUEUE" => Ok(Self::Queue),
+            "ADVISORY" => Ok(Self::Advisory),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["MERGE", "SQUASH", "REBASE", "QUEUE", "ADVISORY"],
+            )),
+        }
+    }
 }
 impl MergeSubjectV2MergeMethod {
     pub fn code(&self) -> u64 {
@@ -10199,10 +11461,22 @@ impl CanonicalOrder for MergeSubjectV2MergeMethod {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum MergeSubjectV2Type {
     #[serde(rename = "MergeSubjectV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for MergeSubjectV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "MergeSubjectV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["MergeSubjectV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -10397,7 +11671,7 @@ impl CanonicalOrder for MergeSubjectV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelContentBlockV1Kind {
     #[serde(rename = "TEXT")]
     Text,
@@ -10405,6 +11679,20 @@ pub enum ModelContentBlockV1Kind {
     ToolUse,
     #[serde(rename = "TOOL_RESULT")]
     ToolResult,
+}
+impl<'de> Deserialize<'de> for ModelContentBlockV1Kind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "TEXT" => Ok(Self::Text),
+            "TOOL_USE" => Ok(Self::ToolUse),
+            "TOOL_RESULT" => Ok(Self::ToolResult),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["TEXT", "TOOL_USE", "TOOL_RESULT"],
+            )),
+        }
+    }
 }
 impl ModelContentBlockV1Kind {
     pub fn code(&self) -> u64 {
@@ -10434,10 +11722,22 @@ impl CanonicalOrder for ModelContentBlockV1Kind {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelContentBlockV1Type {
     #[serde(rename = "ModelContentBlockV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ModelContentBlockV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ModelContentBlockV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ModelContentBlockV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -10565,10 +11865,22 @@ impl CanonicalOrder for ModelContentBlockV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelContentV1Type {
     #[serde(rename = "ModelContentV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ModelContentV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ModelContentV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ModelContentV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -10641,10 +11953,22 @@ impl CanonicalOrder for ModelContentV1 {
         1usize.saturating_add(self.blocks.canonical_nesting())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelIntentV2Type {
     #[serde(rename = "ModelIntentV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for ModelIntentV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ModelIntentV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ModelIntentV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -10841,7 +12165,7 @@ impl CanonicalOrder for ModelIntentV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelMessageV1Role {
     #[serde(rename = "SYSTEM")]
     System,
@@ -10851,6 +12175,21 @@ pub enum ModelMessageV1Role {
     Assistant,
     #[serde(rename = "TOOL")]
     Tool,
+}
+impl<'de> Deserialize<'de> for ModelMessageV1Role {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "SYSTEM" => Ok(Self::System),
+            "USER" => Ok(Self::User),
+            "ASSISTANT" => Ok(Self::Assistant),
+            "TOOL" => Ok(Self::Tool),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["SYSTEM", "USER", "ASSISTANT", "TOOL"],
+            )),
+        }
+    }
 }
 impl ModelMessageV1Role {
     pub fn code(&self) -> u64 {
@@ -10882,10 +12221,22 @@ impl CanonicalOrder for ModelMessageV1Role {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelMessageV1Type {
     #[serde(rename = "ModelMessageV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ModelMessageV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ModelMessageV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ModelMessageV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -10984,10 +12335,19 @@ impl CanonicalOrder for ModelMessageV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelToolV1Type {
     #[serde(rename = "ModelToolV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ModelToolV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ModelToolV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["ModelToolV1"])),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -11092,10 +12452,19 @@ impl CanonicalOrder for ModelToolV1 {
         Some(self.tool_id.0.as_bytes().to_vec())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ModelTurnV2Type {
     #[serde(rename = "ModelTurnV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for ModelTurnV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ModelTurnV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["ModelTurnV2"])),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -11266,7 +12635,7 @@ impl CanonicalOrder for ModelTurnV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum OracleTrustClassV1Origin {
     #[serde(rename = "TRUSTED_REPOSITORY_TEST")]
     TrustedRepositoryTest,
@@ -11282,6 +12651,32 @@ pub enum OracleTrustClassV1Origin {
     DeterministicExploit,
     #[serde(rename = "UNTRUSTED_AGENT_EXPECTATION")]
     UntrustedAgentExpectation,
+}
+impl<'de> Deserialize<'de> for OracleTrustClassV1Origin {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "TRUSTED_REPOSITORY_TEST" => Ok(Self::TrustedRepositoryTest),
+            "TRUSTED_SPECIFICATION" => Ok(Self::TrustedSpecification),
+            "SECURITY_INVARIANT" => Ok(Self::SecurityInvariant),
+            "STANDARDS_REQUIREMENT" => Ok(Self::StandardsRequirement),
+            "MAINTAINER_APPROVED" => Ok(Self::MaintainerApproved),
+            "DETERMINISTIC_EXPLOIT" => Ok(Self::DeterministicExploit),
+            "UNTRUSTED_AGENT_EXPECTATION" => Ok(Self::UntrustedAgentExpectation),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "TRUSTED_REPOSITORY_TEST",
+                    "TRUSTED_SPECIFICATION",
+                    "SECURITY_INVARIANT",
+                    "STANDARDS_REQUIREMENT",
+                    "MAINTAINER_APPROVED",
+                    "DETERMINISTIC_EXPLOIT",
+                    "UNTRUSTED_AGENT_EXPECTATION",
+                ],
+            )),
+        }
+    }
 }
 impl OracleTrustClassV1Origin {
     pub fn code(&self) -> u64 {
@@ -11319,10 +12714,22 @@ impl CanonicalOrder for OracleTrustClassV1Origin {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum OracleTrustClassV1Type {
     #[serde(rename = "OracleTrustClassV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for OracleTrustClassV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "OracleTrustClassV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["OracleTrustClassV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -11443,10 +12850,22 @@ impl CanonicalOrder for OracleTrustClassV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum PatchCandidateV2Type {
     #[serde(rename = "PatchCandidateV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for PatchCandidateV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PatchCandidateV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["PatchCandidateV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -11596,7 +13015,7 @@ impl CanonicalOrder for PatchCandidateV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum PatchCustodyV1State {
     #[serde(rename = "AVAILABLE")]
     Available,
@@ -11606,6 +13025,21 @@ pub enum PatchCustodyV1State {
     DeletionPending,
     #[serde(rename = "DELETED")]
     Deleted,
+}
+impl<'de> Deserialize<'de> for PatchCustodyV1State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "AVAILABLE" => Ok(Self::Available),
+            "LOST" => Ok(Self::Lost),
+            "DELETION_PENDING" => Ok(Self::DeletionPending),
+            "DELETED" => Ok(Self::Deleted),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["AVAILABLE", "LOST", "DELETION_PENDING", "DELETED"],
+            )),
+        }
+    }
 }
 impl PatchCustodyV1State {
     pub fn code(&self) -> u64 {
@@ -11637,10 +13071,22 @@ impl CanonicalOrder for PatchCustodyV1State {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum PatchCustodyV1Type {
     #[serde(rename = "PatchCustodyV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for PatchCustodyV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PatchCustodyV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["PatchCustodyV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -11858,10 +13304,22 @@ impl CanonicalOrder for PatchCustodyV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum PolicyVersionV1Type {
     #[serde(rename = "PolicyVersionV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for PolicyVersionV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PolicyVersionV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["PolicyVersionV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -12039,10 +13497,22 @@ impl CanonicalOrder for PolicyVersionV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ProducerEventV2Type {
     #[serde(rename = "ProducerEventV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for ProducerEventV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ProducerEventV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ProducerEventV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -12200,10 +13670,22 @@ impl CanonicalOrder for ProducerEventV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ProviderEventV2Type {
     #[serde(rename = "ProviderEventV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for ProviderEventV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ProviderEventV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ProviderEventV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -12345,10 +13827,22 @@ impl CanonicalOrder for ProviderEventV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ProviderResultV1Type {
     #[serde(rename = "ProviderResultV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ProviderResultV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ProviderResultV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ProviderResultV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -12501,10 +13995,22 @@ impl CanonicalOrder for ProviderResultV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum PublicationEffectsV1Type {
     #[serde(rename = "PublicationEffectsV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for PublicationEffectsV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PublicationEffectsV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["PublicationEffectsV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -12596,7 +14102,7 @@ impl CanonicalOrder for PublicationEffectsV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum PublicationOperationV1State {
     #[serde(rename = "PLANNED")]
     Planned,
@@ -12618,6 +14124,38 @@ pub enum PublicationOperationV1State {
     Unknown,
     #[serde(rename = "MANUAL_RECONCILIATION")]
     ManualReconciliation,
+}
+impl<'de> Deserialize<'de> for PublicationOperationV1State {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PLANNED" => Ok(Self::Planned),
+            "AWAITING_APPROVAL" => Ok(Self::AwaitingApproval),
+            "AUTHORIZED" => Ok(Self::Authorized),
+            "RUNNING" => Ok(Self::Running),
+            "CONFIRMED" => Ok(Self::Confirmed),
+            "FAILED_TERMINAL" => Ok(Self::FailedTerminal),
+            "REVOKED" => Ok(Self::Revoked),
+            "EXPIRED" => Ok(Self::Expired),
+            "UNKNOWN" => Ok(Self::Unknown),
+            "MANUAL_RECONCILIATION" => Ok(Self::ManualReconciliation),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &[
+                    "PLANNED",
+                    "AWAITING_APPROVAL",
+                    "AUTHORIZED",
+                    "RUNNING",
+                    "CONFIRMED",
+                    "FAILED_TERMINAL",
+                    "REVOKED",
+                    "EXPIRED",
+                    "UNKNOWN",
+                    "MANUAL_RECONCILIATION",
+                ],
+            )),
+        }
+    }
 }
 impl PublicationOperationV1State {
     pub fn code(&self) -> u64 {
@@ -12661,10 +14199,22 @@ impl CanonicalOrder for PublicationOperationV1State {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum PublicationOperationV1Type {
     #[serde(rename = "PublicationOperationV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for PublicationOperationV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "PublicationOperationV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["PublicationOperationV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -12806,10 +14356,22 @@ impl CanonicalOrder for PublicationOperationV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ResolutionChallengeV1Type {
     #[serde(rename = "ResolutionChallengeV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ResolutionChallengeV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ResolutionChallengeV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ResolutionChallengeV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -12967,10 +14529,22 @@ impl CanonicalOrder for ResolutionChallengeV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ResourceEnvelopeV2Type {
     #[serde(rename = "ResourceEnvelopeV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for ResourceEnvelopeV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ResourceEnvelopeV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["ResourceEnvelopeV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -13230,10 +14804,22 @@ impl CanonicalOrder for ResourceEnvelopeV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum RevocationRecordV1Type {
     #[serde(rename = "RevocationRecordV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for RevocationRecordV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "RevocationRecordV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["RevocationRecordV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -13372,10 +14958,19 @@ impl CanonicalOrder for RevocationRecordV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum ScopeV1Type {
     #[serde(rename = "ScopeV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for ScopeV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "ScopeV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["ScopeV1"])),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -13480,10 +15075,22 @@ impl CanonicalOrder for ScopeV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum SignedEnvelopeV1Type {
     #[serde(rename = "SignedEnvelopeV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for SignedEnvelopeV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "SignedEnvelopeV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["SignedEnvelopeV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -13606,10 +15213,19 @@ impl CanonicalOrder for SignedEnvelopeV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum TreeEntryV1Type {
     #[serde(rename = "TreeEntryV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for TreeEntryV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "TreeEntryV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(&value, &["TreeEntryV1"])),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -13703,10 +15319,22 @@ impl CanonicalOrder for TreeEntryV1 {
         Some(self.path.0.clone())
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum TrustBundleV1Type {
     #[serde(rename = "TrustBundleV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for TrustBundleV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "TrustBundleV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["TrustBundleV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -13826,10 +15454,22 @@ impl CanonicalOrder for TrustBundleV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum TrustMemberV1Type {
     #[serde(rename = "TrustMemberV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for TrustMemberV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "TrustMemberV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["TrustMemberV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -13966,10 +15606,22 @@ impl CanonicalOrder for TrustMemberV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum TrustedDisplayReceiptV1Type {
     #[serde(rename = "TrustedDisplayReceiptV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for TrustedDisplayReceiptV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "TrustedDisplayReceiptV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["TrustedDisplayReceiptV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -14137,7 +15789,7 @@ impl CanonicalOrder for TrustedDisplayReceiptV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum VerificationReceiptV2IndependenceClass {
     #[serde(rename = "C0")]
     C0,
@@ -14149,6 +15801,22 @@ pub enum VerificationReceiptV2IndependenceClass {
     C3,
     #[serde(rename = "C4")]
     C4,
+}
+impl<'de> Deserialize<'de> for VerificationReceiptV2IndependenceClass {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "C0" => Ok(Self::C0),
+            "C1" => Ok(Self::C1),
+            "C2" => Ok(Self::C2),
+            "C3" => Ok(Self::C3),
+            "C4" => Ok(Self::C4),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["C0", "C1", "C2", "C3", "C4"],
+            )),
+        }
+    }
 }
 impl VerificationReceiptV2IndependenceClass {
     pub fn code(&self) -> u64 {
@@ -14182,7 +15850,7 @@ impl CanonicalOrder for VerificationReceiptV2IndependenceClass {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum VerificationReceiptV2Outcome {
     #[serde(rename = "CONFIRMED")]
     Confirmed,
@@ -14192,6 +15860,21 @@ pub enum VerificationReceiptV2Outcome {
     Unsupported,
     #[serde(rename = "INCONCLUSIVE")]
     Inconclusive,
+}
+impl<'de> Deserialize<'de> for VerificationReceiptV2Outcome {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "CONFIRMED" => Ok(Self::Confirmed),
+            "REJECTED" => Ok(Self::Rejected),
+            "UNSUPPORTED" => Ok(Self::Unsupported),
+            "INCONCLUSIVE" => Ok(Self::Inconclusive),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["CONFIRMED", "REJECTED", "UNSUPPORTED", "INCONCLUSIVE"],
+            )),
+        }
+    }
 }
 impl VerificationReceiptV2Outcome {
     pub fn code(&self) -> u64 {
@@ -14223,10 +15906,22 @@ impl CanonicalOrder for VerificationReceiptV2Outcome {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum VerificationReceiptV2Type {
     #[serde(rename = "VerificationReceiptV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for VerificationReceiptV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "VerificationReceiptV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["VerificationReceiptV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -14441,10 +16136,22 @@ impl CanonicalOrder for VerificationReceiptV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum VerificationSetV2Type {
     #[serde(rename = "VerificationSetV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for VerificationSetV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "VerificationSetV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["VerificationSetV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -14594,10 +16301,22 @@ impl CanonicalOrder for VerificationSetV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum VerifiedPublicationPlanV2Type {
     #[serde(rename = "VerifiedPublicationPlanV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for VerifiedPublicationPlanV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "VerifiedPublicationPlanV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["VerifiedPublicationPlanV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -14859,10 +16578,22 @@ impl CanonicalOrder for VerifiedPublicationPlanV2 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum WebAuthnCeremonyV1Type {
     #[serde(rename = "WebAuthnCeremonyV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for WebAuthnCeremonyV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "WebAuthnCeremonyV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["WebAuthnCeremonyV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -14985,10 +16716,22 @@ impl CanonicalOrder for WebAuthnCeremonyV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum WebAuthnRegistrationCeremonyV1Type {
     #[serde(rename = "WebAuthnRegistrationCeremonyV1")]
     Value,
+}
+impl<'de> Deserialize<'de> for WebAuthnRegistrationCeremonyV1Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "WebAuthnRegistrationCeremonyV1" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["WebAuthnRegistrationCeremonyV1"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(
@@ -15105,7 +16848,7 @@ impl CanonicalOrder for WebAuthnRegistrationCeremonyV1 {
         )
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum WorkflowSpecCoreV2Mode {
     #[serde(rename = "FAST")]
     Fast,
@@ -15115,6 +16858,21 @@ pub enum WorkflowSpecCoreV2Mode {
     Hybrid,
     #[serde(rename = "DEEP")]
     Deep,
+}
+impl<'de> Deserialize<'de> for WorkflowSpecCoreV2Mode {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "FAST" => Ok(Self::Fast),
+            "AI" => Ok(Self::Ai),
+            "HYBRID" => Ok(Self::Hybrid),
+            "DEEP" => Ok(Self::Deep),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["FAST", "AI", "HYBRID", "DEEP"],
+            )),
+        }
+    }
 }
 impl WorkflowSpecCoreV2Mode {
     pub fn code(&self) -> u64 {
@@ -15146,10 +16904,22 @@ impl CanonicalOrder for WorkflowSpecCoreV2Mode {
         0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum WorkflowSpecCoreV2Type {
     #[serde(rename = "WorkflowSpecCoreV2")]
     Value,
+}
+impl<'de> Deserialize<'de> for WorkflowSpecCoreV2Type {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "WorkflowSpecCoreV2" => Ok(Self::Value),
+            _ => Err(serde::de::Error::unknown_variant(
+                &value,
+                &["WorkflowSpecCoreV2"],
+            )),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(

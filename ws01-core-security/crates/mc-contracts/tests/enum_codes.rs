@@ -3108,3 +3108,129 @@ fn every_registered_enum_code_and_literal() {
             .is_err()
     );
 }
+
+fn assert_enum_json_strings_only<T>(literals: &[&str]) -> usize
+where
+    T: serde::de::DeserializeOwned + serde::Serialize + std::fmt::Debug,
+{
+    let enum_name = std::any::type_name::<T>();
+    for &literal in literals {
+        let canonical = serde_json::json!(literal);
+        let canonical_text = serde_json::to_string(&canonical).unwrap();
+        for (entry, parsed) in [
+            ("from_value", serde_json::from_value::<T>(canonical.clone())),
+            ("from_str", serde_json::from_str::<T>(&canonical_text)),
+        ] {
+            let parsed = parsed.unwrap_or_else(|error| {
+                panic!("{enum_name} {entry} rejected canonical {literal}: {error}")
+            });
+            assert_eq!(serde_json::to_value(&parsed).unwrap(), canonical);
+            assert_eq!(serde_json::to_string(&parsed).unwrap(), canonical_text);
+        }
+
+        let mut tagged = serde_json::Map::new();
+        tagged.insert(literal.to_owned(), serde_json::Value::Null);
+        for invalid in [
+            serde_json::Value::Object(tagged),
+            serde_json::json!({}),
+            serde_json::json!([]),
+            serde_json::json!([literal]),
+            serde_json::json!(0),
+            serde_json::json!(-1),
+            serde_json::json!(1.5),
+            serde_json::json!(false),
+            serde_json::json!(true),
+            serde_json::Value::Null,
+        ] {
+            let text = serde_json::to_string(&invalid).unwrap();
+            for (entry, result) in [
+                ("from_value", serde_json::from_value::<T>(invalid.clone())),
+                ("from_str", serde_json::from_str::<T>(&text)),
+            ] {
+                let error = match result {
+                    Ok(parsed) => panic!("{enum_name} {entry} accepted {text}: {parsed:?}"),
+                    Err(error) => error,
+                };
+                let message = error.to_string();
+                assert!(
+                    message.contains("invalid type:") && message.contains("expected a string"),
+                    "{enum_name} {entry} wrong rejection for {text}: {message}"
+                );
+            }
+        }
+    }
+
+    let unknown = serde_json::json!("UNREGISTERED_VALUE");
+    let unknown_text = serde_json::to_string(&unknown).unwrap();
+    for (entry, result) in [
+        ("from_value", serde_json::from_value::<T>(unknown)),
+        ("from_str", serde_json::from_str::<T>(&unknown_text)),
+    ] {
+        let error = match result {
+            Ok(parsed) => panic!("{enum_name} {entry} accepted an unknown literal: {parsed:?}"),
+            Err(error) => error,
+        };
+        assert!(
+            error
+                .to_string()
+                .contains("unknown variant `UNREGISTERED_VALUE`"),
+            "{enum_name} {entry} wrong unknown-literal rejection: {error}"
+        );
+    }
+    literals.len()
+}
+
+#[test]
+fn generated_enums_require_json_strings() {
+    // Same independent registry literal tables as every_registered_enum_code_and_literal.
+    macro_rules! check_tables {
+        ($($enum_type:ty => [$($literal:literal),+]),+ $(,)?) => {
+            let count = 0 $(+ assert_enum_json_strings_only::<$enum_type>(&[$($literal),+]))+;
+            assert_eq!(count, 197);
+            assert_eq!([$(stringify!($enum_type)),+].len(), 41);
+        };
+    }
+    check_tables! {
+        Provider => ["GITHUB", "OTHER"],
+        EffectKind => ["CREATE_BLOB", "CREATE_TREE", "CREATE_COMMIT", "CREATE_REF", "CREATE_FIX_PR", "CREATE_CHECK", "UPDATE_CHECK", "MODEL_REQUEST", "CHECKOUT_FETCH", "DEPENDENCY_FETCH"],
+        GitOidV1Algorithm => ["SHA1", "SHA256"],
+        MergeSubjectV2CandidateKind => ["HEAD_ONLY_NONMERGE", "TEST_MERGE", "MERGE_GROUP", "PROVIDER_EQUIVALENT"],
+        MergeSubjectV2MergeMethod => ["MERGE", "SQUASH", "REBASE", "QUEUE", "ADVISORY"],
+        WorkflowSpecCoreV2Mode => ["FAST", "AI", "HYBRID", "DEEP"],
+        AttemptBindingV2SandboxTier => ["S0", "S1", "S2", "S3"],
+        ManifestDescriptorV1Kind => ["SCOPES", "FILES_SYMBOLS", "EXCLUSIONS", "SANDBOX_REQUIREMENTS", "COVERAGE_EXPECTATIONS", "ANALYZER_CONFIGURATION"],
+        AnalysisCompletionReceiptV1Outcome => ["COMPLETED", "FAILED", "UNSUPPORTED", "CANCELLED"],
+        OracleTrustClassV1Origin => ["TRUSTED_REPOSITORY_TEST", "TRUSTED_SPECIFICATION", "SECURITY_INVARIANT", "STANDARDS_REQUIREMENT", "MAINTAINER_APPROVED", "DETERMINISTIC_EXPLOIT", "UNTRUSTED_AGENT_EXPECTATION"],
+        EvidenceReceiptV2Grade => ["E0", "E1", "E2", "E3", "E4"],
+        VerificationReceiptV2IndependenceClass => ["C0", "C1", "C2", "C3", "C4"],
+        VerificationReceiptV2Outcome => ["CONFIRMED", "REJECTED", "UNSUPPORTED", "INCONCLUSIVE"],
+        GateProofV2Conclusion => ["PASS", "FAIL", "BLOCKED", "HUMAN_REVIEW_REQUIRED", "PARTIALLY_AVAILABLE", "STALE", "REVOKED", "INVALID"],
+        ChangedObjectV1Mode => ["REGULAR", "EXECUTABLE", "SYMLINK", "DELETE"],
+        PatchCustodyV1State => ["AVAILABLE", "LOST", "DELETION_PENDING", "DELETED"],
+        ApprovalCredentialBindingV1State => ["ACTIVE", "SUSPENDED", "REVOKED"],
+        PublicationOperationV1State => ["PLANNED", "AWAITING_APPROVAL", "AUTHORIZED", "RUNNING", "CONFIRMED", "FAILED_TERMINAL", "REVOKED", "EXPIRED", "UNKNOWN", "MANUAL_RECONCILIATION"],
+        GitPublicationCapabilityV2EffectKind => ["CREATE_BLOB", "CREATE_TREE", "CREATE_COMMIT", "CREATE_REF", "CREATE_FIX_PR"],
+        EffectIntentV2State => ["PENDING"],
+        EffectStateV1State => ["PENDING", "STARTED", "CONFIRMED", "FAILED_TERMINAL", "UNKNOWN", "MANUAL_RECONCILIATION"],
+        ExternalEffectJournalV1EntryKind => ["PREPARED", "SEND_ARMED", "OBSERVED", "RESOLVED"],
+        CheckProjectionV2ProjectedConclusion => ["UNCONFIRMED", "IN_PROGRESS", "SUCCESS", "FAILURE", "CANCELLED", "ACTION_REQUIRED"],
+        CheckProjectionV2DesiredConclusion => ["IN_PROGRESS", "SUCCESS", "FAILURE", "CANCELLED", "ACTION_REQUIRED"],
+        CheckProjectionV2State => ["PENDING", "WRITING", "CONFIRMED", "WITHDRAWAL_PENDING", "UNKNOWN", "MANUAL_RECONCILIATION"],
+        CheckProjectionV2FreezeState => ["NONE", "REQUESTED", "CONFIRMED", "FAILED"],
+        ModelMessageV1Role => ["SYSTEM", "USER", "ASSISTANT", "TOOL"],
+        CheckWriteRequestV1Conclusion => ["IN_PROGRESS", "SUCCESS", "FAILURE", "CANCELLED", "ACTION_REQUIRED"],
+        ManualResolutionActionV1Kind => ["DISPUTED_FINDING", "FALSE_POSITIVE", "UNSUPPORTED_VERIFICATION", "EXTERNAL_EFFECT_UNCERTAINTY", "APPROVAL_RECOVERY", "UNTRUSTED_ORACLE"],
+        ManualResolutionActionV1Decision => ["REQUEST_FRESH_EVALUATION", "PROVIDE_ORACLE", "CONFIRM_EFFECT", "PROVE_TERMINAL_NONEXECUTION", "REMAIN_BLOCKED", "REVOKE", "ACCEPT_RISK", "CLOSE_UNRESOLVED", "CREATE_POLICY_EXCLUSION"],
+        ApprovalRecoveryPolicyV1Profile => ["DUAL_ADMIN", "INDIVIDUAL_OFFLINE"],
+        ModelContentBlockV1Kind => ["TEXT", "TOOL_USE", "TOOL_RESULT"],
+        ApprovalEnrollmentIntentV1Operation => ["INITIAL_BOOTSTRAP", "ADD", "REPLACE", "REVOKE", "RECOVER", "CHANGE_BINDING", "INITIAL_REGISTRATION", "SUSPEND"],
+        CapabilityProfileV1Mode => ["FAST", "AI", "HYBRID", "DEEP"],
+        CapabilityProfileV1SandboxTier => ["S0", "S1", "S2", "S3"],
+        CapabilityProfileV1MinimumIndependence => ["C0", "C1", "C2", "C3", "C4"],
+        ApprovalLifecycleChallengeV1Purpose => ["OWNER_CONSENT", "ADMIN_CONSENT", "SECURITY_SUSPEND"],
+        ApprovalLifecycleConsentV1Purpose => ["OWNER_CONSENT", "ADMIN_CONSENT", "SECURITY_SUSPEND"],
+        AcquisitionRequestV1EffectKind => ["CHECKOUT_FETCH", "DEPENDENCY_FETCH"],
+        AcquisitionRequestV1Method => ["GET", "POST"],
+        ManualCaseStateV1State => ["OPEN", "EVIDENCE_PENDING", "RESOLVED_CONFIRMED", "RESOLVED_NOT_EXECUTED", "RESOLVED_REEVALUATE", "ACCEPTED_RISK", "REJECTED", "CLOSED_UNRESOLVED", "EXPIRED"],
+    }
+}
