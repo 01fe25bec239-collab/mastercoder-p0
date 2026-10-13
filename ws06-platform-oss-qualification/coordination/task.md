@@ -8,7 +8,6 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W06-DOCS-REPOSITORY-OVERVIEW | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W06-DOCS-REPOSITORY-OVERVIEW-r0 | 9a7922bf29c0a6689903b96896dab8851d1eeeeb | four exact Markdown draft paths | 2026-10-13T05:51:57.586435+00:00 | fresh A2 drafts/RETURN; publication pending |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -25,7 +24,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W06-DOCS-REPOSITORY-OVERVIEW | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | Owner README questions; local draft-only A2; no staging/commit/outward authorization; proposed new doc scope not in protected main |
+| W06-DOCS-REPOSITORY-OVERVIEW | BUILD | BLOCKED | r0 | NONE | NONE | NONE | Four local A2 drafts verified; publication choice/scope registration pending; no active A2 or product commit |
 | W06-T000-ROOT-HARDENING | BUILD | INTEGRATED | r1 | b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03 | b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03 | 5f92752cac8d9ba39ef20a6caf4c1c95227d7036 | Fresh final r1-d A3 PASS_WITH_NONBLOCKING_FINDINGS; actual commissioning merge/main activation verified; N-1/N-2 retained |
 | W06-T001-WS06-WORKSPACE-SCAFFOLD | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W06-T002-TESTDB-I14 | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
