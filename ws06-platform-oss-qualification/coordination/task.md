@@ -8,7 +8,6 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -25,7 +24,8 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W06-T000-ROOT-HARDENING | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
+| W06-DOCS-REPOSITORY-OVERVIEW | BUILD | BLOCKED | r0 | NONE | NONE | NONE | Four local A2 drafts verified; publication choice/scope registration pending; no active A2 or product commit |
+| W06-T000-ROOT-HARDENING | BUILD | INTEGRATED | r1 | b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03 | b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03 | 5f92752cac8d9ba39ef20a6caf4c1c95227d7036 | Fresh final r1-d A3 PASS_WITH_NONBLOCKING_FINDINGS; actual commissioning merge/main activation verified; N-1/N-2 retained |
 | W06-T001-WS06-WORKSPACE-SCAFFOLD | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W06-T002-TESTDB-I14 | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W06-T003-EVIDENCE-SCHEMAS | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
@@ -1077,3 +1077,31 @@ States: NOT_STARTED · DISPATCHED · RETURNED · IN_REVIEW · REPAIR · ACCEPTED
 - **OUT-OF-SCOPE:** Any untested variant or other cell (no PASS inheritance); other claims; production implementation; capability enablement in production.
 - **BLOCKERS:** G2 (external audit), G3 (execution authorization), IM-7; external: YES — two independent storage domains (cloud).
 - **A3 REVIEW FOCUS:** Evidence lenses: DS lens → fresh evidence-A3 session using the W04 lane playbook, CC lens → fresh evidence-A3 session using the W02 lane playbook. Fail condition: Any injected case violates the stated observation/threshold, or positive control fails. Missing/inaccessible evidence, unpinned participating component, unobservable required outcome or non-independent review yields INCONCLUSIVE, which disables the cell like FAIL.
+
+## Attempt history — W06-T000
+
+- r0: RETURNED NOT_READY: INCOMPLETE_R0_RETURN_REQUESTED_BY_OWNER, 2026-10-12T18:54:29Z. No implementation SHA/tree. Eight scoped dirty files and index preserved; no final A3 target. See RETURNS/W06-T000-ROOT-HARDENING-r0-A2_RETURN.md and DISPOSITIONS/W06-T000-ROOT-HARDENING-r0-DISPOSITION.md.
+- r1: fresh bounded remainder prepared 2026-10-12T19:04:51Z at import base; exact r0 bytes recovered without editing/committing r0. Requires fixture-cwd repair, missing runbook and complete local verification. Not launched by A1; no implementation/acceptance/merge yet.
+
+## Owner-requested documentation draft task
+
+- **TASK_ID:** W06-DOCS-REPOSITORY-OVERVIEW
+- **OBJECTIVE:** Prepare two accurate, distinct README drafts and proposed GitHub descriptions: product overview for mastercoder-p0, CI evidence explanation for mastercoder-p0-w06-ci-qualification. Explain what Mastercoder is intended to do, how its workflow operates, architecture/stack and actual implementation status. These are local reviewable drafts, not a deployment or production-readiness grant.
+- **WHY IT EXISTS:** Owner finds the duplicated READMEs and descriptions misleading and insufficient; A1 must coordinate A2 instead of handing coordination back to another A1.
+- **ARCHITECTURE REQUIREMENTS:** Preserve authoritative local-first review/bounded fix-publication design from01; canonical00D/49–57 precedence,00F stack and frozen architecture status. Reader-friendly descriptions do not alter contracts or gates.
+- **P0 CLAIMS:** none executed or accepted; all55remainNOT_RUN.
+- **INPUT CONTRACTS:** existing normative architecture and actual W01/W06 integration records; no new wire contract.
+- **OUTPUT CONTRACTS:** root README draft, distinct qualification README draft, two suggested GitHub descriptions, source/status map.
+- **EXACT WRITE SCOPE:** README.md; ws06-platform-oss-qualification/docs/README_CI_QUALIFICATION_DRAFT.md; ws06-platform-oss-qualification/docs/REPOSITORY_DESCRIPTIONS_DRAFT.md; ws06-platform-oss-qualification/docs/REPOSITORY_OVERVIEW_SOURCES.md. Plus only the named absolute A2 RETURN.
+- **READ-ONLY DEPENDENCIES:** ARCHITECTURE/V2_1/**; live absolute coordination/memory/task/reviews; retained remoteCI proof; existing lane source/manifests/workflows; original qualification source atb780a3f4fa4f550b76a79bc9483c1f94cd7f2d03.
+- **PRECONDITIONS:** G0/G1 build records present; W01-T000/W06-T000 integrated; fresh task worktree at9a7922bf29c0a6689903b96896dab8851d1eeeeb; no other W06 A2 overlaps this draft scope.
+- **IMPLEMENTATION STEPS:** Read authoritative sources/current state; draft main README with product overview/workflow/planned capabilities/architecture/stack/repo map/current status/useful verified developer commands/contribution pointers; draft qualification README with original source, rationale, one positive/nine deliberate rejecting cases and real CI/PR links; propose distinct short GitHub descriptions; provide source map separating design claims from implemented facts. Main product purpose must come before internal-program language. Preserve required prototype/qualification status in an appropriately scoped current-status section/footer, without calling the future product inherently disposable. Do not assert production readiness or features currently absent. Fix inherited README references to package-only paths that do not exist in the published repo. Do not place local private paths or credentials in proposed published README text.
+- **SECURITY INVARIANTS:** No false production/P0 claim, copied evidence scope expansion, authority change, credential exposure, or fixture failure called a product defect. Architectural trust boundaries are design targets unless implemented evidence supports them.
+- **FAILURE CASES:** Two identical READMEs; planned runner/API/UI described as already runnable; nonexistent rootCargo/startup command; placeholder check claimed full product test; changing normative architecture/gates; modifying existing qualifying main/tree history.
+- **TESTS REQUIRED:** Documentation-only static review: inspect every source/status claim and relative link/command against actual files; git diff --check; exact changed-path verification. No build, package install, new test suite or broad scan is needed for reversible Markdown drafts; any executable validator/scan must use shared wrapper. Existing code/test results are cited at their actual scope, not rerun or invented.
+- **NEGATIVE TESTS:** Manually reject unsupported production-ready/end-to-end claims, broken repo links, machine-specific/private paths or instructions implying all lane workspaces already exist. No implementation tests introduced.
+- **ACCEPTANCE CRITERIA:** Two different readable drafts; main product purpose/how-it-works understandable to a newcomer; actual vs planned capabilities explicit; qualification controls and preservation explained; source map and suggested descriptions complete; exactly authorized draft paths changed. DRAFT_READY is not code acceptance/integration.
+- **EVIDENCE TO RETURN:** Actual HEAD/tree/dirty draft paths; hashes for each draft; source map, link/command review and diff-check results; proposed descriptions; explicit publishing blockers.
+- **OUT-OF-SCOPE:** Code/CI/architecture/license/gates, repository deletion/archive/renaming/settings changes, pushes/PRs/merges or root doc scope registration. No .env.local or credentials needed.
+- **BLOCKERS:** Publication has not been authorized by this question/complaint. This new task is not in protected-main WRITE_SCOPES.json, so signed implementation commits/pushes cannot be represented as ready: leave drafts uncommitted, do not stage/bypass hooks. A1 will process the concrete output and arrange publication authorization/scope registration separately if requested.
+- **A3 REVIEW FOCUS:** Future documentation review: trace planned capabilities to authoritative architecture, verify current implementation caveats, distinguish CI test repo from canonical product and preserve exact qualifying source history. No A3 is dispatched by this draft task.

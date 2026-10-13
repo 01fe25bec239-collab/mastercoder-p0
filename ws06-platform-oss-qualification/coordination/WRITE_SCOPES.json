@@ -1,387 +1,394 @@
 {
- "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
- "tasks": {
-  "W06-DEPENDENCY-UPDATE": {
-   "allow": [
-    "ws06-platform-oss-qualification/Cargo.toml",
-    "ws06-platform-oss-qualification/Cargo.lock",
-    "ws06-platform-oss-qualification/crates/*/Cargo.toml",
-    "ws06-platform-oss-qualification/doubles/*/v1/Cargo.toml",
-    "ws06-platform-oss-qualification/claims/*/harness/Cargo.toml",
-    "ws06-platform-oss-qualification/tools/*/Cargo.toml",
-    "ws06-platform-oss-qualification/docs/MODULES.md"
-   ],
-   "deny": [],
-   "standing": "DEPENDENCY_REQUEST resolution only (AGENTS.md \u00a73a dependency rule)"
+  "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
+  "tasks": {
+    "W06-DEPENDENCY-UPDATE": {
+      "allow": [
+        "ws06-platform-oss-qualification/Cargo.toml",
+        "ws06-platform-oss-qualification/Cargo.lock",
+        "ws06-platform-oss-qualification/crates/*/Cargo.toml",
+        "ws06-platform-oss-qualification/doubles/*/v1/Cargo.toml",
+        "ws06-platform-oss-qualification/claims/*/harness/Cargo.toml",
+        "ws06-platform-oss-qualification/tools/*/Cargo.toml",
+        "ws06-platform-oss-qualification/docs/MODULES.md"
+      ],
+      "deny": [],
+      "standing": "DEPENDENCY_REQUEST resolution only (AGENTS.md §3a dependency rule)"
+    },
+    "W06-LOCKFILE-SYNC": {
+      "allow": [
+        "ws06-platform-oss-qualification/Cargo.lock"
+      ],
+      "deny": [],
+      "standing": "lockfile regeneration only (AGENTS.md §3a lockfile rule)"
+    },
+    "W06-RUN-P0-06A": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-06A/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-06B": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-06B/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-07D": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-07D/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-10B": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10B/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-10C": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10C/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-10D": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10D/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-10E": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10E/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-10F": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10F/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-10G": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10G/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-RUN-P0-10H": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10H/cells/default/**"
+      ],
+      "deny": []
+    },
+    "W06-T000-ROOT-HARDENING": {
+      "allow": [
+        ".editorconfig",
+        ".gitattributes",
+        ".github/workflows/common-arch-check.yml",
+        ".github/workflows/common-write-set-guard.yml",
+        "rust-toolchain.toml",
+        "scripts/check_action_pins.py",
+        "scripts/check_write_set.sh",
+        "scripts/verify_architecture.py",
+        "ws06-platform-oss-qualification/docs/branch-protection.md"
+      ],
+      "deny": []
+    },
+    "W06-T001-WS06-WORKSPACE-SCAFFOLD": {
+      "allow": [
+        ".github/workflows/ws06-ci.yml",
+        "ws06-platform-oss-qualification/.env.example",
+        "ws06-platform-oss-qualification/.gitignore",
+        "ws06-platform-oss-qualification/Cargo.lock",
+        "ws06-platform-oss-qualification/Cargo.toml",
+        "ws06-platform-oss-qualification/README.md",
+        "ws06-platform-oss-qualification/claims/*/harness/Cargo.toml",
+        "ws06-platform-oss-qualification/claims/*/harness/src/main.rs",
+        "ws06-platform-oss-qualification/claims/README.md",
+        "ws06-platform-oss-qualification/compose.yaml",
+        "ws06-platform-oss-qualification/crates/*/Cargo.toml",
+        "ws06-platform-oss-qualification/crates/*/src/*.rs",
+        "ws06-platform-oss-qualification/crates/*/src/lib.rs",
+        "ws06-platform-oss-qualification/crates/*/src/main.rs",
+        "ws06-platform-oss-qualification/docs/MODULES.md",
+        "ws06-platform-oss-qualification/docs/README.md",
+        "ws06-platform-oss-qualification/drills/README.md",
+        "ws06-platform-oss-qualification/drills/admin-domains/README.md",
+        "ws06-platform-oss-qualification/drills/deletion/README.md",
+        "ws06-platform-oss-qualification/drills/failover/README.md",
+        "ws06-platform-oss-qualification/drills/load/README.md",
+        "ws06-platform-oss-qualification/drills/logs-audit/README.md",
+        "ws06-platform-oss-qualification/drills/restore/README.md",
+        "ws06-platform-oss-qualification/drills/transfer/README.md",
+        "ws06-platform-oss-qualification/drills/upgrade/README.md"
+      ],
+      "deny": []
+    },
+    "W06-T002-TESTDB-I14": {
+      "allow": [
+        "scripts/testdb",
+        "ws06-platform-oss-qualification/testdb/**"
+      ],
+      "deny": []
+    },
+    "W06-T003-EVIDENCE-SCHEMAS": {
+      "allow": [
+        "ws06-platform-oss-qualification/evidence-kit/**"
+      ],
+      "deny": []
+    },
+    "W06-T004-OSS-GOVERNANCE-DRAFTS": {
+      "allow": [
+        "ws06-platform-oss-qualification/oss/**"
+      ],
+      "deny": []
+    },
+    "W06-T005-STAGING-ENVIRONMENT-DOC": {
+      "allow": [
+        "ws06-platform-oss-qualification/docs/staging-environment.md"
+      ],
+      "deny": []
+    },
+    "W06-T006-SUPPLY-CHAIN-POLICY": {
+      "allow": [
+        "ws06-platform-oss-qualification/supply-chain/POLICY.md"
+      ],
+      "deny": []
+    },
+    "W06-T007-SUPPLY-CHAIN-CI": {
+      "allow": [
+        ".github/dependabot.yml",
+        ".github/workflows/common-supply-chain.yml",
+        "deny.toml",
+        "ws06-platform-oss-qualification/supply-chain/ci/**"
+      ],
+      "deny": []
+    },
+    "W06-T008-INDEPENDENCE-AND-REPRO-CHECKS": {
+      "allow": [
+        ".github/workflows/common-independence.yml",
+        "ws06-platform-oss-qualification/supply-chain/independence/**"
+      ],
+      "deny": []
+    },
+    "W06-T009-EVIDENCE-CLI": {
+      "allow": [
+        "ws06-platform-oss-qualification/crates/mc-evidence/README.md",
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/bundle.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/main.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/runs.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/seal.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/status.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/verify.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/tests/bundle.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/tests/runs.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/tests/seal.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/tests/status.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/tests/verify.rs"
+      ],
+      "deny": []
+    },
+    "W06-T010-EVIDENCE-STORE": {
+      "allow": [
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/main.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/src/store.rs",
+        "ws06-platform-oss-qualification/crates/mc-evidence/tests/store.rs",
+        "ws06-platform-oss-qualification/docs/evidence-store.md",
+        "ws06-platform-oss-qualification/evidence-store/**"
+      ],
+      "deny": []
+    },
+    "W06-T011-CLAIM-LEDGER": {
+      "allow": [
+        "evidence-ledger/**",
+        "ws06-platform-oss-qualification/crates/mc-ledger-gen/src/**",
+        "ws06-platform-oss-qualification/crates/mc-ledger-gen/tests/**"
+      ],
+      "deny": []
+    },
+    "W06-T012-CANARY-SCANNER": {
+      "allow": [
+        "ws06-platform-oss-qualification/crates/canary-scanner/src/**",
+        "ws06-platform-oss-qualification/crates/canary-scanner/tests/**"
+      ],
+      "deny": []
+    },
+    "W06-T013-OBSERVABILITY-COLLECTOR": {
+      "allow": [
+        "ws06-platform-oss-qualification/observability/**"
+      ],
+      "deny": []
+    },
+    "W06-T014-ARTIFACT-STORE": {
+      "allow": [
+        "ws06-platform-oss-qualification/artifact-store/**"
+      ],
+      "deny": []
+    },
+    "W06-T015-PARITY-RUNNER": {
+      "allow": [
+        "ws06-platform-oss-qualification/crates/parity-harness/src/**",
+        "ws06-platform-oss-qualification/crates/parity-harness/tests/**"
+      ],
+      "deny": []
+    },
+    "W06-T016-P0-06A-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-06A/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-06A/harness/Cargo.toml"
+      ]
+    },
+    "W06-T017-P0-06B-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-06B/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-06B/harness/Cargo.toml"
+      ]
+    },
+    "W06-T018-FREEZE-DOSSIER": {
+      "allow": [
+        "ws06-platform-oss-qualification/crates/freeze-dossier/src/**",
+        "ws06-platform-oss-qualification/crates/freeze-dossier/tests/**",
+        "ws06-platform-oss-qualification/freeze-dossier/**"
+      ],
+      "deny": []
+    },
+    "W06-T019-ADMIN-DOMAIN-IAC": {
+      "allow": [
+        "ws06-platform-oss-qualification/drills/admin-domains/**"
+      ],
+      "deny": []
+    },
+    "W06-T020-LOAD-GENERATOR-AND-CHECKERS": {
+      "allow": [
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/src/orchestrate.rs",
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/src/report.rs",
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/orchestrate.rs",
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/report.rs",
+        "ws06-platform-oss-qualification/drills/load/**"
+      ],
+      "deny": []
+    },
+    "W06-T021-UPGRADE-ORCHESTRATOR": {
+      "allow": [
+        "ws06-platform-oss-qualification/docs/compatibility-tracking.md",
+        "ws06-platform-oss-qualification/drills/upgrade/**"
+      ],
+      "deny": []
+    },
+    "W06-T022-FAILOVER-RIG": {
+      "allow": [
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/src/clock.rs",
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/src/partition.rs",
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/clock.rs",
+        "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/partition.rs",
+        "ws06-platform-oss-qualification/drills/failover/**"
+      ],
+      "deny": []
+    },
+    "W06-T023-TRANSFER-ORCHESTRATOR": {
+      "allow": [
+        "ws06-platform-oss-qualification/drills/transfer/**"
+      ],
+      "deny": []
+    },
+    "W06-T024-P0-10C-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10C/**",
+        "ws06-platform-oss-qualification/drills/deletion/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-10C/harness/Cargo.toml"
+      ]
+    },
+    "W06-T025-P0-10D-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10D/**",
+        "ws06-platform-oss-qualification/drills/logs-audit/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-10D/harness/Cargo.toml"
+      ]
+    },
+    "W06-T026-P0-07D-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-07D/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-07D/harness/Cargo.toml"
+      ]
+    },
+    "W06-T027-P0-10E-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10E/**",
+        "ws06-platform-oss-qualification/docs/measured-envelope.md"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-10E/harness/Cargo.toml"
+      ]
+    },
+    "W06-T028-P0-10F-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10F/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-10F/harness/Cargo.toml"
+      ]
+    },
+    "W06-T029-P0-10G-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10G/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-10G/harness/Cargo.toml"
+      ]
+    },
+    "W06-T030-RESTORE-RIG": {
+      "allow": [
+        "ws06-platform-oss-qualification/drills/restore/**"
+      ],
+      "deny": []
+    },
+    "W06-T031-P0-10B-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10B/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-10B/harness/Cargo.toml"
+      ]
+    },
+    "W06-T032-P0-10H-HARNESS": {
+      "allow": [
+        "ws06-platform-oss-qualification/claims/P0-10H/**"
+      ],
+      "deny": [
+        "ws06-platform-oss-qualification/claims/P0-10H/harness/Cargo.toml"
+      ]
+    },
+    "W06-T033-HOST-LAB-INVENTORY": {
+      "allow": [
+        "ws06-platform-oss-qualification/docs/host-lab.md",
+        "ws06-platform-oss-qualification/lab/**"
+      ],
+      "deny": []
+    },
+    "W06-T034-LOCAL-SERVICES": {
+      "allow": [
+        "ws06-platform-oss-qualification/local-services/**"
+      ],
+      "deny": []
+    },
+    "W06-DOCS-REPOSITORY-OVERVIEW": {
+      "allow": [
+        "README.md"
+      ],
+      "deny": [],
+      "standing": "Owner-approved canonical repository overview documentation only; internal draft/support files are not publishable task paths."
+    }
   },
-  "W06-LOCKFILE-SYNC": {
-   "allow": [
-    "ws06-platform-oss-qualification/Cargo.lock"
-   ],
-   "deny": [],
-   "standing": "lockfile regeneration only (AGENTS.md \u00a73a lockfile rule)"
-  },
-  "W06-RUN-P0-06A": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-06A/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-06B": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-06B/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-07D": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-07D/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-10B": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10B/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-10C": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10C/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-10D": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10D/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-10E": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10E/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-10F": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10F/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-10G": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10G/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-RUN-P0-10H": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10H/cells/default/**"
-   ],
-   "deny": []
-  },
-  "W06-T000-ROOT-HARDENING": {
-   "allow": [
-    ".editorconfig",
-    ".gitattributes",
-    ".github/workflows/common-arch-check.yml",
-    ".github/workflows/common-write-set-guard.yml",
-    "rust-toolchain.toml",
-    "scripts/check_action_pins.py",
-    "scripts/check_write_set.sh",
-    "scripts/verify_architecture.py",
-    "ws06-platform-oss-qualification/docs/branch-protection.md"
-   ],
-   "deny": []
-  },
-  "W06-T001-WS06-WORKSPACE-SCAFFOLD": {
-   "allow": [
-    ".github/workflows/ws06-ci.yml",
-    "ws06-platform-oss-qualification/.env.example",
-    "ws06-platform-oss-qualification/.gitignore",
-    "ws06-platform-oss-qualification/Cargo.lock",
-    "ws06-platform-oss-qualification/Cargo.toml",
-    "ws06-platform-oss-qualification/README.md",
-    "ws06-platform-oss-qualification/claims/*/harness/Cargo.toml",
-    "ws06-platform-oss-qualification/claims/*/harness/src/main.rs",
-    "ws06-platform-oss-qualification/claims/README.md",
-    "ws06-platform-oss-qualification/compose.yaml",
-    "ws06-platform-oss-qualification/crates/*/Cargo.toml",
-    "ws06-platform-oss-qualification/crates/*/src/*.rs",
-    "ws06-platform-oss-qualification/crates/*/src/lib.rs",
-    "ws06-platform-oss-qualification/crates/*/src/main.rs",
-    "ws06-platform-oss-qualification/docs/MODULES.md",
-    "ws06-platform-oss-qualification/docs/README.md",
-    "ws06-platform-oss-qualification/drills/README.md",
-    "ws06-platform-oss-qualification/drills/admin-domains/README.md",
-    "ws06-platform-oss-qualification/drills/deletion/README.md",
-    "ws06-platform-oss-qualification/drills/failover/README.md",
-    "ws06-platform-oss-qualification/drills/load/README.md",
-    "ws06-platform-oss-qualification/drills/logs-audit/README.md",
-    "ws06-platform-oss-qualification/drills/restore/README.md",
-    "ws06-platform-oss-qualification/drills/transfer/README.md",
-    "ws06-platform-oss-qualification/drills/upgrade/README.md"
-   ],
-   "deny": []
-  },
-  "W06-T002-TESTDB-I14": {
-   "allow": [
-    "scripts/testdb",
-    "ws06-platform-oss-qualification/testdb/**"
-   ],
-   "deny": []
-  },
-  "W06-T003-EVIDENCE-SCHEMAS": {
-   "allow": [
-    "ws06-platform-oss-qualification/evidence-kit/**"
-   ],
-   "deny": []
-  },
-  "W06-T004-OSS-GOVERNANCE-DRAFTS": {
-   "allow": [
-    "ws06-platform-oss-qualification/oss/**"
-   ],
-   "deny": []
-  },
-  "W06-T005-STAGING-ENVIRONMENT-DOC": {
-   "allow": [
-    "ws06-platform-oss-qualification/docs/staging-environment.md"
-   ],
-   "deny": []
-  },
-  "W06-T006-SUPPLY-CHAIN-POLICY": {
-   "allow": [
-    "ws06-platform-oss-qualification/supply-chain/POLICY.md"
-   ],
-   "deny": []
-  },
-  "W06-T007-SUPPLY-CHAIN-CI": {
-   "allow": [
-    ".github/dependabot.yml",
-    ".github/workflows/common-supply-chain.yml",
-    "deny.toml",
-    "ws06-platform-oss-qualification/supply-chain/ci/**"
-   ],
-   "deny": []
-  },
-  "W06-T008-INDEPENDENCE-AND-REPRO-CHECKS": {
-   "allow": [
-    ".github/workflows/common-independence.yml",
-    "ws06-platform-oss-qualification/supply-chain/independence/**"
-   ],
-   "deny": []
-  },
-  "W06-T009-EVIDENCE-CLI": {
-   "allow": [
-    "ws06-platform-oss-qualification/crates/mc-evidence/README.md",
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/bundle.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/main.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/runs.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/seal.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/status.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/verify.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/tests/bundle.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/tests/runs.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/tests/seal.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/tests/status.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/tests/verify.rs"
-   ],
-   "deny": []
-  },
-  "W06-T010-EVIDENCE-STORE": {
-   "allow": [
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/main.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/src/store.rs",
-    "ws06-platform-oss-qualification/crates/mc-evidence/tests/store.rs",
-    "ws06-platform-oss-qualification/docs/evidence-store.md",
-    "ws06-platform-oss-qualification/evidence-store/**"
-   ],
-   "deny": []
-  },
-  "W06-T011-CLAIM-LEDGER": {
-   "allow": [
-    "evidence-ledger/**",
-    "ws06-platform-oss-qualification/crates/mc-ledger-gen/src/**",
-    "ws06-platform-oss-qualification/crates/mc-ledger-gen/tests/**"
-   ],
-   "deny": []
-  },
-  "W06-T012-CANARY-SCANNER": {
-   "allow": [
-    "ws06-platform-oss-qualification/crates/canary-scanner/src/**",
-    "ws06-platform-oss-qualification/crates/canary-scanner/tests/**"
-   ],
-   "deny": []
-  },
-  "W06-T013-OBSERVABILITY-COLLECTOR": {
-   "allow": [
-    "ws06-platform-oss-qualification/observability/**"
-   ],
-   "deny": []
-  },
-  "W06-T014-ARTIFACT-STORE": {
-   "allow": [
-    "ws06-platform-oss-qualification/artifact-store/**"
-   ],
-   "deny": []
-  },
-  "W06-T015-PARITY-RUNNER": {
-   "allow": [
-    "ws06-platform-oss-qualification/crates/parity-harness/src/**",
-    "ws06-platform-oss-qualification/crates/parity-harness/tests/**"
-   ],
-   "deny": []
-  },
-  "W06-T016-P0-06A-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-06A/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-06A/harness/Cargo.toml"
-   ]
-  },
-  "W06-T017-P0-06B-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-06B/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-06B/harness/Cargo.toml"
-   ]
-  },
-  "W06-T018-FREEZE-DOSSIER": {
-   "allow": [
-    "ws06-platform-oss-qualification/crates/freeze-dossier/src/**",
-    "ws06-platform-oss-qualification/crates/freeze-dossier/tests/**",
-    "ws06-platform-oss-qualification/freeze-dossier/**"
-   ],
-   "deny": []
-  },
-  "W06-T019-ADMIN-DOMAIN-IAC": {
-   "allow": [
-    "ws06-platform-oss-qualification/drills/admin-domains/**"
-   ],
-   "deny": []
-  },
-  "W06-T020-LOAD-GENERATOR-AND-CHECKERS": {
-   "allow": [
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/src/orchestrate.rs",
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/src/report.rs",
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/orchestrate.rs",
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/report.rs",
-    "ws06-platform-oss-qualification/drills/load/**"
-   ],
-   "deny": []
-  },
-  "W06-T021-UPGRADE-ORCHESTRATOR": {
-   "allow": [
-    "ws06-platform-oss-qualification/docs/compatibility-tracking.md",
-    "ws06-platform-oss-qualification/drills/upgrade/**"
-   ],
-   "deny": []
-  },
-  "W06-T022-FAILOVER-RIG": {
-   "allow": [
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/src/clock.rs",
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/src/partition.rs",
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/clock.rs",
-    "ws06-platform-oss-qualification/crates/mc-drill-kit/tests/partition.rs",
-    "ws06-platform-oss-qualification/drills/failover/**"
-   ],
-   "deny": []
-  },
-  "W06-T023-TRANSFER-ORCHESTRATOR": {
-   "allow": [
-    "ws06-platform-oss-qualification/drills/transfer/**"
-   ],
-   "deny": []
-  },
-  "W06-T024-P0-10C-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10C/**",
-    "ws06-platform-oss-qualification/drills/deletion/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-10C/harness/Cargo.toml"
-   ]
-  },
-  "W06-T025-P0-10D-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10D/**",
-    "ws06-platform-oss-qualification/drills/logs-audit/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-10D/harness/Cargo.toml"
-   ]
-  },
-  "W06-T026-P0-07D-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-07D/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-07D/harness/Cargo.toml"
-   ]
-  },
-  "W06-T027-P0-10E-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10E/**",
-    "ws06-platform-oss-qualification/docs/measured-envelope.md"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-10E/harness/Cargo.toml"
-   ]
-  },
-  "W06-T028-P0-10F-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10F/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-10F/harness/Cargo.toml"
-   ]
-  },
-  "W06-T029-P0-10G-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10G/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-10G/harness/Cargo.toml"
-   ]
-  },
-  "W06-T030-RESTORE-RIG": {
-   "allow": [
-    "ws06-platform-oss-qualification/drills/restore/**"
-   ],
-   "deny": []
-  },
-  "W06-T031-P0-10B-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10B/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-10B/harness/Cargo.toml"
-   ]
-  },
-  "W06-T032-P0-10H-HARNESS": {
-   "allow": [
-    "ws06-platform-oss-qualification/claims/P0-10H/**"
-   ],
-   "deny": [
-    "ws06-platform-oss-qualification/claims/P0-10H/harness/Cargo.toml"
-   ]
-  },
-  "W06-T033-HOST-LAB-INVENTORY": {
-   "allow": [
-    "ws06-platform-oss-qualification/docs/host-lab.md",
-    "ws06-platform-oss-qualification/lab/**"
-   ],
-   "deny": []
-  },
-  "W06-T034-LOCAL-SERVICES": {
-   "allow": [
-    "ws06-platform-oss-qualification/local-services/**"
-   ],
-   "deny": []
-  }
- },
- "workstream": "W06"
+  "workstream": "W06"
 }

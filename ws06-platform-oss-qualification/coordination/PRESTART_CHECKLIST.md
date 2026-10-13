@@ -1,6 +1,6 @@
 # PRESTART CHECKLIST — WORKSTREAM-06-PLATFORM-OSS-QUALIFICATION (lane 06, operator: master)
 
-Complete every box before the first A1 session. Anything you cannot complete: write it under "Open items" — the lane's A1 will treat it as a recorded blocker instead of stalling silently. Machine-wide items (tools, GitHub, accounts) are done once; tick them in every lane.
+Owner-approved phased construction scope (2026-10-12): construction checker must pass before A1/A2 construction. Unchecked future-resource/manual items remain required at their owning task/phase; they are not waived or represented as complete. Lane A1 completes mandatory reads on launch. Anything you cannot complete: write it under "Open items" — the lane's A1 will treat it as a recorded blocker instead of stalling silently. Machine-wide items (tools, GitHub, accounts) are done once; tick them in every lane.
 
 ## A0. If your laptop runs Windows (do this first)
 Everything for this program runs **inside WSL2 Ubuntu**, not in native Windows (the hooks are bash, the tooling is Linux, symlinks must work).
@@ -13,16 +13,16 @@ Everything for this program runs **inside WSL2 Ubuntu**, not in native Windows (
 
 ## A. Accounts and access
 - [ ] GitHub account with 2FA; SSH key added; **SSH commit signing** configured (`git config --global gpg.format ssh; git config --global user.signingkey ~/.ssh/id_ed25519.pub; git config --global commit.gpgsign true`).
-- [ ] You own the private repo `mastercoder-p0` (your personal account with GitHub Pro); you are the sole CODEOWNER.
-- [ ] `gh auth login` done; `gh repo view <org>/mastercoder-p0` works.
+- [x] You own the private repo `mastercoder-p0` (your personal account with GitHub Pro); you are the sole CODEOWNER.
+- [x] `gh auth login` done; `gh repo view <org>/mastercoder-p0` works.
 - [ ] Password manager entry "mastercoder-staging-lane06" for this lane's staging secrets.
 - [ ] Access to the private evidence store (created by the W06 lane, W06-T010).
 
 ## B. Tools (record versions in memory.md "Environment")
-- [ ] git ≥ 2.40, gh CLI
-- [ ] rustup with the toolchain pinned in `/rust-toolchain.toml`; `cargo fmt`, `clippy`; `cargo install cargo-deny gitleaks sccache` (or brew gitleaks sccache). `sccache` lets 15 parallel worktrees share compiled crates (`RUSTC_WRAPPER=sccache` in the lane `.env`).
-- [ ] Docker / Docker Compose (local PostgreSQL)
-- [ ] Python ≥ 3.10 (architecture checker), `jq`, `psql` client
+- [x] git ≥ 2.40, gh CLI
+- [x] rustup with the toolchain pinned in `/rust-toolchain.toml`; `cargo fmt`, `clippy`; `cargo install cargo-deny gitleaks sccache` (or brew gitleaks sccache). `sccache` lets 15 parallel worktrees share compiled crates (`RUSTC_WRAPPER=sccache` in the lane `.env`).
+- [x] Docker / Docker Compose (local PostgreSQL)
+- [x] Python ≥ 3.10 (architecture checker), `jq`, `psql` client
 - [ ] Node LTS + pnpm (`corepack enable`), Playwright browsers
 - [ ] A coding-agent tool you will use for A1/A2/A3 sessions (e.g. Claude Code or Codex CLI), able to read/write files and run shell commands in the worktree, and a plan/rate limit that allows ~15 A2 + 6 A1 + A3 sessions at once
 - [ ] Machine: a MacBook Pro M4 Pro with 24 GB RAM runs 5 parallel A2s comfortably. A full wave of 15 works with `CARGO_BUILD_JOBS=2` (in every lane `.env`), `sccache` and Docker Desktop limited to about 4 GB, because the A2s rarely all compile at the same moment. If macOS starts swapping heavily (Activity Monitor → Memory Pressure red), lower the lane caps. Keep ≥100 GB free disk; the A1 removes finished worktrees and their `target/` (AGENTS.md §3b)
@@ -31,7 +31,7 @@ Everything for this program runs **inside WSL2 Ubuntu**, not in native Windows (
 - [ ] Admin access to the `mastercoder-p0` repo settings (you are the repo owner) to apply branch protection and secret scanning.
 - [ ] Two cloud accounts with different root owners: account A (you) and account B (administered by a second, independent administrator — the one role master cannot fill alone; see COMMON/PROGRAM_README.md, section What still needs a second person) for P0-07D; no shared billing root admin, CI credential or recovery contact.
 - [ ] A private object-lock bucket for the evidence store (not public, not in the repo).
-- [ ] Install: cargo-deny, cargo-audit, cargo-cyclonedx, gitleaks, syft, tshark, k6 (or a Rust load tool), MinIO client `mc`.
+- [x] Install: cargo-deny, cargo-audit, cargo-cyclonedx, gitleaks, syft, tshark, k6 (or a Rust load tool), MinIO client `mc`.
 - [ ] Approval-key profile: as the single operator you qualify INDIVIDUAL_OFFLINE (create an offline recovery key, store it offline). DUAL_ADMIN (G-053) needs a second independent custodian; without one that cell stays DISABLED.
 
 ## D. Workspace setup (automated)
@@ -52,8 +52,8 @@ python3 ../COMMON/verify_architecture.py ARCHITECTURE_READONLY/MASTERCODER_CONVE
 (cd repo && git log --oneline -1)                                         # note ARCH_IMPORT_COMMIT
 ```
 - [ ] All commands succeeded; ARCH_IMPORT_COMMIT written into `../WORKSPACE/worktrees/COORD-ws06/ws06-platform-oss-qualification/coordination/memory.md` §Environment.
-- [ ] The COORDINATION worktree exists on branch `ws06/coordination`. From now on its `ws06-platform-oss-qualification/coordination/` copy is authoritative.
-- [ ] Hooks active: `git -C repo config core.hooksPath` prints `.githooks`.
+- [x] The COORDINATION worktree exists on branch `ws06/coordination`. From now on its `ws06-platform-oss-qualification/coordination/` copy is authoritative.
+- [x] Hooks active: `git -C repo config core.hooksPath` prints `.githooks`.
 - [ ] Agent tool guardrails set (AGENT_TOOLING/README.md → Guardrails) and tested: starting a session in the COORDINATION worktree makes the agent cite the WORK LOCATION rule.
 
 ## E. Knowledge (read before the first session)
@@ -66,11 +66,18 @@ python3 ../COMMON/verify_architecture.py ARCHITECTURE_READONLY/MASTERCODER_CONVE
 - [ ] The "MUST READ" rows of `ARCHITECTURE_MAP.md`
 
 ## F. Gates
-- [ ] G0 recorded (repo exists, protection on) — date: ____
-- [ ] G1 signed by master — G1 file SHA-256: ____ (A1 records it in memory.md)
+- [x] G0 recorded — 2026-10-12T14:48:06Z — owner-approved PHASED_BUILD_STARTUP; construction checker PASS
+- [x] G1 signed by master — G1 file SHA-256: 2b5253f7739ed7b4a434053af256887f8a84b2e6d0def4cc56744eec10692712 (owner typed chat signature; recorded in memory.md)
 - [ ] I understand G2/G3 are needed before any claim RUN.
 
 ## Open items
+- Startup check 2026-10-12: see `NOTICES/STARTUP_2026-10-12.md`. Phased G0 and scoped PRESTART are recorded; later-task access/manual prerequisites remain open.
+- Signing key registered by owner and local SSH signing verified; account 2FA status not independently checked.
+- Only ~41 GiB free, below the 100 GB checklist; Docker memory tuning to about 4 GB remains open.
+- Future-task resources remain unprovisioned; setup reports placeholders. No fabricated accounts, credentials, host access or evidence-store readiness.
+- Complete the lane-specific knowledge/read and manual-access checks before signing PRESTART.
 -
 
-Signed: master ______  Date (UTC): ______
+Signed: Omkar (master; explicit owner approval of scoped PRESTART)  Recorded (UTC): 2026-10-12T14:48:06Z
+Scope: verified construction startup only; unchecked manual/access/knowledge/resource boxes are not claimed complete.
+G0_PHASE_RECORD_SHA256: 079c1584dca8f51d45cfd10127ff308749736ecc92961765e274f6789b7508cf
