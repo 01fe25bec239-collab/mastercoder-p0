@@ -29,7 +29,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
 | W01-T000-WORKSPACE-SCAFFOLD | BUILD | INTEGRATED | r1 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | 9a7922bf29c0a6689903b96896dab8851d1eeeeb | Completed independent local A3 plus all real CI and owner A1 disposition; normal PR2 merge and actual main checks verified |
-| W01-DEPENDENCY-UPDATE | BUILD | REVIEW_PENDING | r0 | 72410409afd609bd98eb9d8742592287d8b1cb6a | NONE | NONE | A2 local RETURN verified; fresh preliminary A3 prepared/not launched; remote CI unauthorized; T004 held |
+| W01-DEPENDENCY-UPDATE | BUILD | BLOCKED | r0 | 72410409afd609bd98eb9d8742592287d8b1cb6a | NONE | NONE | Independent preliminary A3 SATISFACTORY; FINAL_PR_CI_PENDING; remote scope proposed awaiting owner; T004 held |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
