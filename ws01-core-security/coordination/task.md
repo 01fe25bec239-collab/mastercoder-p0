@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W01-T004-CONTRACT-TYPES-CODEGEN | r2 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T004-CONTRACT-TYPES-CODEGEN-r2 | 9f40fae0db8fc6f6b9fc20e4b7f56cc8a56e1174 | reject_vectors.rs only | NOT_STARTED (prepared 2026-10-13T22:20:46.166454+00:00) | Fresh A2 launch prompt ready; not launched |
+| W01-T004-CONTRACT-TYPES-CODEGEN | r2-a (review) | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T004-CONTRACT-TYPES-CODEGEN-r2-review-a | ae25048f83bc66d0e7d31f3d6d01fd3756bf92ec | A3 read-only; report only | NOT_STARTED (prepared 2026-10-13T22:55:03.338466+00:00) | Fresh independent A3 on exact candidate; actual remote CI pending |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -34,7 +34,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | REPAIR_REQUIRED | r2 | NONE | NONE | NONE | r1-a reviewed 9f40fae0db8fc6f6b9fc20e4b7f56cc8a56e1174; F-1 closed locally; F-2 LOW test repair; fresh repair prepared NOT_LAUNCHED; prior candidate preserved; real CI NOT_RUN |
+| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | REVIEW_PENDING | r2 | ae25048f83bc66d0e7d31f3d6d01fd3756bf92ec | NONE | NONE | r2 one-file candidate verified; F-2 locally addressed pending fresh r2-a A3 prepared/not launched; F-1 prior local closure preserved; actual remote CI NOT_RUN |
 | W01-T005-CBOR-CORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
