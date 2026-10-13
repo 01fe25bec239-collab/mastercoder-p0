@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W06-T000-ROOT-HARDENING | r1 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W06-T000-ROOT-HARDENING-r1 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | original nine-path T000 scope | 2026-10-12T23:10:55Z | fresh preliminary A3; remote CI pending |
+| W06-T000-ROOT-HARDENING | r1 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W06-T000-ROOT-HARDENING-r1 | 58b6ab38b0a514d94d8851679ad66ef9bf696c9e | original nine-path T000 scope | 2026-10-12T23:10:55Z | preliminary A3 SATISFACTORY; owner phase1 remote authorization; canonical activation/CI pending |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -25,7 +25,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
-| W06-T000-ROOT-HARDENING | BUILD | IN_REVIEW | r1 | b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03 | NONE | NONE | Signed clean candidate; preliminary A3 requested, remote green/red CI pending; not accepted |
+| W06-T000-ROOT-HARDENING | BUILD | BLOCKED | r1 | b780a3f4fa4f550b76a79bc9483c1f94cd7f2d03 | NONE | NONE | preliminary local SATISFACTORY; B-1 protected-base activation and genuine CI pending; phase1 proposal requires owner approval |
 | W06-T001-WS06-WORKSPACE-SCAFFOLD | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W06-T002-TESTDB-I14 | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W06-T003-EVIDENCE-SCHEMAS | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |

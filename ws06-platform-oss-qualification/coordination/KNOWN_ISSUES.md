@@ -17,3 +17,9 @@ A2 r1 records JSON Extra data when parsing entire trusted checker output. Leadin
 ## KI-003 — hidden block-scalar workflow events (SECURITY)
 
 A2 r1 records hidden literal/folded target events in draft lint. Conservative lint rejects these forms with positive/negative controls; independent A3/provider evidence pending. Never count offline replay as protected-main deployment.
+
+## KI-002 — protected-base CI activation and check binding
+
+PROTOTYPE — DISPOSABLE — NOT PRODUCTION
+
+Symptom: locally satisfactory guard implementation cannot be remotely qualified by PR CI against bootstrap protected main; target-event check subjects also unverified. Root cause: guards correctly execute protected-default/base bytes and old main lacks new lint/verifier/guard controls. B-1 is an acceptance blocker; N-2 is remote evidence binding, not a demonstrated permitting defect. Proposed bounded verification phase: /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/COORD-ws06/ws06-platform-oss-qualification/coordination/NOTICES/W06-T000-CI-COMMISSIONING-PROPOSAL.md; owner approval pending, canonical activation still separate. Prevention: record exact trusted workflow/code/base/head and actual provider check association; never call bootstrap greens or isolatedmain greens canonical deployment proof. No waiver, acceptedSHA or merge. N-1 resource bounds remain nonblocking/unqualified; any new requirement gets scoped A2/A3 work.
