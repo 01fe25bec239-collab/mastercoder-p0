@@ -8,7 +8,7 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W01-T004-CONTRACT-TYPES-CODEGEN | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T004-CONTRACT-TYPES-CODEGEN-r0 | a217d94ff1ac1262e21cf9b2e9f713666a830a18 | mc-contracts/src/**; mc-contracts/tests/**; tools/codegen/src/** | NOT_STARTED (reserved 2026-10-13T16:30:10.256015+00:00) | Fresh A2 launch |
+| W01-T004-CONTRACT-TYPES-CODEGEN | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-T004-CONTRACT-TYPES-CODEGEN-r0 | a217d94ff1ac1262e21cf9b2e9f713666a830a18 | mc-contracts/src/**; mc-contracts/tests/**; tools/codegen/src/** | OBSERVED 2026-10-13T16:46:03.235192+00:00 (actual launch time not reported) | A2 implementation RETURN |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -34,7 +34,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | Fresh A2 prepared/not launched at integrated dependency main; exact JSON/type/codegen scope; no outward grant |
+| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | IN_PROGRESS | r0 | NONE | NONE | NONE | Implementation changes observed at original base; no RETURN yet; parallel W03/W06 ready; no outward grant |
 | W01-T005-CBOR-CORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
