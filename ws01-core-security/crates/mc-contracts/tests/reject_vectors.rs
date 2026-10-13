@@ -293,17 +293,108 @@ fn string_only_git_publication_effect_kind_rejects_externally_tagged_object() {
 
 #[test]
 fn projection_level_rejects_all_reject() {
+    let vectors = vectors();
+    let controls: Vec<_> = vectors
+        .iter()
+        .filter(|vector| vector["expect"] == "ACCEPT_ENCODING")
+        .collect();
+    assert_eq!(controls.len(), 85);
+    for control in &controls {
+        assert_eq!(
+            round_trip_projection(control["projection"].clone()).unwrap(),
+            control["projection"],
+            "{} positive control",
+            control["id"]
+        );
+    }
     let mut projections = 0;
     let mut byte_only = 0;
-    for vector in vectors()
-        .into_iter()
+    for vector in vectors
+        .iter()
         .filter(|vector| vector["expect"] == "REJECT_ENCODING")
     {
         if let Some(projection) = vector.get("projection") {
             projections += 1;
+            let control = &controls
+                .iter()
+                .find(|control| control["contract"] == vector["contract"])
+                .unwrap()["projection"];
+            let expected = match vector["reason"].as_str().unwrap() {
+                "extra-field" => {
+                    let extra: Vec<_> = projection
+                        .as_object()
+                        .unwrap()
+                        .keys()
+                        .filter(|field| control.get(*field).is_none())
+                        .collect();
+                    assert_eq!(extra.len(), 1);
+                    let mut restored = projection.clone();
+                    restored.as_object_mut().unwrap().remove(extra[0]);
+                    assert_eq!(restored, *control);
+                    format!("unknown field `{}`", extra[0])
+                }
+                "missing-field" => {
+                    let missing: Vec<_> = control
+                        .as_object()
+                        .unwrap()
+                        .keys()
+                        .filter(|field| projection.get(*field).is_none())
+                        .collect();
+                    assert_eq!(missing.len(), 1);
+                    let mut restored = projection.clone();
+                    restored[missing[0]] = control[missing[0]].clone();
+                    assert_eq!(restored, *control);
+                    format!("missing field `{}`", missing[0])
+                }
+                "wrong-revision" => {
+                    let mut restored = projection.clone();
+                    restored["wire_revision"] = control["wire_revision"].clone();
+                    assert_eq!(restored, *control);
+                    "unsupported wire revision".to_owned()
+                }
+                reason @ ("u64-overflow" | "u64-leading-zero" | "u64-number") => {
+                    let mut restored = projection.clone();
+                    restored["lease_generation"] = control["lease_generation"].clone();
+                    assert_eq!(restored, *control);
+                    match reason {
+                        "u64-overflow" => "decimal overflow".to_owned(),
+                        "u64-leading-zero" => "noncanonical decimal syntax".to_owned(),
+                        _ => format!(
+                            "invalid type: integer `{}`, expected a string",
+                            projection["lease_generation"]
+                        ),
+                    }
+                }
+                "uuid-string-instead-of-epoch" => {
+                    let mut restored = projection.clone();
+                    restored["scope"]["authority_epoch"] =
+                        control["scope"]["authority_epoch"].clone();
+                    assert_eq!(restored, *control);
+                    "UUID must be lowercase hyphenated hexadecimal".to_owned()
+                }
+                "duplicate set element" => {
+                    let mut restored = projection.clone();
+                    restored["required_units"].as_array_mut().unwrap().pop();
+                    assert_eq!(restored, *control);
+                    "duplicate record identity".to_owned()
+                }
+                "publication capability permits only five publication effects" => {
+                    let mut restored = projection.clone();
+                    restored["effect_kind"] = control["effect_kind"].clone();
+                    assert_eq!(restored, *control);
+                    format!(
+                        "unknown variant `{}`",
+                        projection["effect_kind"].as_str().unwrap()
+                    )
+                }
+                reason => panic!("unclassified projection rejection: {reason}"),
+            };
+            let failure = round_trip_projection(projection.clone())
+                .expect_err("must reject malformed projection")
+                .to_string();
             assert!(
-                round_trip_projection(projection.clone()).is_err(),
-                "{}: {}",
+                failure.contains(&expected),
+                "{} {}: expected {expected}, got {failure}",
                 vector["id"],
                 vector["reason"]
             );
@@ -345,35 +436,85 @@ fn wrong_wire_revision_rejected() {
 
 #[test]
 fn every_required_field_and_null_rejected() {
+    let registry: Value = serde_json::from_str(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../../ARCHITECTURE/V2_1/SCHEMAS/REGISTRY.json"
+    )))
+    .unwrap();
+    let mut checked = 0;
     for vector in vectors()
         .into_iter()
         .filter(|vector| vector["expect"] == "ACCEPT_ENCODING")
     {
         let projection = vector["projection"].clone();
-        assert!(round_trip_projection(projection.clone()).is_ok());
+        assert_eq!(
+            round_trip_projection(projection.clone()).unwrap(),
+            projection
+        );
         for field in projection.as_object().unwrap().keys() {
+            checked += 1;
             let mut missing = projection.clone();
             missing.as_object_mut().unwrap().remove(field);
             let failure = round_trip_projection(missing).unwrap_err().to_string();
             let expected_reason = if field == "type" {
-                "missing or invalid contract type"
+                "missing or invalid contract type".to_owned()
             } else {
-                "missing field"
+                format!("missing field `{field}`")
             };
             assert!(
-                failure.contains(expected_reason),
+                failure.contains(&expected_reason),
                 "{} {field}: {failure}",
                 vector["id"]
             );
             let mut null = projection.clone();
             null[field] = Value::Null;
-            assert!(
-                round_trip_projection(null).is_err(),
-                "{} {field}",
-                vector["id"]
+            let expected = if field == "type" {
+                "missing or invalid contract type".to_owned()
+            } else {
+                let kind = if field == "wire_revision" {
+                    "u16"
+                } else {
+                    let descriptor =
+                        &registry["contracts"][vector["contract"].as_str().unwrap()]["fields"]
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .find(|entry| entry["name"] == *field)
+                            .unwrap()["type"];
+                    if descriptor.get("option").is_some() {
+                        "a zero or one element option array"
+                    } else if descriptor.get("array").is_some() || descriptor.get("set").is_some() {
+                        "an array of at most 65536 elements"
+                    } else if descriptor.get("enum").is_some() {
+                        "a string"
+                    } else {
+                        let name = descriptor.as_str().unwrap();
+                        if registry["contracts"].get(name).is_some() {
+                            "a contract JSON object"
+                        } else {
+                            match registry["primitives"][name]["type"].as_str() {
+                                Some("integer") => name,
+                                Some("boolean") => "a boolean",
+                                Some("string") => "a string",
+                                None if registry["primitives"][name]["enum"].is_array() => {
+                                    "a string"
+                                }
+                                kind => panic!("unclassified null field {field}: {kind:?}"),
+                            }
+                        }
+                    }
+                };
+                format!("invalid type: null, expected {kind}")
+            };
+            let failure = round_trip_projection(null).unwrap_err().to_string();
+            assert_eq!(
+                failure, expected,
+                "{} {field}: null must reject at the field/header boundary",
+                vector["id"],
             );
         }
     }
+    assert_eq!(checked, 967);
 }
 
 #[test]
@@ -416,10 +557,27 @@ fn positional_json_record_array_rejected() {
 
 #[test]
 fn wrong_wire_revision_json_kind_rejected() {
-    for revision in [json!(1.0), json!("1"), json!(true), json!(null)] {
-        let mut projection = scope();
+    let control = scope();
+    assert_direct_round_trip::<ScopeV1>(&control, "ScopeV1 revision control");
+    for (revision, kind) in [
+        (json!(1.0), "floating point"),
+        (json!("1"), "string"),
+        (json!(true), "boolean"),
+        (Value::Null, "null"),
+    ] {
+        let mut projection = control.clone();
         projection["wire_revision"] = revision;
-        assert!(serde_json::from_value::<ScopeV1>(projection).is_err());
+        let text = serde_json::to_string(&projection).unwrap();
+        let from_value = serde_json::from_value::<ScopeV1>(projection);
+        let from_str = serde_json::from_str::<ScopeV1>(&text);
+        for (path, result) in [("from_value", from_value), ("from_str", from_str)] {
+            let failure = result.unwrap_err().to_string();
+            assert!(
+                failure.contains(&format!("invalid type: {kind}"))
+                    && failure.contains("expected u16"),
+                "wire_revision {kind} {path}: {failure}"
+            );
+        }
     }
 }
 
