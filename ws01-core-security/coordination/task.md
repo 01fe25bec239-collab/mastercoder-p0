@@ -8,7 +8,6 @@ Operator: master (one human, all six lanes). Coordinator: this lane's current A1
 
 | TASK_ID | ATTEMPT | WORKTREE | BASE_SHA | WRITE SCOPE | STARTED (UTC) | WAITING FOR |
 |---|---|---|---|---|---|---|
-| W01-DEPENDENCY-UPDATE | r0 | /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/W01-DEPENDENCY-UPDATE-r0 | c87dea0a5fa5439f127830a88d19bbb1d3bd499d | mc-contracts/Cargo.toml; Cargo.lock; docs/MODULES.md | NOT_STARTED (reserved 2026-10-13T13:01:06.559058+00:00) | Fresh A2 launch; runs alone |
 
 ## Parallel waves (BUILD tasks, from PRECONDITIONS)
 
@@ -30,7 +29,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | TASK_ID | KIND | STATE | ATTEMPT | IMPLEMENTATION_SHA | ACCEPTED_SHA | MERGED_SHA | NOTES |
 |---|---|---|---|---|---|---|---|
 | W01-T000-WORKSPACE-SCAFFOLD | BUILD | INTEGRATED | r1 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | d926be555e86ad2f382fa2d3f73ab6d6998c8e41 | 9a7922bf29c0a6689903b96896dab8851d1eeeeb | Completed independent local A3 plus all real CI and owner A1 disposition; normal PR2 merge and actual main checks verified |
-| W01-DEPENDENCY-UPDATE | BUILD | DISPATCHED | r0 | NONE | NONE | NONE | Prepared, not launched; minimal NFC direct dependency before T004; standing task runs alone |
+| W01-DEPENDENCY-UPDATE | BUILD | REVIEW_PENDING | r0 | 72410409afd609bd98eb9d8742592287d8b1cb6a | NONE | NONE | A2 local RETURN verified; fresh preliminary A3 prepared/not launched; remote CI unauthorized; T004 held |
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
