@@ -1,6 +1,5 @@
-# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Placeholder for lane 03 CI, created by bootstrap_repo.sh.
-# `ws03-ci` is a REQUIRED check on main, so it must report on every PR (auto-merge waits for it).
-# The lane's scaffold task replaces this file with the real workflow and keeps the job name `ws03-ci`.
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+# T000 CI only. Hosted native runtime is mandatory, pending actual authorized execution.
 name: ws03-ci
 on:
   pull_request:
@@ -9,10 +8,1654 @@ on:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: ws03-native-ci
+  cancel-in-progress: false
 jobs:
   ws03-ci:
     name: ws03-ci
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ fromJSON(vars.MC_WS03_CI_JOB_MINUTES || '30') }}
+    outputs:
+      relevant: ${{ steps.change_gate.outputs.relevant }}
+    env:
+      CARGO_BUILD_JOBS: 2
     steps:
-      - name: Placeholder (lane 03 scaffold not merged yet)
-        run: echo "ws03 workspace not scaffolded yet; nothing to test."
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Decide whether W03 checks are required
+        id: change_gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed_paths="$RUNNER_TEMP/ws03-ci-changed-paths"
+          if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+            empty_tree="$(git hash-object -t tree /dev/null)"
+            git diff --name-only --no-renames -z "$empty_tree" HEAD > "$changed_paths"
+          else
+            [[ "$BASE_SHA" =~ ^[0-9a-fA-F]{40}$ ]]
+            git cat-file -e "${BASE_SHA}^{commit}"
+            merge_base="$(git merge-base "$BASE_SHA" HEAD)"
+            git diff --name-only --no-renames -z "$merge_base" HEAD > "$changed_paths"
+          fi
+          relevant=false
+          while IFS= read -r -d '' path; do
+            case "$path" in
+              ws03-runner-sandbox-acquisition|ws03-runner-sandbox-acquisition/*|.github/workflows/ws03-ci.yml|ws01-core-security/crates/*|ws01-core-security/doubles/*|ws01-core-security/Cargo.toml|rust-toolchain.toml|deny.toml|ARCHITECTURE/V2_1/*)
+                relevant=true
+                break
+                ;;
+            esac
+          done < "$changed_paths"
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          if [[ "$relevant" == false ]]; then
+            echo "No W03 or current upstream CI inputs changed; remaining checks are skipped."
+          fi
+      - name: Materialize reviewed CI-only native helpers
+        if: steps.change_gate.outputs.relevant == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, pathlib
+          source = pathlib.Path('.github/workflows/ws03-ci.yml').read_text().splitlines()
+          for label, name in (('PYTHON', 'ws03-native.py'), ('WFP', 'ws03-wfp.cpp')):
+              start = source.index('          # WS03_' + label + '_BEGIN') + 1
+              end = source.index('          # WS03_' + label + '_END')
+              lines = source[start:end]
+              assert all(not line or line.startswith('          ') for line in lines)
+              pathlib.Path(os.environ['RUNNER_TEMP'], name).write_text('\n'.join(line[10:] for line in lines) + '\n')
+          PY
+          : <<'WS03_INLINE_ASSETS'
+          # WS03_PYTHON_BEGIN
+          # PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+          """Native Windows CI adapter, locally authored; native execution NOT_RUN.
+
+          Contracts checked 2026-10-14 against Microsoft Learn and microsoft/win32metadata:
+          https://learn.microsoft.com/en-us/windows/win32/secauthz/implementing-an-appcontainer
+          https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
+          https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects
+          https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/icacls
+          https://learn.microsoft.com/en-us/windows/security/operating-system-security/network-security/windows-firewall/troubleshooting-uwp-firewall
+
+          The caller owns a fresh disposable copied tree and a fresh random profile name.
+          No shared checkout/toolchain ACL is modified. Loopback exemption covers the
+          profile, not one port. Call setup/cleanup from the same Windows user identity.
+          Caller disposes the copied tree after cleanup; its low label is never restored
+          onto a shared path. guarded=False exists solely for fixture mutation controls.
+          """
+          import ctypes as C
+          import math
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import time
+
+          DWORD, WORD, BOOL = C.c_uint32, C.c_uint16, C.c_int32
+          HANDLE, PTR, SIZE = C.c_void_p, C.c_void_p, C.c_size_t
+          PDWORD = C.POINTER(DWORD)
+
+
+          class SID_AND_ATTRIBUTES(C.Structure):
+              _fields_ = [("Sid", PTR), ("Attributes", DWORD)]
+
+
+          class SECURITY_CAPABILITIES(C.Structure):
+              _fields_ = [("AppContainerSid", PTR), ("Capabilities", PTR),
+                          ("CapabilityCount", DWORD), ("Reserved", DWORD)]
+
+
+          class STARTUPINFO(C.Structure):
+              _fields_ = [("cb", DWORD), ("lpReserved", PTR), ("lpDesktop", PTR),
+                          ("lpTitle", PTR)] + [(name, DWORD) for name in (
+                              "dwX", "dwY", "dwXSize", "dwYSize", "dwXCountChars",
+                              "dwYCountChars", "dwFillAttribute", "dwFlags")] + [
+                          ("wShowWindow", WORD), ("cbReserved2", WORD),
+                          ("lpReserved2", PTR), ("hStdInput", HANDLE),
+                          ("hStdOutput", HANDLE), ("hStdError", HANDLE)]
+
+
+          class STARTUPINFOEX(C.Structure):
+              _fields_ = [("StartupInfo", STARTUPINFO), ("lpAttributeList", PTR)]
+
+
+          class PROCESS_INFORMATION(C.Structure):
+              _fields_ = [("hProcess", HANDLE), ("hThread", HANDLE),
+                          ("dwProcessId", DWORD), ("dwThreadId", DWORD)]
+
+
+          class BASIC_LIMITS(C.Structure):
+              _fields_ = [("PerProcessUserTimeLimit", C.c_int64),
+                          ("PerJobUserTimeLimit", C.c_int64), ("LimitFlags", DWORD),
+                          ("MinimumWorkingSetSize", SIZE), ("MaximumWorkingSetSize", SIZE),
+                          ("ActiveProcessLimit", DWORD), ("Affinity", SIZE),
+                          ("PriorityClass", DWORD), ("SchedulingClass", DWORD)]
+
+
+          class IO_COUNTERS(C.Structure):
+              _fields_ = [(name, C.c_uint64) for name in (
+                  "ReadOperationCount", "WriteOperationCount", "OtherOperationCount",
+                  "ReadTransferCount", "WriteTransferCount", "OtherTransferCount")]
+
+
+          class EXTENDED_LIMITS(C.Structure):
+              _fields_ = [("BasicLimitInformation", BASIC_LIMITS), ("IoInfo", IO_COUNTERS)] + [
+                  (name, SIZE) for name in ("ProcessMemoryLimit", "JobMemoryLimit",
+                                           "PeakProcessMemoryUsed", "PeakJobMemoryUsed")]
+
+
+          class ACCOUNTING(C.Structure):
+              _fields_ = [(name, C.c_int64) for name in (
+                  "TotalUserTime", "TotalKernelTime", "ThisPeriodTotalUserTime",
+                  "ThisPeriodTotalKernelTime")] + [(name, DWORD) for name in (
+                  "TotalPageFaultCount", "TotalProcesses", "ActiveProcesses",
+                  "TotalTerminatedProcesses")]
+
+
+          # WinBase.h/winnt.h constants, defined once; not deployment configuration.
+          SECURITY_ATTRIBUTE, JOB_ATTRIBUTE = 0x20009, 0x2000D
+          EXTENDED_STARTUP, UNICODE_ENVIRONMENT, SUSPENDED = 0x80000, 0x400, 0x4
+          KILL_ON_CLOSE, TOKEN_QUERY, INSUFFICIENT_BUFFER = 0x2000, 0x8, 122
+          WAIT_OBJECT_0, WAIT_TIMEOUT, WAIT_FAILED = 0, 258, 0xFFFFFFFF
+          TOKEN_INTEGRITY, TOKEN_APPCONTAINER, TOKEN_CAPABILITIES, TOKEN_PACKAGE = 25, 29, 30, 31
+          LOW_INTEGRITY, REPARSE_POINT = 0x1000, 0x400
+
+
+          def validate_token_shape(is_container, same_sid, capability_count, integrity):
+              if (is_container, same_sid, capability_count, integrity) != (1, True, 0, LOW_INTEGRITY):
+                  raise RuntimeError("AppContainer token shape differs from zero-capability low-IL policy")
+
+
+          def environment_block(env):
+              """Explicit caller-sanitized map; never inherit the host environment."""
+              entries, seen = [], set()
+              for key, value in env.items():
+                  if not isinstance(key, str) or not isinstance(value, str):
+                      raise ValueError("environment must contain strings")
+                  folded = key.upper()
+                  if not key or "=" in key or "\0" in key + value or folded in seen:
+                      raise ValueError("invalid or duplicate environment key")
+                  if folded.startswith(("GITHUB_", "AWS_", "AZURE_", "GOOGLE_", "OPENAI_")) or folded == "SSH_AUTH_SOCK":
+                      raise ValueError("provider or host credential environment forbidden")
+                  seen.add(folded)
+                  entries.append((folded, key + "=" + value))
+              return "\0".join(value for _, value in sorted(entries)) + "\0\0"
+
+
+          class WindowsGuard:
+              def __init__(self, root, name, timeout):
+                  if os.name != "nt":
+                      raise RuntimeError("WindowsGuard native runtime NOT_RUN on this host")
+                  if not re.fullmatch(r"[-_. A-Za-z0-9]{1,64}", name):
+                      raise ValueError("invalid AppContainer profile name")
+                  if not math.isfinite(timeout) or not 0 < timeout * 1000 < WAIT_FAILED:
+                      raise ValueError("invalid bounded timeout")
+                  self.root = Path(os.path.abspath(root))
+                  if not self.root.is_dir() or self.root == Path(self.root.anchor):
+                      raise ValueError("root must be an existing disposable copied directory")
+                  self.name, self.timeout = name, timeout
+                  self.sid, self.created, self.exempt, self.closed = PTR(), False, False, False
+                  self.sid_text = None
+                  self.profile_folder = None
+                  self.k = C.WinDLL("kernel32", use_last_error=True)
+                  self.a = C.WinDLL("advapi32", use_last_error=True)
+                  self.u = C.WinDLL("userenv", use_last_error=True)
+                  self.f = C.WinDLL("FirewallAPI", use_last_error=True)
+                  self.o = C.WinDLL("ole32", use_last_error=True)
+                  self._bind()
+                  # Compute OS utility location; it is not supplied by untrusted PATH.
+                  buffer = C.create_unicode_buffer(32768)
+                  n = self.k.GetSystemDirectoryW(buffer, len(buffer))
+                  if n == 0 or n >= len(buffer):
+                      raise C.WinError(C.get_last_error())
+                  self.system = Path(buffer.value)
+                  self._check_path(self.root)
+
+              def _bind(self):
+                  prototypes = [
+                      (self.u, "CreateAppContainerProfile", C.c_int32, [C.c_wchar_p]*3 + [PTR, DWORD, C.POINTER(PTR)]),
+                      (self.u, "DeleteAppContainerProfile", C.c_int32, [C.c_wchar_p]),
+                      (self.u, "GetAppContainerFolderPath", C.c_int32, [C.c_wchar_p, C.POINTER(PTR)]),
+                      (self.o, "CoTaskMemFree", None, [PTR]),
+                      (self.a, "FreeSid", PTR, [PTR]),
+                      (self.a, "ConvertSidToStringSidW", BOOL, [PTR, C.POINTER(PTR)]),
+                      (self.a, "ConvertStringSidToSidW", BOOL, [C.c_wchar_p, C.POINTER(PTR)]),
+                      (self.a, "OpenProcessToken", BOOL, [HANDLE, DWORD, C.POINTER(HANDLE)]),
+                      (self.a, "GetTokenInformation", BOOL, [HANDLE, C.c_int32, PTR, DWORD, PDWORD]),
+                      (self.a, "EqualSid", BOOL, [PTR, PTR]),
+                      (self.a, "IsValidSid", BOOL, [PTR]),
+                      (self.a, "GetSidSubAuthorityCount", C.POINTER(C.c_ubyte), [PTR]),
+                      (self.a, "GetSidSubAuthority", PDWORD, [PTR, DWORD]),
+                      (self.k, "GetSystemDirectoryW", DWORD, [C.c_wchar_p, DWORD]),
+                      (self.k, "LocalFree", PTR, [PTR]),
+                      (self.k, "GetProcessHeap", HANDLE, []),
+                      (self.k, "HeapFree", BOOL, [HANDLE, DWORD, PTR]),
+                      (self.f, "NetworkIsolationGetAppContainerConfig", DWORD, [PDWORD, C.POINTER(C.POINTER(SID_AND_ATTRIBUTES))]),
+                      (self.k, "CreateJobObjectW", HANDLE, [PTR, C.c_wchar_p]),
+                      (self.k, "SetInformationJobObject", BOOL, [HANDLE, C.c_int32, PTR, DWORD]),
+                      (self.k, "QueryInformationJobObject", BOOL, [HANDLE, C.c_int32, PTR, DWORD, PDWORD]),
+                      (self.k, "InitializeProcThreadAttributeList", BOOL, [PTR, DWORD, DWORD, C.POINTER(SIZE)]),
+                      (self.k, "UpdateProcThreadAttribute", BOOL, [PTR, DWORD, SIZE, PTR, SIZE, PTR, PTR]),
+                      (self.k, "DeleteProcThreadAttributeList", None, [PTR]),
+                      (self.k, "CreateProcessW", BOOL, [C.c_wchar_p, C.c_wchar_p, PTR, PTR, BOOL, DWORD, PTR, C.c_wchar_p, PTR, C.POINTER(PROCESS_INFORMATION)]),
+                      (self.k, "ResumeThread", DWORD, [HANDLE]),
+                      (self.k, "WaitForSingleObject", DWORD, [HANDLE, DWORD]),
+                      (self.k, "GetExitCodeProcess", BOOL, [HANDLE, PDWORD]),
+                      (self.k, "GetCurrentProcess", HANDLE, []),
+                      (self.k, "TerminateProcess", BOOL, [HANDLE, DWORD]),
+                      (self.k, "IsProcessInJob", BOOL, [HANDLE, HANDLE, C.POINTER(BOOL)]),
+                      (self.k, "TerminateJobObject", BOOL, [HANDLE, DWORD]),
+                      (self.k, "CloseHandle", BOOL, [HANDLE]),
+                  ]
+                  for dll, name, result, args in prototypes:
+                      function = getattr(dll, name)
+                      function.restype, function.argtypes = result, args
+
+              @staticmethod
+              def _ok(value):
+                  if not value:
+                      raise C.WinError(C.get_last_error())
+                  return value
+
+              def _check_path(self, path):
+                  # Never follow a junction/symlink while granting ACLs or selecting cwd.
+                  for entry in (path, *path.parents):
+                      stat = entry.stat(follow_symlinks=False)
+                      if entry.is_symlink() or stat.st_file_attributes & REPARSE_POINT:
+                          raise ValueError("reparse point forbidden in copied path")
+
+              def _utility(self, executable, args):
+                  subprocess.run([str(self.system / executable), *args], check=True,
+                                 timeout=self.timeout, stdin=subprocess.DEVNULL)
+
+              def _exemption_present(self):
+                  # Read-only API; never replace the global exemption list.
+                  count, entries = DWORD(), C.POINTER(SID_AND_ATTRIBUTES)()
+                  error = self.f.NetworkIsolationGetAppContainerConfig(C.byref(count), C.byref(entries))
+                  if error:
+                      raise C.WinError(error)
+                  try:
+                      return any(self.a.EqualSid(entries[i].Sid, self.sid) for i in range(count.value))
+                  finally:
+                      heap = self.k.GetProcessHeap()
+                      for i in range(count.value):
+                          self._ok(self.k.HeapFree(heap, 0, entries[i].Sid))
+                      if entries:
+                          self._ok(self.k.HeapFree(heap, 0, C.cast(entries, PTR)))
+
+              def setup(self):
+                  if self.created or self.closed:
+                      raise RuntimeError("guard setup is single-use")
+                  for directory, dirs, files in os.walk(self.root, followlinks=False):
+                      for name in (*dirs, *files):
+                          self._check_path(Path(directory) / name)
+                          entry = Path(directory) / name
+                          if entry.is_file() and entry.stat(follow_symlinks=False).st_nlink != 1:
+                              raise ValueError("hard-linked copied files forbidden before ACL grant")
+                  # Collision is a failure, never derive/reuse/delete another profile.
+                  hr = self.u.CreateAppContainerProfile(self.name, self.name, self.name,
+                                                        None, 0, C.byref(self.sid))
+                  if hr != 0:
+                      raise RuntimeError(f"CreateAppContainerProfile HRESULT=0x{hr & 0xFFFFFFFF:08x}; profile not owned")
+                  self.created = True
+                  if self._exemption_present():
+                      raise RuntimeError("new profile SID has a preexisting exemption; not owned")
+                  text = PTR()
+                  self._ok(self.a.ConvertSidToStringSidW(self.sid, C.byref(text)))
+                  try:
+                      sid_text = C.wstring_at(text)
+                      self.sid_text = sid_text
+                  finally:
+                      if self.k.LocalFree(text):
+                          raise RuntimeError("LocalFree failed")
+                  folder = PTR()
+                  hr = self.u.GetAppContainerFolderPath(sid_text, C.byref(folder))
+                  if hr != 0:
+                      raise RuntimeError(f"GetAppContainerFolderPath HRESULT=0x{hr & 0xFFFFFFFF:08x}")
+                  try:
+                      self.profile_folder = Path(C.wstring_at(folder))
+                  finally:
+                      self.o.CoTaskMemFree(folder)
+                  # Modify only the fresh copied tree, and only this per-run package SID.
+                  self._utility("icacls.exe", [str(self.root), "/grant:r", f"*{sid_text}:(OI)(CI)M", "/T", "/L"])
+                  self._utility("icacls.exe", [str(self.root), "/setintegritylevel", "(OI)(CI)L", "/T", "/L"])
+                  # Fresh profile cannot legitimately have a preexisting exemption.
+                  # Mark intent before invocation: a timeout can happen after mutation.
+                  self.exempt = True
+                  self._utility("CheckNetIsolation.exe", ["LoopbackExempt", "-a", f"-n={self.name}"])
+                  if not self._exemption_present():
+                      raise RuntimeError("loopback exemption was not installed")
+                  return self
+
+              def _token_info(self, token, kind):
+                  required = DWORD()
+                  ok = self.a.GetTokenInformation(token, kind, None, 0, C.byref(required))
+                  if ok or C.get_last_error() != INSUFFICIENT_BUFFER or not required.value:
+                      raise RuntimeError("unexpected token-information sizing result")
+                  result = C.create_string_buffer(required.value)
+                  self._ok(self.a.GetTokenInformation(token, kind, result, required.value, C.byref(required)))
+                  return result
+
+              def _verify_token(self, process):
+                  token = HANDLE()
+                  self._ok(self.a.OpenProcessToken(process, TOKEN_QUERY, C.byref(token)))
+                  try:
+                      app = self._token_info(token, TOKEN_APPCONTAINER)
+                      package = self._token_info(token, TOKEN_PACKAGE)
+                      capabilities = self._token_info(token, TOKEN_CAPABILITIES)
+                      integrity = self._token_info(token, TOKEN_INTEGRITY)
+                      package_sid = C.cast(package, C.POINTER(PTR)).contents.value
+                      label_sid = C.cast(integrity, C.POINTER(SID_AND_ATTRIBUTES)).contents.Sid
+                      self._ok(self.a.IsValidSid(package_sid))
+                      self._ok(self.a.IsValidSid(label_sid))
+                      count = self.a.GetSidSubAuthorityCount(label_sid).contents.value
+                      if count == 0:
+                          raise RuntimeError("empty integrity SID")
+                      rid = self.a.GetSidSubAuthority(label_sid, count - 1).contents.value
+                      validate_token_shape(C.cast(app, PDWORD).contents.value,
+                                           bool(self.a.EqualSid(package_sid, self.sid)),
+                                           C.cast(capabilities, PDWORD).contents.value, rid)
+                  finally:
+                      self._ok(self.k.CloseHandle(token))
+
+              @classmethod
+              def attest_current(cls, sid_text):
+                  """Called by the child/grandchild itself; no profile or ACL mutation."""
+                  if os.name != "nt":
+                      raise RuntimeError("native token attestation NOT_RUN on this host")
+                  guard = object.__new__(cls)
+                  guard.k = C.WinDLL("kernel32", use_last_error=True)
+                  guard.a = C.WinDLL("advapi32", use_last_error=True)
+                  guard.u = C.WinDLL("userenv", use_last_error=True)
+                  guard.f = C.WinDLL("FirewallAPI", use_last_error=True)
+                  guard.o = C.WinDLL("ole32", use_last_error=True)
+                  guard._bind()
+                  guard.sid = PTR()
+                  guard._ok(guard.a.ConvertStringSidToSidW(sid_text, C.byref(guard.sid)))
+                  try:
+                      guard._verify_token(guard.k.GetCurrentProcess())
+                      return {"is_appcontainer": True, "same_sid": True,
+                              "capability_count": 0, "integrity_rid": LOW_INTEGRITY}
+                  finally:
+                      if guard.k.LocalFree(guard.sid):
+                          raise RuntimeError("LocalFree failed for attestation SID")
+
+              def _drain(self, job):
+                  self._ok(self.k.TerminateJobObject(job, 1))
+                  deadline = time.monotonic() + self.timeout
+                  while True:
+                      accounting = ACCOUNTING()
+                      self._ok(self.k.QueryInformationJobObject(job, 1, C.byref(accounting), C.sizeof(accounting), None))
+                      if accounting.ActiveProcesses == 0:
+                          return
+                      if time.monotonic() >= deadline:
+                          raise TimeoutError("job descendants did not terminate within bound")
+                      time.sleep(min(0.01, max(0, deadline - time.monotonic())))
+
+              def run(self, argv, cwd, env, guarded=True):
+                  if not self.created or not self.exempt or self.closed:
+                      raise RuntimeError("guard is not ready")
+                  if not isinstance(argv, (list, tuple)) or not argv or any(not isinstance(x, str) or "\0" in x for x in argv):
+                      raise ValueError("argv must be a nonempty sequence of NUL-free strings")
+                  executable, directory = Path(argv[0]), Path(cwd)
+                  if not executable.is_absolute() or not directory.is_absolute():
+                      raise ValueError("executable and cwd must be absolute")
+                  executable, directory = Path(os.path.abspath(executable)), Path(os.path.abspath(directory))
+                  for path in (executable, directory):
+                      if not path.is_relative_to(self.root):
+                          raise ValueError("executable/cwd outside disposable copied root")
+                      self._check_path(path)
+                  command = C.create_unicode_buffer(subprocess.list2cmdline(argv))
+                  environment = C.create_unicode_buffer(environment_block(env))
+                  job = self._ok(self.k.CreateJobObjectW(None, None))  # Unnamed, noninheritable.
+                  attributes, initialized, process = None, False, PROCESS_INFORMATION()
+                  try:
+                      limits = EXTENDED_LIMITS()
+                      limits.BasicLimitInformation.LimitFlags = KILL_ON_CLOSE
+                      self._ok(self.k.SetInformationJobObject(job, 9, C.byref(limits), C.sizeof(limits)))
+                      needed = SIZE()
+                      count = 2 if guarded else 1
+                      if self.k.InitializeProcThreadAttributeList(None, count, 0, C.byref(needed)) or C.get_last_error() != INSUFFICIENT_BUFFER:
+                          raise RuntimeError("unexpected attribute-list sizing result")
+                      attributes = C.create_string_buffer(needed.value)
+                      self._ok(self.k.InitializeProcThreadAttributeList(attributes, count, 0, C.byref(needed)))
+                      initialized = True
+                      jobs = (HANDLE * 1)(job)
+                      self._ok(self.k.UpdateProcThreadAttribute(attributes, 0, JOB_ATTRIBUTE, jobs, C.sizeof(jobs), None, None))
+                      capabilities = SECURITY_CAPABILITIES(self.sid, None, 0, 0)
+                      if guarded:
+                          self._ok(self.k.UpdateProcThreadAttribute(attributes, 0, SECURITY_ATTRIBUTE, C.byref(capabilities), C.sizeof(capabilities), None, None))
+                      startup = STARTUPINFOEX()
+                      startup.StartupInfo.cb = C.sizeof(startup)
+                      startup.lpAttributeList = C.cast(attributes, PTR)
+                      self._ok(self.k.CreateProcessW(str(executable), command, None, None, False,
+                                   EXTENDED_STARTUP | UNICODE_ENVIRONMENT | SUSPENDED,
+                                   environment, str(directory), C.byref(startup), C.byref(process)))
+                      in_job = BOOL()
+                      self._ok(self.k.IsProcessInJob(process.hProcess, job, C.byref(in_job)))
+                      if not in_job.value:
+                          raise RuntimeError("new process not in owned job")
+                      if guarded:
+                          self._verify_token(process.hProcess)
+                      if self.k.ResumeThread(process.hThread) == WAIT_FAILED:
+                          raise C.WinError(C.get_last_error())
+                      wait = self.k.WaitForSingleObject(process.hProcess, math.ceil(self.timeout * 1000))
+                      if wait == WAIT_TIMEOUT:
+                          raise TimeoutError("process exceeded configured time bound")
+                      if wait != WAIT_OBJECT_0:
+                          raise C.WinError(C.get_last_error())
+                      exit_code = DWORD()
+                      self._ok(self.k.GetExitCodeProcess(process.hProcess, C.byref(exit_code)))
+                      return exit_code.value
+                  finally:
+                      # Always cancel surviving descendants, even after successful parent exit.
+                      try:
+                          if process.hProcess and self.k.WaitForSingleObject(process.hProcess, 0) == WAIT_TIMEOUT:
+                              self._ok(self.k.TerminateProcess(process.hProcess, 1))
+                          self._drain(job)
+                      finally:
+                          try:
+                              self._ok(self.k.CloseHandle(job))
+                          finally:
+                              if process.hThread:
+                                  self._ok(self.k.CloseHandle(process.hThread))
+                              if process.hProcess:
+                                  self._ok(self.k.CloseHandle(process.hProcess))
+                              if initialized:
+                                  self.k.DeleteProcThreadAttributeList(attributes)
+
+              def cleanup(self):
+                  if self.closed:
+                      return
+                  # No global -c, no deletion of an unowned name, no guessed ACL restore.
+                  if self.exempt:
+                      if self._exemption_present():
+                          self._utility("CheckNetIsolation.exe", ["LoopbackExempt", "-d", f"-n={self.name}"])
+                      if self._exemption_present():
+                          raise RuntimeError("owned loopback exemption remained after removal")
+                      self.exempt = False
+                  if self.created:
+                      hr = self.u.DeleteAppContainerProfile(self.name)
+                      if hr != 0:
+                          raise RuntimeError(f"DeleteAppContainerProfile HRESULT=0x{hr & 0xFFFFFFFF:08x}")
+                      if self.profile_folder is not None and os.path.lexists(self.profile_folder):
+                          raise RuntimeError("owned profile folder remained after successful deletion")
+                      self.created = False
+                  if self.sid.value:
+                      if self.a.FreeSid(self.sid):
+                          raise RuntimeError("FreeSid failed")
+                      self.sid = PTR()
+                  self.closed = True
+
+
+          def selftest():
+              """Pure shape checks; this never invokes a Windows API or native guard."""
+              validate_token_shape(1, True, 0, LOW_INTEGRITY)
+              for shape in ((0, True, 0, LOW_INTEGRITY), (1, False, 0, LOW_INTEGRITY),
+                            (1, True, 1, LOW_INTEGRITY), (1, True, 0, 0x2000)):
+                  try:
+                      validate_token_shape(*shape)
+                  except RuntimeError:
+                      continue
+                  raise AssertionError("unsafe token shape accepted")
+              assert environment_block({"B": "2", "a": "1"}) == "a=1\0B=2\0\0"
+              for env in ({"A": "1", "a": "2"}, {"A": "x\0y"}, {"AWS_ACCESS_KEY_ID": "canary"}):
+                  try:
+                      environment_block(env)
+                  except ValueError:
+                      continue
+                  raise AssertionError("invalid environment accepted")
+              if C.sizeof(PTR) == 8:
+                  assert C.sizeof(STARTUPINFO) == 104
+                  assert C.sizeof(STARTUPINFOEX) == 112
+                  assert C.sizeof(SECURITY_CAPABILITIES) == 24
+                  assert C.sizeof(EXTENDED_LIMITS) == 144
+              return "pure selftest PASS; native AppContainer/job/ACL/loopback NOT_RUN"
+
+
+
+          # PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+          # CI fixtures only; no product sandbox implementation or capability qualification.
+          import argparse
+          import ctypes
+          import errno
+          import hashlib
+          import ipaddress
+          import json
+          import math
+          import os
+          from pathlib import Path
+          import platform
+          import re
+          import secrets
+          import shutil
+          import signal
+          import socket
+          import struct
+          import subprocess
+          import sys
+          import threading
+          import time
+          import tomllib
+
+
+          class Config:
+              """One validated config reader, with documented nonsecret CI defaults."""
+              def __init__(self, lane):
+                  defaults = dict(line.split('=', 1) for line in (lane / '.env.example').read_text().splitlines()
+                                  if line.startswith('MC_WS03_CI_') and '=' in line)
+                  self.values = {key: os.environ.get(key, value) for key, value in defaults.items()}
+                  for key in ('MC_WS03_CI_PROBE_SECONDS', 'MC_WS03_CI_SETUP_SECONDS',
+                              'MC_WS03_CI_COMMAND_SECONDS', 'MC_WS03_CI_CLEANUP_SECONDS'):
+                      value = float(self.values[key])
+                      if not math.isfinite(value) or value <= 0:
+                          raise ValueError(key + ': expected finite positive seconds')
+                  if not re.fullmatch(r'postgresql@[0-9]+', self.values['MC_WS03_CI_PG_FORMULA']):
+                      raise ValueError('Invalid native PostgreSQL formula')
+                  if not re.fullmatch(r'[a-z][a-z0-9-]*\.test', self.values['MC_WS03_CI_DNS_SUFFIX']):
+                      raise ValueError('Expected synthetic .test suffix')
+                  for key in ('MC_WS03_CI_SEATBELT_LIBRARY', 'MC_WS03_CI_MACOS_RESOLVER_DIRECTORY'):
+                      if self.values[key] != defaults[key] or not Path(self.values[key]).is_absolute():
+                          raise ValueError(key + ': this adapter requires the documented native system interface')
+
+              def seconds(self, name):
+                  return float(self.values['MC_WS03_CI_' + name + '_SECONDS'])
+
+
+          def checked(argv, **kwargs):
+              return subprocess.run([str(x) for x in argv], check=True, **kwargs)
+
+
+          def native_dns(name):
+              # Actual system resolver/broker API, never replaced by a direct UDP probe.
+              return sorted({x[4][0] for x in socket.getaddrinfo(name, None, socket.AF_INET, socket.SOCK_STREAM)})
+
+
+          def query_pg(port, timeout):
+              """Actual PostgreSQL startup and SELECT, against disposable trust-auth loopback."""
+              def message(conn):
+                  def exact(n):
+                      data = b''
+                      while len(data) < n:
+                          part = conn.recv(n - len(data))
+                          if not part:
+                              raise RuntimeError('PostgreSQL closed the protocol stream')
+                          data += part
+                      return data
+                  kind = exact(1)
+                  length = struct.unpack('!I', exact(4))[0]
+                  if not 4 <= length <= 65536:
+                      raise RuntimeError('Invalid PostgreSQL message bound')
+                  return kind, exact(length - 4)
+              with socket.create_connection(('127.0.0.1', port), timeout) as conn:
+                  conn.settimeout(timeout)
+                  payload = struct.pack('!I', 196608) + b'user\0postgres\0database\0postgres\0\0'
+                  conn.sendall(struct.pack('!I', len(payload) + 4) + payload)
+                  while True:
+                      kind, data = message(conn)
+                      if kind == b'E' or (kind == b'R' and data != struct.pack('!I', 0)):
+                          raise RuntimeError('Expected disposable trust-auth PostgreSQL')
+                      if kind == b'Z':
+                          break
+                  conn.sendall(b'Q' + struct.pack('!I', 13) + b'SELECT 1\0')
+                  row = False
+                  while True:
+                      kind, data = message(conn)
+                      if kind == b'E':
+                          raise RuntimeError('PostgreSQL SELECT failed')
+                      if kind == b'D':
+                          row = data == b'\0\1\0\0\0\1' + b'1'
+                      if kind == b'Z':
+                          break
+                  if not row:
+                      raise RuntimeError('PostgreSQL did not return SELECT 1')
+
+
+          def dns_answer(packet, ipv4):
+              # Synthetic authoritative A/AAAA responses, TTL zero avoids positive-cache masking.
+              if len(packet) < 17 or packet[4:6] != b'\0\1':
+                  raise ValueError('Invalid fixture DNS request')
+              offset, labels = 12, []
+              while packet[offset]:
+                  size = packet[offset]
+                  if size > 63 or offset + size + 1 >= len(packet):
+                      raise ValueError('Invalid fixture DNS label')
+                  labels.append(packet[offset + 1:offset + 1 + size].decode('ascii'))
+                  offset += size + 1
+              end = offset + 5
+              qtype, qclass = struct.unpack('!HH', packet[offset + 1:end])
+              if qclass != 1 or end > len(packet):
+                  raise ValueError('Unsupported fixture DNS question')
+              answer = b''
+              if qtype == 1:
+                  answer = b'\xc0\x0c' + struct.pack('!HHIH', 1, 1, 0, 4) + socket.inet_aton(ipv4)
+              return (packet[:2] + struct.pack('!HHHHH', 0x8180, 1, bool(answer), 0, 0)
+                      + packet[12:end] + answer), '.'.join(labels)
+
+
+          def serve(config_path):
+              config = json.loads(Path(config_path).read_text())
+              sockets, threads, errors = [], [], []
+              stop = threading.Event()
+              def worker(sock, protocol):
+                  try:
+                      while not stop.is_set():
+                          try:
+                              if protocol == 'tcp':
+                                  conn, _ = sock.accept()
+                                  with conn:
+                                      conn.settimeout(config['timeout'])
+                                      conn.sendall(config['canary'].encode())
+                              else:
+                                  data, addr = sock.recvfrom(4096)
+                                  if protocol == 'dns':
+                                      reply, name = dns_answer(data, config['ipv4'])
+                                      with Path(config['dns_log']).open('a') as output:
+                                          output.write(name + '\n')
+                                      sock.sendto(reply, addr)
+                                  elif data == config['canary'].encode():
+                                      sock.sendto(data, addr)
+                                  else:
+                                      raise ValueError('Unexpected fixture canary')
+                          except socket.timeout:
+                              continue
+                  except BaseException as error:
+                      errors.append(type(error).__name__)
+                      stop.set()
+              endpoints = []
+              for family, address in ((socket.AF_INET, config['ipv4']), (socket.AF_INET6, config['ipv6']),
+                                      (socket.AF_INET, '127.0.0.1'), (socket.AF_INET6, '::1')):
+                  for protocol in ('tcp', 'udp'):
+                      sock = socket.socket(family, socket.SOCK_STREAM if protocol == 'tcp' else socket.SOCK_DGRAM)
+                      sock.settimeout(config['timeout'])
+                      sock.bind((address, 0))
+                      if protocol == 'tcp':
+                          sock.listen()
+                      sockets.append(sock)
+                      endpoints.append({'family': family, 'address': address, 'port': sock.getsockname()[1],
+                                        'protocol': protocol, 'loopback': ipaddress.ip_address(address.split('%')[0]).is_loopback})
+                      threads.append(threading.Thread(target=worker, args=(sock, protocol)))
+              dns = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+              dns.settimeout(config['timeout'])
+              dns.bind((config['ipv4'], config['dns_port']))
+              sockets.append(dns)
+              threads.append(threading.Thread(target=worker, args=(dns, 'dns')))
+              config['dns_port'] = dns.getsockname()[1]
+              config['endpoints'] = endpoints
+              for thread in threads:
+                  thread.start()
+              ready = Path(config['ready'])
+              temporary = ready.with_suffix('.new')
+              temporary.write_text(json.dumps(config))
+              temporary.replace(ready)
+              try:
+                  deadline = time.monotonic() + config['lifetime']
+                  while not stop.wait(min(config['timeout'], max(0, deadline - time.monotonic()))):
+                      if Path(config['stop']).exists() or time.monotonic() >= deadline:
+                          break
+              finally:
+                  stop.set()
+                  for thread in threads:
+                      thread.join(config['timeout'] + 1)
+                  for sock in sockets:
+                      sock.close()
+              if errors or any(thread.is_alive() for thread in threads):
+                  raise RuntimeError('Fixture failed: ' + ','.join(errors))
+
+
+          def check_results(results, denied):
+              # A removed guard must fail this exact predicate; outage alone never establishes denial.
+              for result in results:
+                  expected = not denied or result['loopback']
+                  if result['reachable'] != expected:
+                      raise RuntimeError('Network expectation failed: ' + result['name'])
+                  if not expected and result['error'] not in ('policy', 'timeout', 'dns-denied'):
+                      raise RuntimeError('Unsupported network/interface error: ' + result['name'])
+
+
+          def probe(config_path, mode, phase, descendant=False):
+              config = json.loads(Path(config_path).read_text())
+              if mode == 'deny':
+                  if sys.platform == 'win32':
+                      WindowsGuard.attest_current(config['package_sid'])
+                  elif sys.platform == 'linux':
+                      status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines() if ':' in line)
+                      if (os.geteuid() == 0 or status['NoNewPrivs'].strip() != '1'
+                              or any(int(status[key].strip(), 16) for key in ('CapEff', 'CapBnd', 'CapInh', 'CapAmb'))):
+                          raise RuntimeError('Restricted process retained privilege or escalation')
+                      if not {'lo', 'fixture0'} == {name for _, name in socket.if_nameindex()}:
+                          raise RuntimeError('Unexpected namespace interface')
+                  elif sys.platform == 'darwin':
+                      sandbox = ctypes.CDLL(config['seatbelt_library'])
+                      sandbox.sandbox_check.restype = ctypes.c_int
+                      # sandbox_check's varargs ABI: pid, operation, filter=0 (no path), no extra argument.
+                      if sandbox.sandbox_check(ctypes.c_int(os.getpid()), ctypes.c_char_p(b'network-outbound'), ctypes.c_int(0)) != 1:
+                          raise RuntimeError('Seatbelt network policy denial is absent or unsupported')
+              results = []
+              allowed_errors = {errno.EACCES, errno.EPERM, errno.ENETUNREACH, errno.EHOSTUNREACH, 10013, 10051, 10065}
+              for endpoint in config['endpoints']:
+                  result = {'name': endpoint['address'] + ':' + endpoint['protocol'],
+                            'loopback': endpoint['loopback'], 'reachable': False, 'error': None}
+                  with socket.socket(endpoint['family'], socket.SOCK_STREAM if endpoint['protocol'] == 'tcp' else socket.SOCK_DGRAM) as conn:
+                      conn.settimeout(config['timeout'])
+                      try:
+                          if endpoint['protocol'] == 'tcp':
+                              conn.connect((endpoint['address'], endpoint['port']))
+                              data = b''
+                              while len(data) < len(config['canary']):
+                                  part = conn.recv(len(config['canary']) - len(data))
+                                  if not part:
+                                      break
+                                  data += part
+                          else:
+                              conn.sendto(config['canary'].encode(), (endpoint['address'], endpoint['port']))
+                              data, peer = conn.recvfrom(4096)
+                              if peer[1] != endpoint['port']:
+                                  raise RuntimeError('Fixture response from wrong port')
+                          if data != config['canary'].encode():
+                              raise RuntimeError('Fixture canary mismatch')
+                          result['reachable'] = True
+                      except socket.timeout:
+                          result['error'] = 'timeout'
+                      except OSError as error:
+                          if error.errno not in allowed_errors and getattr(error, 'winerror', None) not in allowed_errors:
+                              raise
+                          result['error'] = 'policy'
+                  results.append(result)
+              # Direct DNS is additional coverage, never a substitute for getaddrinfo/broker.
+              name = phase + '-' + ('child' if descendant else 'parent') + '.' + config['domain']
+              result = {'name': 'system-dns:' + name, 'loopback': False, 'reachable': False, 'error': None}
+              try:
+                  if config['ipv4'] not in native_dns(name):
+                      raise RuntimeError('DNS returned an unexpected fixture address')
+                  result['reachable'] = True
+              except socket.gaierror as error:
+                  if error.errno not in (socket.EAI_AGAIN, socket.EAI_NONAME, socket.EAI_FAIL, 11001, 11002):
+                      raise
+                  result['error'] = 'dns-denied'
+              results.append(result)
+              direct_name = 'wire-' + name
+              packet = b'\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00'
+              packet += b''.join(bytes([len(x)]) + x.encode() for x in direct_name.split('.')) + b'\0\0\1\0\1'
+              result = {'name': 'direct-dns', 'loopback': False, 'reachable': False, 'error': None}
+              with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as conn:
+                  conn.settimeout(config['timeout'])
+                  try:
+                      conn.sendto(packet, (config['ipv4'], config['dns_port']))
+                      answer, _ = conn.recvfrom(4096)
+                      if answer != dns_answer(packet, config['ipv4'])[0]:
+                          raise RuntimeError('DNS fixture reply mismatch')
+                      result['reachable'] = True
+                  except socket.timeout:
+                      result['error'] = 'timeout'
+                  except OSError as error:
+                      if error.errno not in allowed_errors and getattr(error, 'winerror', None) not in allowed_errors:
+                          raise
+                      result['error'] = 'policy'
+              results.append(result)
+              query_pg(config['pg_port'], config['timeout'])
+              Path(config['output'], phase + ('-child' if descendant else '-parent') + '.json').write_text(json.dumps({
+                  'pid': os.getpid(), 'parent': os.getppid(), 'platform': platform.platform(), 'mode': mode,
+                  'postgres_select_1': True, 'results': results}, indent=2))
+              if mode != 'mutation':
+                  check_results(results, mode == 'deny')
+              else:
+                  check_results(results, False)
+                  try:
+                      check_results(results, True)
+                  except RuntimeError:
+                      pass
+                  else:
+                      raise RuntimeError('Removed guard escaped the denial checker')
+              if not descendant:
+                  checked([sys.executable, __file__, 'probe-child', config_path, mode, phase], timeout=config['command_timeout'])
+
+
+          def safe_env(root):
+              # No inherited GitHub credentials, provider secrets, proxy or host key variables.
+              allowed = ('PATH', 'SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT', 'NUMBER_OF_PROCESSORS')
+              env = {key: os.environ[key] for key in allowed if key in os.environ}
+              env.update({'HOME': str(root / 'home'), 'USERPROFILE': str(root / 'home'),
+                          'TEMP': str(root / 'temp'), 'TMP': str(root / 'temp'),
+                          'CARGO_HOME': str(root / 'cargo'), 'RUSTUP_HOME': str(root / 'rustup'),
+                          'CARGO_BUILD_JOBS': '2', 'CARGO_INCREMENTAL': '0', 'PYTHONDONTWRITEBYTECODE': '1'})
+              return env
+
+
+          def wait_file(path, process, bound):
+              deadline = time.monotonic() + bound
+              while not path.exists():
+                  if process.poll() is not None:
+                      raise RuntimeError('Fixture exited before readiness')
+                  if time.monotonic() >= deadline:
+                      raise TimeoutError('Fixture readiness exceeded bound')
+                  threading.Event().wait(0.1)
+
+
+          class PosixGuard:
+              def __init__(self, root, config):
+                  self.root, self.config = root, config
+                  self.namespace = None
+                  self.container = None
+                  self.resolver = None
+                  self.profile = root / 'seatbelt.sb'
+                  self.prefix = []
+                  self.cleanup_actions = []
+                  self.fixture = None
+
+              def setup(self, fixture):
+                  timeout = self.config.seconds('SETUP')
+                  if sys.platform == 'linux':
+                      # Docker none namespace has no interface to the host/public network.
+                      image = dict(line.split('=', 1) for line in (self.root / 'work/ws03-runner-sandbox-acquisition/.env.example').read_text().splitlines()
+                                   if line.startswith('MC_WS03_POSTGRES_IMAGE='))['MC_WS03_POSTGRES_IMAGE']
+                      checked(['docker', 'pull', image], timeout=timeout)
+                      self.container = subprocess.check_output(['docker', 'run', '--detach', '--network', 'none',
+                          '-e', 'POSTGRES_HOST_AUTH_METHOD=trust', '-e', 'PGPORT=' + str(fixture['pg_port']), image,
+                          '-c', 'listen_addresses=127.0.0.1'], text=True, timeout=timeout).strip()
+                      pid = subprocess.check_output(['docker', 'inspect', '--format', '{{.State.Pid}}', self.container], text=True).strip()
+                      if not re.fullmatch(r'[1-9][0-9]*', pid):
+                          raise RuntimeError('Invalid owned namespace PID')
+                      self.prefix = ['sudo', '-n', 'nsenter', '--target', pid, '--net', '--']
+                      if subprocess.check_output(self.prefix + ['nft', 'list', 'tables'], text=True).strip():
+                          raise RuntimeError('Unexpected policy in owned namespace')
+                      checked(self.prefix + ['sysctl', '-w', 'net.ipv6.conf.all.disable_ipv6=0'], timeout=timeout)
+                      checked(self.prefix + ['sysctl', '-w', 'net.ipv6.conf.default.disable_ipv6=0'], timeout=timeout)
+                      checked(self.prefix + ['ip', 'link', 'add', 'fixture0', 'type', 'dummy'], timeout=timeout)
+                      checked(self.prefix + ['ip', 'link', 'set', 'fixture0', 'up'], timeout=timeout)
+                      # RFC 5737 / RFC 4193 synthetic fixture addresses in this isolated namespace only.
+                      fixture['ipv4'] = '192.0.2.1'
+                      fixture['ipv6'] = str(ipaddress.IPv6Address((0xfd << 120) | (secrets.randbits(40) << 80) | 1))
+                      checked(self.prefix + ['ip', 'addr', 'add', fixture['ipv4'] + '/32', 'dev', 'fixture0'], timeout=timeout)
+                      checked(self.prefix + ['ip', '-6', 'addr', 'add', fixture['ipv6'] + '/128', 'dev', 'fixture0', 'nodad'], timeout=timeout)
+                      fixture['dns_port'] = 53
+                      self.fixture_prefix = self.prefix
+                      ready = ['docker', 'exec', self.container, 'pg_isready', '-h', '127.0.0.1', '-p', str(fixture['pg_port']), '-U', 'postgres']
+                      deadline = time.monotonic() + timeout
+                      while subprocess.run(ready, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
+                          if time.monotonic() >= deadline:
+                              raise TimeoutError('Owned PostgreSQL readiness exceeded bound')
+                          threading.Event().wait(0.1)
+                  else:
+                      # Existing native interface addresses; no adapter/global firewall mutation.
+                      listing = subprocess.check_output(['ifconfig'], text=True, timeout=timeout)
+                      ipv4 = re.findall(r'\binet (\S+)', listing)
+                      ipv6 = re.findall(r'\binet6 (\S+)', listing)
+                      fixture['ipv4'] = next(x for x in ipv4 if not ipaddress.ip_address(x).is_loopback)
+                      fixture['ipv6'] = next(x for x in ipv6 if not ipaddress.ip_address(x.split('%')[0]).is_loopback)
+                      fixture['dns_port'] = 0
+                      self.fixture_prefix = []
+                      self.seatbelt = shutil.which('sandbox-exec')
+                      if not self.seatbelt or not Path(self.seatbelt).is_file():
+                          raise RuntimeError('Native Seatbelt interface is missing')
+                      self.profile.write_text('(version 1)\n(allow default)\n(deny network*)\n'
+                          '(allow network-outbound (remote ip "localhost:*"))\n'
+                          '(deny mach-lookup (global-name "com.apple.mDNSResponder") (global-name "com.apple.dnssd.service"))\n')
+
+              def resolver_setup(self, fixture):
+                  if sys.platform == 'darwin':
+                      self.resolver = Path(self.config.values['MC_WS03_CI_MACOS_RESOLVER_DIRECTORY']) / fixture['domain']
+                      # mkdir of standard resolver directory is bounded; preexisting per-job file is never reused.
+                      checked(['sudo', '-n', 'mkdir', '-p', str(self.resolver.parent)])
+                      content = ('nameserver ' + fixture['ipv4'] + '\nport ' + str(fixture['dns_port']) + '\n')
+                      checked(['sudo', '-n', 'python3', '-c',
+                               'import os,sys; fd=os.open(sys.argv[1],os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o644); os.write(fd,sys.argv[2].encode()); os.close(fd)',
+                               self.resolver, content], timeout=self.config.seconds('SETUP'))
+                      self.resolver_hash = hashlib.sha256(content.encode()).hexdigest()
+                  else:
+                      resolver_file = self.root / 'resolv.conf'
+                      resolver_file.write_text('nameserver ' + fixture['ipv4'] + '\noptions attempts:1 timeout:1\n')
+                      # Never execute a test-writable file as root. An owned PID namespace
+                      # terminates even descendants that create another session/group.
+                      script = 'set -euo pipefail\nmount --bind "$1" /etc/resolv.conf\nshift\nexec "$@"\n'
+                      self.resolver_prefix = self.prefix + ['unshare', '--mount', '--propagation', 'private',
+                          '--pid', '--fork', '--kill-child', '--mount-proc', '--', 'bash', '-c', script, 'ws03-resolver',
+                          str(resolver_file), 'setpriv', '--reuid', str(os.getuid()), '--regid', str(os.getgid()),
+                          '--clear-groups', '--inh-caps=-all', '--ambient-caps=-all', '--bounding-set=-all', '--no-new-privs', '--']
+
+              def install(self):
+                  if sys.platform == 'linux':
+                      policy = 'table inet ws03_guard { chain output { type filter hook output priority 0; policy drop; ip daddr 127.0.0.0/8 accept; ip6 daddr ::1 accept; } }\n'
+                      checked(self.prefix + ['nft', '-f', '-'], input=policy, text=True)
+                      self.policy = policy
+
+              def run(self, argv, cwd, env, guarded=True):
+                  if sys.platform == 'linux':
+                      prefix = self.resolver_prefix
+                  else:
+                      prefix = [self.seatbelt, '-f', str(self.profile)] if guarded else []
+                  process = subprocess.Popen(prefix + ['env', '-i'] + [k + '=' + v for k, v in env.items()] + [str(x) for x in argv],
+                                             cwd=cwd, start_new_session=True)
+                  try:
+                      code = process.wait(timeout=self.config.seconds('COMMAND'))
+                      if code:
+                          raise subprocess.CalledProcessError(code, argv)
+                  finally:
+                      # Kill remaining descendants even after a successful parent; exact owned session only.
+                      self.kill_session(process.pid)
+                      process.wait(timeout=self.config.seconds('CLEANUP'))
+
+              def kill_session(self, pid):
+                  if sys.platform == 'linux':
+                      body = 'import os,signal,sys\ntry: os.killpg(int(sys.argv[1]),signal.SIGKILL)\nexcept ProcessLookupError: pass\n'
+                      checked(['sudo', '-n', sys.executable, '-c', body, str(pid)], timeout=self.config.seconds('CLEANUP'))
+                  else:
+                      try:
+                          os.killpg(pid, signal.SIGKILL)
+                      except ProcessLookupError:
+                          pass
+
+              def mutation(self):
+                  if sys.platform == 'linux':
+                      checked(self.prefix + ['nft', 'delete', 'table', 'inet', 'ws03_guard'])
+
+              def cleanup(self):
+                  failures = []
+                  if self.fixture:
+                      (self.root / 'stop').touch()
+                      try:
+                          code = self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
+                          if code:
+                              raise RuntimeError('Fixture cleanup exit ' + str(code))
+                      except BaseException as error:
+                          failures.append(str(error))
+                          self.kill_session(self.fixture.pid)
+                          self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
+                  if self.resolver:
+                      try:
+                          checked(['sudo', '-n', 'python3', '-c',
+                              'import pathlib,hashlib,sys; p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(p.read_bytes()).hexdigest()==sys.argv[2]; p.unlink()',
+                              self.resolver, self.resolver_hash], timeout=self.config.seconds('CLEANUP'))
+                      except BaseException as error:
+                          failures.append(str(error))
+                  if self.container:
+                      try:
+                          checked(['docker', 'rm', '--force', '--volumes', self.container], timeout=self.config.seconds('CLEANUP'))
+                      except BaseException as error:
+                          failures.append(str(error))
+                  if failures:
+                      raise RuntimeError('Owned cleanup failed: ' + ';'.join(failures))
+
+
+          def self_test(lane):
+              Config(lane)
+              positive = [{'name': 'fixture', 'loopback': False, 'reachable': True, 'error': None},
+                          {'name': 'loopback', 'loopback': True, 'reachable': True, 'error': None}]
+              negative = [dict(positive[0], reachable=False, error='policy'), positive[1]]
+              check_results(positive, False)
+              check_results(negative, True)
+              for removed in (positive, [dict(negative[0], error='connection-refused'), positive[1]],
+                              [negative[0], dict(positive[1], reachable=False)]):
+                  try:
+                      check_results(removed, True)
+                  except RuntimeError:
+                      pass
+                  else:
+                      raise AssertionError('Invalid guard control accepted')
+              env = safe_env(Path('synthetic-root'))
+              assert not any('TOKEN' in key or 'PASSWORD' in key or 'SECRET' in key for key in env)
+              packet = b'\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x01a\x04test\0\0\1\0\1'
+              answer, name = dns_answer(packet, '192.0.2.1')
+              assert name == 'a.test' and answer.endswith(socket.inet_aton('192.0.2.1'))
+              print('PASS: config, reachable controls, denial, removed-guard mutation, outage rejection, loopback failure, env, DNS fixture')
+
+
+          class WindowsCI:
+              def __init__(self, root, config):
+                  self.root, self.config = root, config
+                  self.native = WindowsGuard(root, 'ws03.' + secrets.token_hex(12), config.seconds('COMMAND'))
+                  self.fixture_prefix = []
+                  self.fixture = None
+                  self.rule_name = None
+                  self.rule_domain = None
+                  self.wfp_handle = ctypes.c_void_p()
+
+              def ps(self, body, arguments=()):
+                  script = self.root / ('setup-' + secrets.token_hex(4) + '.ps1')
+                  if body.startswith('param('):
+                      first, body = body.split('\n', 1)
+                      body = first + "\n$ErrorActionPreference = 'Stop'\n" + body
+                  else:
+                      body = "$ErrorActionPreference = 'Stop'\n" + body
+                  script.write_text(body)
+                  return subprocess.check_output(['powershell.exe', '-NoProfile', '-NonInteractive', '-File', str(script),
+                                                  *map(str, arguments)], text=True, timeout=self.config.seconds('SETUP'))
+
+              def setup(self, fixture):
+                  addresses = json.loads(self.ps("Get-NetIPAddress -AddressState Preferred | Select-Object IPAddress,InterfaceIndex | ConvertTo-Json\n"))
+                  fixture['ipv4'] = next(x['IPAddress'] for x in addresses if ':' not in x['IPAddress']
+                                        and not ipaddress.ip_address(x['IPAddress']).is_loopback)
+                  v6 = next(x for x in addresses if ':' in x['IPAddress'] and not ipaddress.ip_address(x['IPAddress']).is_loopback)
+                  fixture['ipv6'] = v6['IPAddress'] + ('%' + str(v6['InterfaceIndex']) if ipaddress.ip_address(v6['IPAddress']).is_link_local else '')
+                  fixture['dns_port'] = 53
+                  self.native.setup()
+                  fixture['package_sid'] = self.native.sid_text
+
+              def resolver_setup(self, fixture):
+                  # One job-owned DNS suffix rule; never rewrite an adapter's/global DNS configuration.
+                  owner = self.native.name
+                  self.rule_domain = fixture['domain']
+                  rule = self.ps("param($suffix,$address,$owner)\n"
+                      "$existing = @(Get-DnsClientNrptRule | Where-Object { $_.Namespace -contains ('.' + $suffix) })\n"
+                      "if ($existing.Count -ne 0) { throw 'DNS fixture namespace collision' }\n"
+                      "Add-DnsClientNrptRule -Namespace ('.' + $suffix) -NameServers $address -Comment $owner -PassThru | Select-Object -ExpandProperty Name\n",
+                      (fixture['domain'], fixture['ipv4'], owner)).strip()
+                  if not re.fullmatch(r'\{?[0-9a-fA-F-]{36}\}?', rule):
+                      raise RuntimeError('Expected owned NRPT rule GUID')
+                  self.rule_name = rule
+
+              def install(self):
+                  self.wfp_open()
+
+              def wfp_open(self):
+                  if self.wfp_handle.value:
+                      raise RuntimeError('WFP session already installed')
+                  self.wfp = ctypes.WinDLL(str(self.root / 'wfp_scope.dll'))
+                  self.wfp.ScopeOpen.restype = ctypes.c_uint32
+                  self.wfp.ScopeOpen.argtypes = [ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_void_p)]
+                  self.wfp.ScopeAttest.restype = ctypes.c_uint32
+                  self.wfp.ScopeAttest.argtypes = [ctypes.c_void_p]
+                  self.wfp.ScopeClose.restype = ctypes.c_uint32
+                  self.wfp.ScopeClose.argtypes = [ctypes.c_void_p]
+                  code = self.wfp.ScopeOpen(self.native.sid_text, ctypes.byref(self.wfp_handle))
+                  if code:
+                      raise RuntimeError('Owned WFP setup failed: ' + str(code))
+                  if self.wfp.ScopeAttest(self.wfp_handle):
+                      raise RuntimeError('Owned WFP policy readback failed')
+
+              def run(self, argv, cwd, env, guarded=True):
+                  if guarded and (not self.wfp_handle.value or self.wfp.ScopeAttest(self.wfp_handle)):
+                      raise RuntimeError('Missing owned WFP policy before restricted process')
+                  code = self.native.run(list(map(str, argv)), str(cwd), env, guarded)
+                  if guarded and self.wfp.ScopeAttest(self.wfp_handle):
+                      raise RuntimeError('Owned WFP policy changed during restricted process')
+                  if code:
+                      raise subprocess.CalledProcessError(code, argv)
+
+              def mutation(self):
+                  # The full removed-guard mutation omits both AppContainer and its scoped WFP filters.
+                  code = self.wfp.ScopeClose(self.wfp_handle)
+                  self.wfp_handle = ctypes.c_void_p()
+                  if code:
+                      raise RuntimeError('Owned WFP mutation cleanup failed: ' + str(code))
+
+              def cleanup(self):
+                  failures = []
+                  if self.wfp_handle.value:
+                      code = self.wfp.ScopeClose(self.wfp_handle)
+                      self.wfp_handle = ctypes.c_void_p()
+                      if code:
+                          failures.append('WFP session cleanup/readback failed: ' + str(code))
+                  if self.fixture:
+                      (self.root / 'stop').touch()
+                      try:
+                          if self.fixture.wait(timeout=self.config.seconds('CLEANUP')):
+                              raise RuntimeError('Fixture exited with cleanup failure')
+                      except BaseException as error:
+                          self.fixture.kill()
+                          self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
+                          failures.append(str(error))
+                  if self.rule_domain:
+                      try:
+                          self.ps("param($name,$owner,$suffix)\n"
+                              "$owned = @(Get-DnsClientNrptRule | Where-Object { $_.Comment -eq $owner -and $_.Namespace -contains ('.' + $suffix) })\n"
+                              "if ($owned.Count -gt 1) { throw 'Ambiguous owned DNS rules' }\n"
+                              "if ($name -and ($owned.Count -ne 1 -or $owned[0].Name -ne $name)) { throw 'DNS rule ownership changed' }\n"
+                              "foreach ($rule in $owned) { Remove-DnsClientNrptRule -Name $rule.Name -Force }\n"
+                              "if (@(Get-DnsClientNrptRule | Where-Object { $_.Comment -eq $owner }).Count) { throw 'DNS rule cleanup incomplete' }\n",
+                              (self.rule_name or '', self.native.name, self.rule_domain))
+                      except BaseException as error:
+                          failures.append(str(error))
+                  try:
+                      self.native.cleanup()
+                  except BaseException as error:
+                      failures.append(str(error))
+                  if failures:
+                      raise RuntimeError('Owned Windows cleanup failed: ' + ';'.join(failures))
+
+
+          def run_ci():
+              if os.environ.get('GITHUB_ACTIONS') != 'true' or os.environ.get('RUNNER_ENVIRONMENT') != 'github-hosted':
+                  raise RuntimeError('Native probes require the admitted standard GitHub-hosted job')
+              repo = Path(os.environ['GITHUB_WORKSPACE'])
+              config = Config(repo / 'ws03-runner-sandbox-acquisition')
+              root = Path(os.environ['RUNNER_TEMP']) / ('ws03-' + secrets.token_hex(8))
+              root.mkdir()
+              evidence = Path(os.environ['WS03_CI_EVIDENCE'])
+              evidence.mkdir()
+              try:
+                  run_ci_owned(repo, config, root, evidence)
+              except BaseException as error:
+                  (evidence / 'failure.json').write_text(json.dumps({'type': type(error).__name__, 'reason': str(error)}))
+                  raise
+              finally:
+                  # Early build/acquisition failure starts no native guard/service. Once services
+                  # start, run_ci_owned's finally must finish before the owned copied root is removed.
+                  if root.exists() and not (evidence / 'cleanup.json').exists():
+                      shutil.rmtree(root)
+                      (evidence / 'cleanup.json').write_text(json.dumps({'early_setup': True, 'copied_root_removed': True}))
+                  manifest = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in evidence.iterdir()
+                              if p.is_file() and p.name != 'sha256.json'}
+                  (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
+
+
+          def run_ci_owned(repo, config, root, evidence):
+              for name in ('home', 'temp', 'cargo', 'rustup', 'output'):
+                  (root / name).mkdir()
+              # Copied sources/cache contain no checkout metadata or credential/config file.
+              shutil.copytree(repo, root / 'work', ignore=shutil.ignore_patterns('.git', '.env.local', '.env', 'target', '__pycache__'))
+              lane = root / 'work/ws03-runner-sandbox-acquisition'
+              env = safe_env(root)
+              toolchain = tomllib.loads((repo / 'rust-toolchain.toml').read_text())['toolchain']
+              pin = toolchain['channel']
+              checked(['rustup', 'toolchain', 'install', pin, '--profile', toolchain['profile'], '--component', 'rustfmt,clippy'],
+                      timeout=config.seconds('SETUP'))
+              original_home = Path(os.environ.get('CARGO_HOME', str(Path.home() / '.cargo')))
+              checked(['cargo', 'fetch', '--locked'], cwd=repo / 'ws03-runner-sandbox-acquisition', timeout=config.seconds('SETUP'))
+              shutil.copytree(original_home / 'registry', root / 'cargo/registry')
+              cargo = Path(subprocess.check_output(['rustup', 'which', 'cargo'], cwd=repo, text=True).strip())
+              active_toolchain = cargo.parent.parent
+              if sys.platform == 'win32':
+                  shutil.copytree(active_toolchain, root / 'toolchain')
+                  # Copy only the installed interpreter runtime into owned ACL scope.
+                  shutil.copytree(Path(sys.executable).parent, root / 'python', ignore=shutil.ignore_patterns('__pycache__'))
+                  python = root / 'python' / Path(sys.executable).name
+                  cargo = root / 'toolchain/bin/cargo.exe'
+                  env['RUSTC'], env['RUSTDOC'] = str(root / 'toolchain/bin/rustc.exe'), str(root / 'toolchain/bin/rustdoc.exe')
+                  env['PATH'] = str(root / 'toolchain/bin') + os.pathsep + env['PATH']
+                  # Installed native SDK/MSVC; no downloaded wrapper or invented package interface.
+                  vswhere = Path(os.environ['ProgramFiles(x86)']) / 'Microsoft Visual Studio/Installer/vswhere.exe'
+                  installation = subprocess.check_output([vswhere, '-latest', '-products', '*', '-requires',
+                      'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', '-property', 'installationPath'], text=True).strip()
+                  devcmd = Path(installation) / 'Common7/Tools/VsDevCmd.bat'
+                  source = root / 'wfp_scope.cpp'
+                  source.write_bytes((Path(os.environ['RUNNER_TEMP']) / 'ws03-wfp.cpp').read_bytes())
+                  for path in (devcmd, source, root):
+                      if any(x in str(path) for x in '"&|<>^%\r\n!'):
+                          raise ValueError('Unsafe native compiler path')
+                  compile_script = root / 'compile-wfp.cmd'
+                  compile_script.write_text('@echo off\r\ncall "' + str(devcmd) + '" -arch=x64 -host_arch=x64 >nul\r\n'
+                      'if errorlevel 1 exit /b 1\r\ncl.exe /nologo /LD /std:c++17 /EHsc /W4 /WX "' + str(source) +
+                      '" /link fwpuclnt.lib rpcrt4.lib advapi32.lib /OUT:"' + str(root / 'wfp_scope.dll') + '"\r\nexit /b %errorlevel%\r\n')
+                  with (evidence / 'wfp-compile.log').open('w') as output:
+                      checked([os.environ['COMSPEC'], '/d', '/c', str(compile_script)], cwd=root,
+                              timeout=config.seconds('SETUP'), stdout=output, stderr=subprocess.STDOUT)
+              else:
+                  python = Path(sys.executable)
+                  env['RUSTC'], env['RUSTDOC'] = str(active_toolchain / 'bin/rustc'), str(active_toolchain / 'bin/rustdoc')
+                  env['PATH'] = str(active_toolchain / 'bin') + os.pathsep + env['PATH']
+              helper = root / 'helper.py'
+              helper.write_bytes(Path(__file__).read_bytes())
+              provenance = {'platform': platform.platform(), 'python': sys.version, 'identity': subprocess.check_output(
+                  ['whoami'] if os.name == 'nt' else ['id'], text=True).strip(),
+                  'source_sha': os.environ['GITHUB_SHA'], 'image_os': os.environ.get('ImageOS'),
+                  'image_version': os.environ.get('ImageVersion'), 'helper_sha256': hashlib.sha256(helper.read_bytes()).hexdigest(),
+                  'toolchain_pin': pin, 'tools': {}}
+              for executable in (python, cargo, Path(env['RUSTC']), Path(env['RUSTDOC'])):
+                  provenance['tools'][str(executable)] = {'sha256': hashlib.sha256(executable.read_bytes()).hexdigest()}
+              for command in ([cargo, '--version'], [env['RUSTC'], '--version']):
+                  checked(command, env=env, stdout=(evidence / ('cargo-version.log' if command[0] == cargo else 'rustc-version.log')).open('w'))
+              # Compilation/tool acquisition is separate. Every actual test executes later under the native guard.
+              commands = [[cargo, 'fmt', '--all', '--check'],
+                          [cargo, 'clippy', '--workspace', '--all-targets', '--all-features', '--locked', '--offline', '--', '-D', 'warnings'],
+                          [cargo, 'build', '--workspace', '--locked', '--offline'],
+                          [cargo, 'test', '--workspace', '--all-features', '--locked', '--offline', '--no-run']]
+              for index, command in enumerate(commands):
+                  with (evidence / ('build-' + str(index) + '.log')).open('w') as log:
+                      checked(command, cwd=lane, env=env, timeout=config.seconds('COMMAND'), stdout=log, stderr=subprocess.STDOUT)
+              tree = subprocess.check_output([cargo, 'tree', '-p', 'mc-pack-parser', '-e', 'normal', '--target', 'all', '--locked', '--offline'],
+                                             cwd=lane, env=env, text=True, timeout=config.seconds('COMMAND'))
+              (evidence / 'parser-tree.log').write_text(tree)
+              if re.search(r'(^|[^\w-])(reqwest|hyper|rustls|tokio-rustls) v', tree):
+                  raise RuntimeError('Parser acquired a forbidden HTTP/TLS dependency')
+              # Reserve a numeric loopback ephemeral port; a bind race is a failure, never reused service evidence.
+              with socket.socket() as reserve:
+                  reserve.bind(('127.0.0.1', 0))
+                  pg_port = reserve.getsockname()[1]
+              fixture = {'pg_port': pg_port, 'timeout': config.seconds('PROBE'),
+                  'seatbelt_library': config.values['MC_WS03_CI_SEATBELT_LIBRARY'],
+                  'command_timeout': config.seconds('COMMAND'), 'lifetime': config.seconds('COMMAND') * 3,
+                  'canary': secrets.token_hex(16), 'domain': secrets.token_hex(8) + '.' + config.values['MC_WS03_CI_DNS_SUFFIX'],
+                  'ready': str(root / 'ready.json'), 'stop': str(root / 'stop'),
+                  'dns_log': str(root / 'dns.log'), 'output': str(root / 'output')}
+              guard = WindowsCI(root, config) if sys.platform == 'win32' else PosixGuard(root, config)
+              native_pg = None
+              pg_bin = None
+              failures = []
+              try:
+                  guard.setup(fixture)
+                  if sys.platform == 'linux':
+                      provenance['namespace'] = subprocess.check_output(guard.prefix + ['readlink', '/proc/self/ns/net'], text=True).strip()
+                      tools = ('nsenter', 'unshare', 'setpriv', 'nft', 'ip', 'docker')
+                  elif sys.platform == 'darwin':
+                      tools = ('sandbox-exec', 'ifconfig', 'brew')
+                  else:
+                      tools = ('CheckNetIsolation.exe', 'icacls.exe', 'powershell.exe')
+                  for name in tools:
+                      path = Path(shutil.which(name) or '')
+                      if not path.is_file():
+                          raise RuntimeError('Missing native guard tool ' + name)
+                      provenance['tools'][name] = {'path': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+                  if sys.platform != 'linux':
+                      if sys.platform == 'darwin':
+                          formula = config.values['MC_WS03_CI_PG_FORMULA']
+                          checked(['brew', 'install', formula], timeout=config.seconds('SETUP'))
+                          pg_bin = Path(subprocess.check_output(['brew', '--prefix', formula], text=True).strip()) / 'bin'
+                      else:
+                          pg_bin = Path(os.environ['PGBIN'])
+                      for tool in ('initdb', 'pg_ctl', 'postgres'):
+                          executable = pg_bin / (tool + ('.exe' if os.name == 'nt' else ''))
+                          if not executable.is_file():
+                              raise RuntimeError('Missing native PostgreSQL tool ' + tool)
+                          provenance['tools'][tool] = {'sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
+                              'version': subprocess.check_output([executable, '--version'], text=True).strip()}
+                      native_pg = root / 'postgres-data'
+                      checked([pg_bin / 'initdb', '-D', native_pg, '-U', 'postgres', '-A', 'trust'], timeout=config.seconds('SETUP'))
+                      checked([pg_bin / 'pg_ctl', '-D', native_pg, '-l', root / 'postgres.log', '-o',
+                               '-h 127.0.0.1 -p ' + str(pg_port), '-w', 'start'], timeout=config.seconds('SETUP'))
+                  (root / 'fixture.json').write_text(json.dumps(fixture))
+                  guard.fixture = subprocess.Popen(guard.fixture_prefix + [str(python), str(helper), 'serve', str(root / 'fixture.json')],
+                                                   start_new_session=os.name != 'nt')
+                  wait_file(root / 'ready.json', guard.fixture, config.seconds('SETUP'))
+                  fixture = json.loads((root / 'ready.json').read_text())
+                  guard.resolver_setup(fixture)
+                  def execute(mode, phase, guarded):
+                      if helper.read_bytes() != Path(__file__).read_bytes():
+                          raise RuntimeError('Trusted CI probe source was modified')
+                      with (root / 'probe.json').open('w') as output:
+                          json.dump(fixture, output)
+                      guard.run([str(python), str(helper), 'probe', str(root / 'probe.json'), mode, phase], root, env, guarded)
+                      if hashlib.sha256(helper.read_bytes()).hexdigest() != provenance['helper_sha256']:
+                          raise RuntimeError('Trusted CI probe source changed during execution')
+                      if guard.fixture.poll() is not None:
+                          raise RuntimeError('Fixture died during probes')
+                      queries = (root / 'dns.log').read_text().splitlines()
+                      for child in ('parent', 'child'):
+                          expected = phase + '-' + child + '.' + fixture['domain']
+                          if (expected in queries) != (mode != 'deny'):
+                              raise RuntimeError('System DNS broker observation mismatch: ' + expected)
+                  execute('allow', 'before', False)
+                  guard.install()
+                  if sys.platform == 'linux':
+                      (root / 'output/nft-policy.json').write_text(subprocess.check_output(guard.prefix + ['nft', '-j', 'list', 'ruleset'], text=True))
+                  elif sys.platform == 'win32':
+                      provenance['package_sid'] = guard.native.sid_text
+                      provenance['wfp_dll_sha256'] = hashlib.sha256((root / 'wfp_scope.dll').read_bytes()).hexdigest()
+                  execute('deny', 'restricted', True)
+                  # Fresh unrestricted same endpoints after denial proves listeners/resolver are still usable.
+                  guard.mutation()
+                  execute('mutation', 'removed-guard', False)
+                  if sys.platform == 'linux':
+                      guard.install()
+                  if sys.platform == 'win32':
+                      guard.install()
+                  execute('deny', 'restored', True)
+                  # Native token/profile/namespace inheritance also guards cargo, rustdoc and every spawned test.
+                  env['DATABASE_URL'] = 'postgresql://postgres@127.0.0.1:' + str(pg_port) + '/postgres'
+                  test_script = root / 'tests.py'
+                  test_script.write_text('import pathlib,subprocess,sys\n'
+                      'with pathlib.Path(sys.argv[2]).open("w") as log:\n'
+                      ' r=subprocess.run([sys.argv[1],"test","--workspace","--all-features","--locked","--offline"],stdout=log,stderr=subprocess.STDOUT)\n'
+                      'sys.exit(r.returncode)\n')
+                  guard.run([str(python), str(test_script), str(cargo), str(root / 'output/test.log')], lane, env, True)
+                  # A test must not have mutated this policy/control state unnoticed.
+                  execute('deny', 'after-tests', True)
+                  provenance['runtime_result'] = 'NATIVE_CONTROLS_AND_TESTS_EXECUTED'
+              except BaseException as error:
+                  failures.append(type(error).__name__ + ': ' + str(error))
+                  raise
+              finally:
+                  try:
+                      guard.cleanup()
+                  except BaseException as error:
+                      failures.append('cleanup:' + str(error))
+                  if native_pg and (native_pg / 'postmaster.pid').exists():
+                      try:
+                          checked([pg_bin / 'pg_ctl', '-D', native_pg, '-m', 'immediate', '-w', 'stop'], timeout=config.seconds('CLEANUP'))
+                      except BaseException as error:
+                          failures.append('postgres-cleanup:' + str(error))
+                  provenance['failures'] = failures
+                  (evidence / 'provenance.json').write_text(json.dumps(provenance, indent=2))
+                  for path in (root / 'output').iterdir():
+                      if path.is_file():
+                          shutil.copy2(path, evidence / path.name)
+                  for name in ('ready.json', 'dns.log', 'seatbelt.sb', 'postgres.log'):
+                      path = root / name
+                      if path.is_file():
+                          shutil.copy2(path, evidence / name)
+                  if not failures:
+                      try:
+                          # Only this freshly created copied root, after all owned processes have stopped.
+                          shutil.rmtree(root)
+                      except BaseException as error:
+                          failures.append('copied-root-cleanup:' + str(error))
+                  (evidence / 'cleanup.json').write_text(json.dumps({'owned_services_stopped': not failures,
+                                                                    'copied_root_removed': not root.exists(), 'failures': failures}))
+                  manifest = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in evidence.iterdir() if p.is_file()}
+                  (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
+                  if failures:
+                      raise RuntimeError('CI failed; retained evidence: ' + ';'.join(failures))
+
+
+          def main():
+              parser = argparse.ArgumentParser()
+              parser.add_argument('operation', choices=['self-test', 'run', 'serve', 'probe', 'probe-child'])
+              parser.add_argument('arguments', nargs='*')
+              args = parser.parse_args()
+              if args.operation == 'self-test':
+                  self_test(Path(args.arguments[0]))
+              elif args.operation == 'serve':
+                  serve(args.arguments[0])
+              elif args.operation.startswith('probe'):
+                  probe(*args.arguments, descendant=args.operation == 'probe-child')
+              else:
+                  run_ci()
+
+
+          if __name__ == '__main__':
+              main()
+          # WS03_PYTHON_END
+          # WS03_WFP_BEGIN
+          // PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+          // CI-only SDK adapter. Native compilation/runtime remain NOT_RUN locally.
+          // Microsoft FWPM_SESSION0/FwpmFilterAdd0: a dynamic session removes its objects
+          // on close; ALE_PACKAGE_ID restricts every filter to this job's AppContainer SID.
+          #define WIN32_LEAN_AND_MEAN
+          #define _WIN32_WINNT 0x0A00
+          #include <windows.h>
+          #include <initguid.h>
+          #include <fwpmu.h>
+          #include <sddl.h>
+          #include <rpc.h>
+          #include <new>
+          #include <cstring>
+
+          struct Scope {
+              HANDLE engine{};
+              PSID sid{};
+              GUID sublayer{};
+              bool sublayer_added{};
+              UINT64 filters[4]{};
+          };
+
+          static DWORD guid(GUID* value) {
+              const RPC_STATUS result = UuidCreate(value);
+              return result == RPC_S_OK || result == RPC_S_UUID_LOCAL_ONLY ? ERROR_SUCCESS : result;
+          }
+
+          static DWORD add_filter(Scope* scope, bool ipv6, bool loopback) {
+              // Address constants are protocol loopback ranges, not deployment addresses.
+              FWP_V4_ADDR_AND_MASK v4{0x7f000000, 0xff000000};
+              FWP_V6_ADDR_AND_MASK v6{};
+              v6.addr[15] = 1;
+              v6.prefixLength = 128;
+              FWPM_FILTER_CONDITION0 conditions[2]{};
+              conditions[0].fieldKey = FWPM_CONDITION_ALE_PACKAGE_ID;
+              conditions[0].matchType = FWP_MATCH_EQUAL;
+              conditions[0].conditionValue.type = FWP_SID;
+              conditions[0].conditionValue.sid = scope->sid;
+              conditions[1].fieldKey = FWPM_CONDITION_IP_REMOTE_ADDRESS;
+              conditions[1].matchType = FWP_MATCH_EQUAL;
+              conditions[1].conditionValue.type = ipv6 ? FWP_V6_ADDR_MASK : FWP_V4_ADDR_MASK;
+              if (ipv6) conditions[1].conditionValue.v6AddrMask = &v6;
+              else conditions[1].conditionValue.v4AddrMask = &v4;
+              FWPM_FILTER0 filter{};
+              DWORD error = guid(&filter.filterKey);
+              if (error) return error;
+              filter.displayData.name = const_cast<wchar_t*>(L"W03 owned AppContainer nonloopback denial");
+              filter.layerKey = ipv6 ? FWPM_LAYER_ALE_AUTH_CONNECT_V6 : FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+              filter.subLayerKey = scope->sublayer;
+              // Microsoft Filter Arbitration: the higher-weight loopback soft permit is
+              // evaluated first inside this fresh sublayer; remaining SID traffic hits a
+              // hard block. Other providers' blocks are never overridden.
+              filter.weight.type = FWP_UINT8;
+              filter.weight.uint8 = loopback ? 15 : 0;
+              filter.action.type = loopback ? FWP_ACTION_PERMIT : FWP_ACTION_BLOCK;
+              filter.numFilterConditions = loopback ? 2 : 1;
+              filter.filterCondition = conditions;
+              return FwpmFilterAdd0(scope->engine, &filter, nullptr, &scope->filters[(ipv6 ? 2 : 0) + (loopback ? 1 : 0)]);
+          }
+
+          static bool address_is_loopback_exception(const FWP_CONDITION_VALUE0& value, bool ipv6) {
+              if (!ipv6) return value.type == FWP_V4_ADDR_MASK && value.v4AddrMask &&
+                  value.v4AddrMask->addr == 0x7f000000 && value.v4AddrMask->mask == 0xff000000;
+              FWP_V6_ADDR_AND_MASK expected{};
+              expected.addr[15] = 1;
+              expected.prefixLength = 128;
+              return value.type == FWP_V6_ADDR_MASK && value.v6AddrMask &&
+                  value.v6AddrMask->prefixLength == expected.prefixLength &&
+                  std::memcmp(value.v6AddrMask->addr, expected.addr, sizeof(expected.addr)) == 0;
+          }
+
+          extern "C" __declspec(dllexport) DWORD ScopeAttest(void* raw) {
+              auto* scope = static_cast<Scope*>(raw);
+              if (!scope || !scope->engine || !scope->sid) return ERROR_INVALID_HANDLE;
+              for (int i = 0; i != 4; ++i) {
+                  const bool ipv6 = i >= 2;
+                  const bool loopback = i % 2 != 0;
+                  FWPM_FILTER0* filter = nullptr;
+                  const DWORD error = FwpmFilterGetById0(scope->engine, scope->filters[i], &filter);
+                  if (error) return error;
+                  const GUID& layer = ipv6 ? FWPM_LAYER_ALE_AUTH_CONNECT_V6 : FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+                  bool valid = filter && IsEqualGUID(filter->layerKey, layer) &&
+                      IsEqualGUID(filter->subLayerKey, scope->sublayer) &&
+                      filter->action.type == (loopback ? FWP_ACTION_PERMIT : FWP_ACTION_BLOCK) &&
+                      filter->weight.type == FWP_UINT8 && filter->weight.uint8 == (loopback ? 15 : 0) &&
+                      filter->flags == 0 && filter->numFilterConditions == (loopback ? 2u : 1u) && filter->filterCondition;
+                  if (valid) {
+                      const auto& package = filter->filterCondition[0];
+                      valid = IsEqualGUID(package.fieldKey, FWPM_CONDITION_ALE_PACKAGE_ID) &&
+                          package.matchType == FWP_MATCH_EQUAL && package.conditionValue.type == FWP_SID &&
+                          package.conditionValue.sid && EqualSid(package.conditionValue.sid, scope->sid);
+                      if (valid && loopback) {
+                          const auto& remote = filter->filterCondition[1];
+                          valid = IsEqualGUID(remote.fieldKey, FWPM_CONDITION_IP_REMOTE_ADDRESS) &&
+                              remote.matchType == FWP_MATCH_EQUAL && address_is_loopback_exception(remote.conditionValue, ipv6);
+                      }
+                  }
+                  FwpmFreeMemory0(reinterpret_cast<void**>(&filter));
+                  if (!valid) return ERROR_INVALID_DATA;
+              }
+              return ERROR_SUCCESS;
+          }
+
+          extern "C" __declspec(dllexport) DWORD ScopeClose(void* raw) {
+              auto* scope = static_cast<Scope*>(raw);
+              if (!scope) return ERROR_INVALID_HANDLE;
+              const UINT64 ids[4]{scope->filters[0], scope->filters[1], scope->filters[2], scope->filters[3]};
+              const GUID sublayer = scope->sublayer;
+              DWORD error = ERROR_SUCCESS;
+              if (scope->engine) error = FwpmEngineClose0(scope->engine);
+              // Verify the dynamic objects disappeared through a separate read-only query session.
+              if (!error && scope->sublayer_added) {
+                  HANDLE observer{};
+                  error = FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr, nullptr, &observer);
+                  if (!error) {
+                      for (UINT64 id : ids) {
+                          if (!id) continue;
+                          FWPM_FILTER0* found = nullptr;
+                          const DWORD query = FwpmFilterGetById0(observer, id, &found);
+                          if (found) FwpmFreeMemory0(reinterpret_cast<void**>(&found));
+                          if (query != FWP_E_FILTER_NOT_FOUND) error = query ? query : ERROR_INVALID_DATA;
+                      }
+                      FWPM_SUBLAYER0* found = nullptr;
+                      const DWORD query = FwpmSubLayerGetByKey0(observer, &sublayer, &found);
+                      if (found) FwpmFreeMemory0(reinterpret_cast<void**>(&found));
+                      if (query != FWP_E_SUBLAYER_NOT_FOUND) error = query ? query : ERROR_INVALID_DATA;
+                      const DWORD close = FwpmEngineClose0(observer);
+                      if (close && !error) error = close;
+                  }
+              }
+              if (scope->sid) LocalFree(scope->sid);
+              delete scope;
+              return error;
+          }
+
+          extern "C" __declspec(dllexport) DWORD ScopeOpen(const wchar_t* text, void** output) {
+              if (!text || !output) return ERROR_INVALID_PARAMETER;
+              *output = nullptr;
+              auto* scope = new (std::nothrow) Scope;
+              if (!scope) return ERROR_OUTOFMEMORY;
+              if (!ConvertStringSidToSidW(text, &scope->sid)) {
+                  const DWORD error = GetLastError();
+                  delete scope;
+                  return error;
+              }
+              // Reject a non-package identity before any policy mutation.
+              const SID_IDENTIFIER_AUTHORITY application{SECURITY_APP_PACKAGE_AUTHORITY};
+              if (!IsValidSid(scope->sid) || *GetSidSubAuthorityCount(scope->sid) != SECURITY_APP_PACKAGE_RID_COUNT ||
+                  std::memcmp(GetSidIdentifierAuthority(scope->sid), &application, sizeof(application)) != 0 ||
+                  *GetSidSubAuthority(scope->sid, 0) != SECURITY_APP_PACKAGE_BASE_RID) {
+                  LocalFree(scope->sid); delete scope; return ERROR_INVALID_SID;
+              }
+              FWPM_SESSION0 session{};
+              DWORD error = guid(&session.sessionKey);
+              session.flags = FWPM_SESSION_FLAG_DYNAMIC;
+              session.displayData.name = const_cast<wchar_t*>(L"W03 owned temporary native CI session");
+              if (!error) error = FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr, &session, &scope->engine);
+              if (!error) error = guid(&scope->sublayer);
+              if (!error) {
+                  FWPM_SUBLAYER0 layer{};
+                  layer.subLayerKey = scope->sublayer;
+                  layer.displayData.name = const_cast<wchar_t*>(L"W03 owned temporary AppContainer sublayer");
+                  layer.weight = 0xffff;
+                  // Random key collision returns an error. No preexisting object is reused.
+                  error = FwpmSubLayerAdd0(scope->engine, &layer, nullptr);
+                  scope->sublayer_added = error == ERROR_SUCCESS;
+              }
+              if (!error) error = add_filter(scope, false, false);
+              if (!error) error = add_filter(scope, false, true);
+              if (!error) error = add_filter(scope, true, false);
+              if (!error) error = add_filter(scope, true, true);
+              if (!error) error = ScopeAttest(scope);
+              if (error) {
+                  const DWORD cleanup = ScopeClose(scope);
+                  return cleanup ? cleanup : error;
+              }
+              *output = scope;
+              return ERROR_SUCCESS;
+          }
+          # WS03_WFP_END
+          WS03_INLINE_ASSETS
+      - name: Prepare admitted Linux namespace tools
+        if: steps.change_gate.outputs.relevant == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n apt-get update
+          sudo -n apt-get install --no-install-recommends -y iproute2 nftables
+          for tool in cargo rustup docker nsenter unshare setpriv nft ip python sudo; do
+            command -v "$tool" > /dev/null
+          done
+      - name: Native baseline, denial, descendants, PostgreSQL, mutation and workspace tests
+        if: steps.change_gate.outputs.relevant == 'true'
+        shell: bash
+        env:
+          WS03_CI_EVIDENCE: ${{ runner.temp }}/ws03-ci-evidence
+        run: |
+          set -euo pipefail
+          python "$RUNNER_TEMP/ws03-native.py" run
+      - name: Retain native provenance and control evidence
+        if: always() && steps.change_gate.outputs.relevant == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ws03-linux-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ws03-ci-evidence
+          retention-days: ${{ vars.MC_WS03_CI_RETENTION_DAYS || 1 }}
+          if-no-files-found: error
+  ws03-macos:
+    name: ws03-macos
+    needs: [ws03-ci]
+    if: always() && needs.ws03-ci.outputs.relevant == 'true'
+    runs-on: macos-15
+    timeout-minutes: ${{ fromJSON(vars.MC_WS03_CI_JOB_MINUTES || '30') }}
+    env:
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Materialize reviewed CI-only native helpers
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, pathlib
+          source = pathlib.Path('.github/workflows/ws03-ci.yml').read_text().splitlines()
+          for label, name in (('PYTHON', 'ws03-native.py'), ('WFP', 'ws03-wfp.cpp')):
+              start = source.index('          # WS03_' + label + '_BEGIN') + 1
+              end = source.index('          # WS03_' + label + '_END')
+              lines = source[start:end]
+              assert all(not line or line.startswith('          ') for line in lines)
+              pathlib.Path(os.environ['RUNNER_TEMP'], name).write_text('\n'.join(line[10:] for line in lines) + '\n')
+          PY
+      - name: Native baseline, denial, descendants, PostgreSQL, mutation and workspace tests
+        if: success()
+        shell: bash
+        env:
+          WS03_CI_EVIDENCE: ${{ runner.temp }}/ws03-ci-evidence
+        run: |
+          set -euo pipefail
+          python "$RUNNER_TEMP/ws03-native.py" run
+      - name: Retain native provenance and control evidence
+        if: always() && true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ws03-macos-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ws03-ci-evidence
+          retention-days: ${{ vars.MC_WS03_CI_RETENTION_DAYS || 1 }}
+          if-no-files-found: error
+  ws03-windows:
+    name: ws03-windows
+    needs: [ws03-ci, ws03-macos]
+    if: always() && needs.ws03-ci.outputs.relevant == 'true'
+    runs-on: windows-2025
+    timeout-minutes: ${{ fromJSON(vars.MC_WS03_CI_JOB_MINUTES || '30') }}
+    env:
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Materialize reviewed CI-only native helpers
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, pathlib
+          source = pathlib.Path('.github/workflows/ws03-ci.yml').read_text().splitlines()
+          for label, name in (('PYTHON', 'ws03-native.py'), ('WFP', 'ws03-wfp.cpp')):
+              start = source.index('          # WS03_' + label + '_BEGIN') + 1
+              end = source.index('          # WS03_' + label + '_END')
+              lines = source[start:end]
+              assert all(not line or line.startswith('          ') for line in lines)
+              pathlib.Path(os.environ['RUNNER_TEMP'], name).write_text('\n'.join(line[10:] for line in lines) + '\n')
+          PY
+      - name: Native baseline, denial, descendants, PostgreSQL, mutation and workspace tests
+        if: success()
+        shell: bash
+        env:
+          WS03_CI_EVIDENCE: ${{ runner.temp }}/ws03-ci-evidence
+        run: |
+          set -euo pipefail
+          python "$RUNNER_TEMP/ws03-native.py" run
+      - name: Retain native provenance and control evidence
+        if: always() && true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ws03-windows-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ws03-ci-evidence
+          retention-days: ${{ vars.MC_WS03_CI_RETENTION_DAYS || 1 }}
+          if-no-files-found: error

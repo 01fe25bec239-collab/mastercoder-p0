@@ -1,0 +1,18 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "w03-p0-02b-harness"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+tokio.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+mc-contracts.workspace = true
+mc-runner-test-support.workspace = true
+mc-sandbox-core.workspace = true
+mc-sandbox-linux.workspace = true
+mc-sandbox-macos.workspace = true
+mc-sandbox-windows.workspace = true
+mc-egress-proxy.workspace = true

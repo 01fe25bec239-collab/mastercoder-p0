@@ -1,0 +1,54 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[workspace]
+resolver = "2"
+members = ["crates/*", "doubles/fake-sandbox/v1", "doubles/fake-runner/v1", "claims/*/harness"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+sha1 = { version = "=0.11.0" }
+tokio = { version = "=1.53.2", features = ["rt-multi-thread", "macros", "time", "sync", "net"] }
+axum = { version = "=0.8.9" }
+sqlx = { version = "=0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "uuid", "macros", "migrate"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154" }
+uuid = { version = "=1.28.0", features = ["v4", "serde"] }
+sha2 = { version = "=0.11.0" }
+hex = { version = "=0.4.3" }
+ed25519-dalek = { version = "=3.0.0" }
+thiserror = { version = "=2.0.21" }
+tracing = { version = "=0.1.44" }
+rustls = { version = "=0.23.45" }
+tokio-rustls = { version = "=0.26.6" }
+rcgen = { version = "=0.14.10" }
+reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "json"] }
+clap = { version = "=4.6.7", features = ["derive"] }
+tempfile = { version = "=3.27.0" }
+proptest = { version = "=1.12.0" }
+async-trait = { version = "=0.1.92" }
+hyper = { version = "=1.12.0", features = ["client", "server", "http1", "http2"] }
+flate2 = { version = "=1.1.10" }
+nix = { version = "=0.31.3", features = ["process", "sched", "signal", "mount", "fs", "resource"] }
+tar = { version = "=0.4.46" }
+mc-runner-test-support = { path = "crates/mc-runner-test-support" }
+mc-sandbox-core = { path = "crates/mc-sandbox-core" }
+mc-runner = { path = "crates/mc-runner" }
+mc-egress-proxy = { path = "crates/mc-egress-proxy" }
+mc-sandbox-linux = { path = "crates/mc-sandbox-linux" }
+mc-sandbox-macos = { path = "crates/mc-sandbox-macos" }
+mc-sandbox-windows = { path = "crates/mc-sandbox-windows" }
+mc-checkout-broker = { path = "crates/mc-checkout-broker" }
+mc-pack-parser = { path = "crates/mc-pack-parser" }
+mc-contracts = { path = "../ws01-core-security/crates/mc-contracts" }
+mc-wire = { path = "../ws01-core-security/crates/mc-wire" }
+mc-lease = { path = "../ws01-core-security/crates/mc-lease" }
+mc-effects = { path = "../ws01-core-security/crates/mc-effects" }
+mc-negotiation = { path = "../ws01-core-security/crates/mc-negotiation" }
+lease-double = { path = "../ws01-core-security/doubles/lease/v1" }
+effects-journal-double = { path = "../ws01-core-security/doubles/effects-journal/v1" }
+runner-control-double = { path = "../ws01-core-security/doubles/runner-control/v1" }
+fake-sandbox = { path = "doubles/fake-sandbox/v1" }
+fake-runner = { path = "doubles/fake-runner/v1" }
