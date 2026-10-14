@@ -33,7 +33,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T001-AA-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T002-RESOLUTION-API-OPENAPI | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T003-RUNNER-CONTROL-PROTOCOL-SPEC | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | BLOCKED | r2 | ae25048f83bc66d0e7d31f3d6d01fd3756bf92ec | NONE | NONE | Independent r2-a SATISFACTORY; F2 CLOSED_LOCALLY/F1 preserved; actual final PR CI NOT_RUN; concrete remote/conditional-merge proposal awaits owner authorization |
+| W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | INTEGRATED | r2 | ae25048f83bc66d0e7d31f3d6d01fd3756bf92ec | ae25048f83bc66d0e7d31f3d6d01fd3756bf92ec | 3b3507fe52025c23f1b335dd93f68dd41d09e99b | Independent local SATISFACTORY plus owner A1 remaining CI disposition; normal PR7 merge, all8 PR/7 main checks and exact source/provenance verified; I-01@v1 published |
 | W01-T005-CBOR-CORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
