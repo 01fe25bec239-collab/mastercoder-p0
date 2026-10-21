@@ -637,8 +637,9 @@ jobs:
 
           class PgError(RuntimeError):
               def __init__(self, fields):
-                  self.code, self.detail = fields.get('C'), fields.get('M', '')
-                  super().__init__('PostgreSQL ' + str(self.code) + ': ' + self.detail)
+                  self.code = fields.get('C')
+                  self.message, self.detail = fields.get('M', ''), fields.get('D', '')
+                  super().__init__('PostgreSQL ' + str(self.code) + ': ' + self.message)
 
 
           def pg_request(port, timeout, sql='SELECT 1', user=PG_ROLE, database=PG_DATABASE, replication=False):
@@ -719,11 +720,11 @@ jobs:
                   raise RuntimeError('PostgreSQL did not return SELECT 1')
 
 
-          def pg_denied(action, code, reason):
+          def pg_denied(action, code, reason, detail=None):
               try:
                   action()
               except PgError as error:
-                  if error.code == code and reason in error.detail:
+                  if error.code == code and reason in error.message and (detail is None or detail in error.detail):
                       return
                   raise RuntimeError('Wrong PostgreSQL denial reason') from error
               raise RuntimeError('PostgreSQL authority negative unexpectedly succeeded')
@@ -755,17 +756,18 @@ jobs:
                   pg_denied(lambda: pg_request(port, timeout, user=user, database=database, replication=replication),
                             '28000', 'pg_hba.conf rejects connection')
               path = config['pg_server_canary'].replace("'", "''")
-              for query, reason in [
-                      ('SET ROLE postgres', 'permission denied to set role'),
-                      ('SET ROLE pg_execute_server_program', 'permission denied to set role'),
-                      ('ALTER ROLE ws03_ci SUPERUSER', 'superuser'),
-                      ('GRANT pg_execute_server_program TO ws03_ci', 'permission denied'),
-                      ("COPY (SELECT 'canary') TO PROGRAM 'exit 0'", 'pg_execute_server_program'),
-                      ("COPY (SELECT 'canary') TO '" + path + "'", 'pg_write_server_files'),
+              for query, reason, detail in [
+                      ('SET ROLE postgres', 'permission denied to set role', None),
+                      ('SET ROLE pg_execute_server_program', 'permission denied to set role', None),
+                      ('ALTER ROLE ws03_ci SUPERUSER', 'superuser', None),
+                      ('GRANT pg_execute_server_program TO ws03_ci', 'permission denied', None),
+                      ("COPY (SELECT 'canary') TO PROGRAM 'exit 0'",
+                       'permission denied to COPY to or from an external program', 'pg_execute_server_program'),
+                      ("COPY (SELECT 'canary') TO '" + path + "'", 'permission denied to COPY to a file', 'pg_write_server_files'),
                       ("CREATE TEMP TABLE ws03_read_control(line text); COPY ws03_read_control FROM '" +
-                       path.removesuffix('__ws03_denied__') + "pg_hba.conf'", 'pg_read_server_files'),
-                      ("SELECT pg_read_file('pg_hba.conf')", 'permission denied for function pg_read_file')]:
-                  pg_denied(lambda: sql(query), '42501', reason)
+                       path.removesuffix('__ws03_denied__') + "pg_hba.conf'", 'permission denied to COPY from a file', 'pg_read_server_files'),
+                      ("SELECT pg_read_file('pg_hba.conf')", 'permission denied for function pg_read_file', None)]:
+                  pg_denied(lambda: sql(query), '42501', reason, detail)
               return {'limited_role': PG_ROLE, 'database': PG_DATABASE, 'migration_rollback': True,
                       'admin_alternate_replication_rejected': True, 'program_file_escalation_denied': True}
 
@@ -1238,6 +1240,19 @@ jobs:
                   pass
               else:
                   raise AssertionError('PostgreSQL success accepted as an authority denial')
+              def copy_denial(fields):
+                  raise PgError(fields)
+              for primary, role in [('permission denied to COPY to or from an external program', 'pg_execute_server_program'),
+                                    ('permission denied to COPY to a file', 'pg_write_server_files'),
+                                    ('permission denied to COPY from a file', 'pg_read_server_files')]:
+                  pg_denied(lambda: copy_denial({'C': '42501', 'M': primary, 'D': role}), '42501', primary, role)
+                  for fields in ({'C': '42501', 'M': primary}, {'C': '42501', 'M': role, 'D': primary}):
+                      try:
+                          pg_denied(lambda: copy_denial(fields), '42501', primary, role)
+                      except RuntimeError:
+                          pass
+                      else:
+                          raise AssertionError('COPY privilege requires separate primary and role detail')
               for fields in ({'C': '58P01', 'M': 'permission denied'}, {'C': '42501', 'M': 'wrong privilege'}):
                   def wrong_denial():
                       raise PgError(fields)
