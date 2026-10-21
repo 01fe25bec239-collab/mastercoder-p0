@@ -76,3 +76,37 @@ prerequisite error. Native SDK/kernel/ACL/inheritance/DNS/PostgreSQL and CI resu
 remain NOT_RUN locally. F-3 macOS detached-session descendant ownership remains
 OPEN for the separate Apple VM route; original process-group cleanup does not
 close it. This scoped candidate is not T000 acceptance or VM readiness.
+
+### Native CI PostgreSQL authority (source only)
+
+The CI helper uses installed initdb/postgres single-user mode before opening any
+listener. It creates ws03_ci as LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE
+NOINHERIT NOREPLICATION NOBYPASSRLS with no password or role memberships, owns
+only its disposable ws03_ci database, and disables bootstrap postgres LOGIN.
+Database ownership permits schema/table migrations; cluster administration and
+server program/file privileges are withheld. The local development Compose
+identity/defaults are separate and unchanged.
+
+An exact six-rule HBA permits only ws03_ci/ws03_ci at 127.0.0.1/32, rejects all
+other IPv4/IPv6 users/databases and replication, and rejects local connections.
+The server binds IPv4 loopback only and disables Unix sockets. Bootstrap has no
+network listener or reusable admin credential; Windows keeps PG/control storage
+under the protected runner ACL. Linux bypasses the image's trust bootstrap and
+uses the same offline SQL/HBA contract as macOS and Windows. The protocol probe
+and restricted Rust DATABASE_URL use the same limited identity.
+
+Each parent probe checks actual role attributes/membership and listener settings,
+SELECT, and an actual schema/table migration in a rolled-back transaction. It
+requires explicit HBA rejection for alternate/admin/database/replication startup
+and SQLSTATE 42501 with privilege-specific reasons for SET ROLE, self-escalation,
+dangerous membership, COPY PROGRAM, server file-write and file-read requests. A
+missing tool, dead listener, invalid SQL or unrelated file error fails. Runner-side
+HBA readback checks the exact file before/after tests. These native controls are
+authored; no PostgreSQL server/SQL or native helper body ran on this Mac. F3 and
+all native/VM/CI gates remain pending.
+
+Primary interfaces: [single-user postgres](https://www.postgresql.org/docs/current/app-postgres.html),
+[HBA first-match and reject](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html),
+[role attributes](https://www.postgresql.org/docs/current/sql-createrole.html),
+[server COPY privileges](https://www.postgresql.org/docs/current/sql-copy.html),
+[predefined roles](https://www.postgresql.org/docs/current/predefined-roles.html).

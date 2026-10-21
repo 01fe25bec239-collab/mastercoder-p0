@@ -585,8 +585,66 @@ jobs:
               return sorted({x[4][0] for x in socket.getaddrinfo(name, None, socket.AF_INET, socket.SOCK_STREAM)})
 
 
-          def query_pg(port, timeout):
-              """Actual PostgreSQL startup and SELECT, against disposable trust-auth loopback."""
+          # Fixed disposable principals, not credentials or configurable SQL identifiers.
+          PG_ROLE = PG_DATABASE = 'ws03_ci'
+          PG_HBA = ('local all all reject\n'
+                    'host ws03_ci ws03_ci 127.0.0.1/32 trust\n'
+                    'host all all 0.0.0.0/0 reject\n'
+                    'host all all ::/0 reject\n'
+                    'host replication all 0.0.0.0/0 reject\n'
+                    'host replication all ::/0 reject\n')
+          PG_BOOTSTRAP = (
+              'CREATE ROLE ws03_ci LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD NULL;\n'
+              'CREATE DATABASE ws03_ci OWNER ws03_ci;\n'
+              'REVOKE ALL ON DATABASE postgres, template1 FROM PUBLIC;\n'
+              'ALTER ROLE postgres NOLOGIN;\n'
+              "DO $$ BEGIN IF EXISTS (SELECT FROM pg_hba_file_rules WHERE error IS NOT NULL) "
+              "OR (SELECT count(*) FROM pg_hba_file_rules) <> 6 "
+              "OR (SELECT count(*) FROM pg_hba_file_rules WHERE auth_method = 'trust' "
+              "AND type = 'host' AND database = ARRAY['ws03_ci'] AND user_name = ARRAY['ws03_ci'] "
+              "AND address = '127.0.0.1' AND netmask = '255.255.255.255') <> 1 "
+              "OR EXISTS (SELECT FROM pg_hba_file_rules WHERE auth_method NOT IN ('trust', 'reject')) "
+              "OR (SELECT count(*) FROM pg_hba_file_rules WHERE auth_method = 'trust') <> 1 "
+              "THEN RAISE EXCEPTION 'unsafe fixture HBA'; END IF; END $$;\n")
+
+
+          def pg_url(port):
+              return 'postgresql://' + PG_ROLE + '@127.0.0.1:' + str(port) + '/' + PG_DATABASE
+
+
+          def bootstrap_pg(tools, data, timeout):
+              # Offline single-user mode has no socket/listener and takes SQL only on owned stdin.
+              checked([tools['initdb'], '-D', data, '-U', 'postgres', '-A', 'scram-sha-256'], timeout=timeout)
+              (data / 'pg_hba.conf').write_text(PG_HBA)
+              result = checked([tools['postgres'], '--single', '-D', data, '-c', 'exit_on_error=on', 'postgres'],
+                               input=PG_BOOTSTRAP, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+              if re.search(r'\b(ERROR|FATAL|PANIC):', result.stdout):
+                  raise RuntimeError('Offline PostgreSQL bootstrap failed')
+
+
+          def linux_pg_command(image, port):
+              # Bypass the image's trust/admin TCP bootstrap; no listener until role and HBA are final.
+              script = ('set -eu\ncommand -v initdb; command -v postgres\n'
+                        'data=/tmp/ws03-postgres-data\n'
+                        'initdb -D "$data" -U postgres -A scram-sha-256\n'
+                        'printf "%s" "$WS03_PG_HBA" > "$data/pg_hba.conf"\n'
+                        'printf "%s" "$WS03_PG_BOOTSTRAP" | postgres --single -D "$data" -c exit_on_error=on postgres\n'
+                        'exec postgres -D "$data" -h 127.0.0.1 -p "$WS03_PG_PORT" -c unix_socket_directories=\n')
+              return ['docker', 'run', '--detach', '--network', 'none', '--user', 'postgres',
+                      '-e', 'WS03_PG_HBA=' + PG_HBA, '-e', 'WS03_PG_BOOTSTRAP=' + PG_BOOTSTRAP,
+                      '-e', 'WS03_PG_PORT=' + str(port), '--entrypoint', '/bin/sh', image, '-ec', script]
+
+
+          class PgError(RuntimeError):
+              def __init__(self, fields):
+                  self.code, self.detail = fields.get('C'), fields.get('M', '')
+                  super().__init__('PostgreSQL ' + str(self.code) + ': ' + self.detail)
+
+
+          def pg_request(port, timeout, sql='SELECT 1', user=PG_ROLE, database=PG_DATABASE, replication=False):
+              """Bounded simple protocol; SQLSTATE and primary error survive for precise negatives."""
+              if any('\0' in x for x in (user, database, sql)) or len(sql.encode()) > 8192:
+                  raise ValueError('Invalid bounded PostgreSQL request')
               def message(conn):
                   def exact(n):
                       data = b''
@@ -600,29 +658,116 @@ jobs:
                   length = struct.unpack('!I', exact(4))[0]
                   if not 4 <= length <= 65536:
                       raise RuntimeError('Invalid PostgreSQL message bound')
-                  return kind, exact(length - 4)
+                  data = exact(length - 4)
+                  if kind == b'E':
+                      if not data.endswith(b'\0\0'):
+                          raise RuntimeError('Malformed PostgreSQL error')
+                      fields = {field[:1].decode('ascii'): field[1:].decode('utf-8') for field in data[:-1].split(b'\0') if field}
+                      raise PgError(fields)
+                  return kind, data
               with socket.create_connection(('127.0.0.1', port), timeout) as conn:
                   conn.settimeout(timeout)
-                  payload = struct.pack('!I', 196608) + b'user\0postgres\0database\0postgres\0\0'
+                  payload = struct.pack('!I', 196608) + ('user\0' + user + '\0database\0' + database + '\0').encode()
+                  payload += (b'replication\0true\0' if replication else b'') + b'\0'
                   conn.sendall(struct.pack('!I', len(payload) + 4) + payload)
-                  while True:
+                  authenticated = False
+                  for _ in range(256):
                       kind, data = message(conn)
-                      if kind == b'E' or (kind == b'R' and data != struct.pack('!I', 0)):
-                          raise RuntimeError('Expected disposable trust-auth PostgreSQL')
+                      if kind == b'R':
+                          if data != struct.pack('!I', 0):
+                              raise RuntimeError('Expected exact limited-role trust authentication')
+                          authenticated = True
                       if kind == b'Z':
+                          if not authenticated or data != b'I':
+                              raise RuntimeError('PostgreSQL did not authenticate an idle session')
                           break
-                  conn.sendall(b'Q' + struct.pack('!I', 13) + b'SELECT 1\0')
-                  row = False
-                  while True:
+                  else:
+                      raise RuntimeError('PostgreSQL startup message limit')
+                  query = sql.encode() + b'\0'
+                  conn.sendall(b'Q' + struct.pack('!I', len(query) + 4) + query)
+                  rows = []
+                  for _ in range(256):
                       kind, data = message(conn)
-                      if kind == b'E':
-                          raise RuntimeError('PostgreSQL SELECT failed')
                       if kind == b'D':
-                          row = data == b'\0\1\0\0\0\1' + b'1'
+                          if len(data) < 2:
+                              raise RuntimeError('Malformed PostgreSQL row')
+                          count, offset, row = struct.unpack('!H', data[:2])[0], 2, []
+                          for _ in range(count):
+                              if offset + 4 > len(data):
+                                  raise RuntimeError('Malformed PostgreSQL column')
+                              size = struct.unpack('!i', data[offset:offset + 4])[0]
+                              offset += 4
+                              if size == -1:
+                                  row.append(None)
+                              elif size < 0 or offset + size > len(data):
+                                  raise RuntimeError('Invalid PostgreSQL column bound')
+                              else:
+                                  row.append(data[offset:offset + size].decode('utf-8'))
+                                  offset += size
+                          if offset != len(data):
+                              raise RuntimeError('Trailing PostgreSQL row bytes')
+                          rows.append(row)
                       if kind == b'Z':
-                          break
-                  if not row:
-                      raise RuntimeError('PostgreSQL did not return SELECT 1')
+                          if data != b'I':
+                              raise RuntimeError('PostgreSQL transaction did not finish idle')
+                          return rows
+                  raise RuntimeError('PostgreSQL query message limit')
+
+
+          def query_pg(port, timeout):
+              if pg_request(port, timeout) != [['1']]:
+                  raise RuntimeError('PostgreSQL did not return SELECT 1')
+
+
+          def pg_denied(action, code, reason):
+              try:
+                  action()
+              except PgError as error:
+                  if error.code == code and reason in error.detail:
+                      return
+                  raise RuntimeError('Wrong PostgreSQL denial reason') from error
+              raise RuntimeError('PostgreSQL authority negative unexpectedly succeeded')
+
+
+          def pg_authority(config):
+              """Authored native controls, executed by the actual guarded parent probe, never locally."""
+              port, timeout = config['pg_port'], config['timeout']
+              def sql(query):
+                  return pg_request(port, timeout, query)
+              predicate = ("SELECT current_user = 'ws03_ci' AND session_user = 'ws03_ci' "
+                  "AND current_database() = 'ws03_ci' AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole "
+                  "AND NOT rolinherit AND NOT rolreplication AND NOT rolbypassrls AND rolcanlogin "
+                  "AND NOT EXISTS (SELECT FROM pg_auth_members WHERE member = r.oid) "
+                  "AND NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres' AND rolcanlogin) "
+                  "FROM pg_roles r WHERE rolname = current_user")
+              if sql(predicate) != [['t']]:
+                  raise RuntimeError('PostgreSQL role attributes/membership differ from least authority')
+              if sql('SHOW listen_addresses') != [['127.0.0.1']] or sql('SHOW unix_socket_directories') != [['']]:
+                  raise RuntimeError('PostgreSQL alternate channel was enabled')
+              name = 'ws03_migration_' + secrets.token_hex(8)
+              if sql('BEGIN; CREATE SCHEMA ' + name + '; CREATE TABLE ' + name + '.t(id integer); '
+                     'ALTER TABLE ' + name + '.t ADD COLUMN value text; INSERT INTO ' + name + ".t VALUES (1, 'canary'); "
+                     'SELECT id FROM ' + name + '.t; ROLLBACK;') != [['1']]:
+                  raise RuntimeError('Limited PostgreSQL migration positive failed')
+              for user, database, replication in [('postgres', PG_DATABASE, False), ('postgres', 'postgres', False),
+                      ('pg_execute_server_program', PG_DATABASE, False), ('ws03_other', PG_DATABASE, False),
+                      (PG_ROLE, 'postgres', False), (PG_ROLE, PG_DATABASE, True)]:
+                  pg_denied(lambda: pg_request(port, timeout, user=user, database=database, replication=replication),
+                            '28000', 'pg_hba.conf rejects connection')
+              path = config['pg_server_canary'].replace("'", "''")
+              for query, reason in [
+                      ('SET ROLE postgres', 'permission denied to set role'),
+                      ('SET ROLE pg_execute_server_program', 'permission denied to set role'),
+                      ('ALTER ROLE ws03_ci SUPERUSER', 'superuser'),
+                      ('GRANT pg_execute_server_program TO ws03_ci', 'permission denied'),
+                      ("COPY (SELECT 'canary') TO PROGRAM 'exit 0'", 'pg_execute_server_program'),
+                      ("COPY (SELECT 'canary') TO '" + path + "'", 'pg_write_server_files'),
+                      ("CREATE TEMP TABLE ws03_read_control(line text); COPY ws03_read_control FROM '" +
+                       path.removesuffix('__ws03_denied__') + "pg_hba.conf'", 'pg_read_server_files'),
+                      ("SELECT pg_read_file('pg_hba.conf')", 'permission denied for function pg_read_file')]:
+                  pg_denied(lambda: sql(query), '42501', reason)
+              return {'limited_role': PG_ROLE, 'database': PG_DATABASE, 'migration_rollback': True,
+                      'admin_alternate_replication_rejected': True, 'program_file_escalation_denied': True}
 
 
           def dns_answer(packet, ipv4):
@@ -827,9 +972,10 @@ jobs:
                       result['error'] = 'policy'
               results.append(result)
               query_pg(config['pg_port'], config['timeout'])
+              authority = pg_authority(config) if not descendant else None
               Path(config['output'], phase + ('-child' if descendant else '-parent') + '.json').write_text(json.dumps({
                   'pid': os.getpid(), 'parent': os.getppid(), 'platform': platform.platform(), 'mode': mode,
-                  'postgres_select_1': True, 'results': results}, indent=2))
+                  'postgres_select_1': True, 'postgres_authority': authority, 'results': results}, indent=2))
               if mode != 'mutation':
                   check_results(results, mode == 'deny')
               else:
@@ -931,9 +1077,8 @@ jobs:
                       image = dict(line.split('=', 1) for line in (self.root / 'work/ws03-runner-sandbox-acquisition/.env.example').read_text().splitlines()
                                    if line.startswith('MC_WS03_POSTGRES_IMAGE='))['MC_WS03_POSTGRES_IMAGE']
                       checked(['docker', 'pull', image], timeout=timeout)
-                      self.container = subprocess.check_output(['docker', 'run', '--detach', '--network', 'none',
-                          '-e', 'POSTGRES_HOST_AUTH_METHOD=trust', '-e', 'PGPORT=' + str(fixture['pg_port']), image,
-                          '-c', 'listen_addresses=127.0.0.1'], text=True, timeout=timeout).strip()
+                      self.container = subprocess.check_output(linux_pg_command(image, fixture['pg_port']), text=True, timeout=timeout).strip()
+                      fixture['pg_server_canary'] = '/tmp/ws03-postgres-data/__ws03_denied__'
                       pid = subprocess.check_output(['docker', 'inspect', '--format', '{{.State.Pid}}', self.container], text=True).strip()
                       if not re.fullmatch(r'[1-9][0-9]*', pid):
                           raise RuntimeError('Invalid owned namespace PID')
@@ -953,7 +1098,7 @@ jobs:
                       # Low ports are unprivileged only inside this owned network namespace.
                       checked(self.prefix + ['/usr/sbin/sysctl', '-w', 'net.ipv4.ip_unprivileged_port_start=0'], cwd='/', timeout=timeout)
                       self.fixture_prefix = self.prefix + drop_identity()
-                      ready = ['docker', 'exec', self.container, 'pg_isready', '-h', '127.0.0.1', '-p', str(fixture['pg_port']), '-U', 'postgres']
+                      ready = ['docker', 'exec', self.container, 'pg_isready', '-h', '127.0.0.1', '-p', str(fixture['pg_port']), '-U', PG_ROLE, '-d', PG_DATABASE]
                       deadline = time.monotonic() + timeout
                       while subprocess.run(ready, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
                           if time.monotonic() >= deadline:
@@ -1069,8 +1214,44 @@ jobs:
                       raise RuntimeError('Owned cleanup failed: ' + ';'.join(failures))
 
 
+          def pg_policy_selftest():
+              # Pure persistent construction controls; deliberately independent expected policy.
+              assert PG_ROLE == PG_DATABASE == 'ws03_ci'
+              assert PG_HBA.splitlines() == [
+                  'local all all reject', 'host ws03_ci ws03_ci 127.0.0.1/32 trust',
+                  'host all all 0.0.0.0/0 reject', 'host all all ::/0 reject',
+                  'host replication all 0.0.0.0/0 reject', 'host replication all ::/0 reject']
+              for clause in ('LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD NULL',
+                             'CREATE DATABASE ws03_ci OWNER ws03_ci;', 'ALTER ROLE postgres NOLOGIN;',
+                             'REVOKE ALL ON DATABASE postgres, template1 FROM PUBLIC;', 'pg_hba_file_rules'):
+                  assert clause in PG_BOOTSTRAP
+              assert pg_url(12345) == 'postgresql://ws03_ci@127.0.0.1:12345/ws03_ci'
+              argv = linux_pg_command('synthetic-pinned-image', 12345)
+              assert '--user' in argv and argv[argv.index('--user') + 1] == 'postgres'
+              assert 'WS03_PG_HBA=' + PG_HBA in argv and 'WS03_PG_BOOTSTRAP=' + PG_BOOTSTRAP in argv
+              script = argv[-1]
+              assert script.index('pg_hba.conf') < script.index('postgres --single') < script.index('exec postgres')
+              assert '-c unix_socket_directories=' in script and '-h 127.0.0.1' in script
+              try:
+                  pg_denied(lambda: None, '42501', 'permission denied')
+              except RuntimeError:
+                  pass
+              else:
+                  raise AssertionError('PostgreSQL success accepted as an authority denial')
+              for fields in ({'C': '58P01', 'M': 'permission denied'}, {'C': '42501', 'M': 'wrong privilege'}):
+                  def wrong_denial():
+                      raise PgError(fields)
+                  try:
+                      pg_denied(wrong_denial, '42501', 'permission denied')
+                  except RuntimeError as error:
+                      assert type(error) is RuntimeError
+                  else:
+                      raise AssertionError('Unrelated PostgreSQL failure accepted')
+
+
           def self_test(lane):
               Config(lane)
+              pg_policy_selftest()
               positive = [{'name': 'fixture', 'loopback': False, 'reachable': True, 'error': None},
                           {'name': 'loopback', 'loopback': True, 'reachable': True, 'error': None}]
               negative = [dict(positive[0], reachable=False, error='policy'), positive[1]]
@@ -1443,13 +1624,15 @@ jobs:
                           provenance['tools'][tool] = {'path': str(executable), 'sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
                               'version': subprocess.check_output([executable, '--version'], text=True).strip()}
                       native_pg = root / 'postgres-data'
-                      checked([pg_tools['initdb'], '-D', native_pg, '-U', 'postgres', '-A', 'trust'], timeout=config.seconds('SETUP'))
+                      bootstrap_pg(pg_tools, native_pg, config.seconds('SETUP'))
+                      fixture['pg_server_canary'] = str(native_pg / '__ws03_denied__')
                       if sys.platform == 'win32':
                           pg_service = WindowsPostgres(guard.native, config)
-                          pg_service.start([str(pg_tools['postgres']), '-D', str(native_pg), '-h', '127.0.0.1', '-p', str(pg_port)], root, env, pg_port)
+                          pg_service.start([str(pg_tools['postgres']), '-D', str(native_pg), '-h', '127.0.0.1', '-p', str(pg_port),
+                              '-c', 'unix_socket_directories='], root, env, pg_port)
                       else:
                           checked([pg_tools['pg_ctl'], '-D', native_pg, '-l', root / 'postgres.log', '-o',
-                                   '-h 127.0.0.1 -p ' + str(pg_port), '-w', 'start'], timeout=config.seconds('SETUP'))
+                                   '-h 127.0.0.1 -p ' + str(pg_port) + ' -c unix_socket_directories=', '-w', 'start'], timeout=config.seconds('SETUP'))
                   (root / 'fixture.json').write_text(json.dumps(fixture))
                   guard.fixture = subprocess.Popen(guard.fixture_prefix + [str(python), '-I', str(helper), 'serve', str(root / 'fixture.json')],
                                                    start_new_session=os.name != 'nt')
@@ -1457,6 +1640,11 @@ jobs:
                   fixture = json.loads((root / 'ready.json').read_text())
                   guard.resolver_setup(fixture)
                   def execute(mode, phase, guarded):
+                      actual_hba = (subprocess.check_output(['docker', 'exec', guard.container, 'cat',
+                          '/tmp/ws03-postgres-data/pg_hba.conf'], text=True, timeout=config.seconds('PROBE'))
+                          if sys.platform == 'linux' else (native_pg / 'pg_hba.conf').read_text())
+                      if actual_hba != PG_HBA:
+                          raise RuntimeError('PostgreSQL HBA changed from exact allow/reject policy')
                       if helper.read_bytes() != Path(__file__).read_bytes():
                           raise RuntimeError('Trusted CI probe source was modified')
                       with (root / 'probe.json').open('w') as output:
@@ -1488,7 +1676,7 @@ jobs:
                       guard.install()
                   execute('deny', 'restored', True)
                   # Native token/profile/namespace inheritance also guards cargo, rustdoc and every spawned test.
-                  env['DATABASE_URL'] = 'postgresql://postgres@127.0.0.1:' + str(pg_port) + '/postgres'
+                  env['DATABASE_URL'] = pg_url(pg_port)
                   guard.run([str(python), '-I', str(test_script), str(cargo), str(root / 'output/test.log')], lane, env, True)
                   # A test must not have mutated this policy/control state unnoticed.
                   execute('deny', 'after-tests', True)
