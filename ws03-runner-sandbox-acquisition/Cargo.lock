@@ -3129,6 +3129,7 @@ dependencies = [
  "clap",
  "mc-contracts",
  "mc-egress-proxy",
+ "mc-pack-parser",
  "mc-runner-test-support",
  "mc-sandbox-core",
  "mc-sandbox-linux",

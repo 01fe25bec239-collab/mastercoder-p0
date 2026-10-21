@@ -16,3 +16,4 @@ mc-sandbox-linux.workspace = true
 mc-sandbox-macos.workspace = true
 mc-sandbox-windows.workspace = true
 mc-egress-proxy.workspace = true
+mc-pack-parser.workspace = true

@@ -87,7 +87,7 @@ jobs:
           No shared checkout/toolchain ACL is modified. Loopback exemption covers the
           profile, not one port. Call setup/cleanup from the same Windows user identity.
           Caller disposes the copied tree after cleanup; its low label is never restored
-          onto a shared path. guarded=False exists solely for fixture mutation controls.
+          onto a shared path. guarded=False is limited to fixture mutation controls and the owned PostgreSQL service.
           """
           import ctypes as C
           import math
@@ -203,6 +203,7 @@ jobs:
                   self.sid, self.created, self.exempt, self.closed = PTR(), False, False, False
                   self.sid_text = None
                   self.profile_folder = None
+                  self.active_jobs = set()
                   self.k = C.WinDLL("kernel32", use_last_error=True)
                   self.a = C.WinDLL("advapi32", use_last_error=True)
                   self.u = C.WinDLL("userenv", use_last_error=True)
@@ -322,9 +323,8 @@ jobs:
                       self.profile_folder = Path(C.wstring_at(folder))
                   finally:
                       self.o.CoTaskMemFree(folder)
-                  # Modify only the fresh copied tree, and only this per-run package SID.
-                  self._utility("icacls.exe", [str(self.root), "/grant:r", f"*{sid_text}:(OI)(CI)M", "/T", "/L"])
-                  self._utility("icacls.exe", [str(self.root), "/setintegritylevel", "(OI)(CI)L", "/T", "/L"])
+                  for arguments in windows_acl_plan(self.root, sid_text):
+                      self._utility("icacls.exe", arguments)
                   # Fresh profile cannot legitimately have a preexisting exemption.
                   # Mark intent before invocation: a timeout can happen after mutation.
                   self.exempt = True
@@ -398,7 +398,7 @@ jobs:
                           raise TimeoutError("job descendants did not terminate within bound")
                       time.sleep(min(0.01, max(0, deadline - time.monotonic())))
 
-              def run(self, argv, cwd, env, guarded=True):
+              def run(self, argv, cwd, env, guarded=True, cancel=None):
                   if not self.created or not self.exempt or self.closed:
                       raise RuntimeError("guard is not ready")
                   if not isinstance(argv, (list, tuple)) or not argv or any(not isinstance(x, str) or "\0" in x for x in argv):
@@ -414,6 +414,7 @@ jobs:
                   command = C.create_unicode_buffer(subprocess.list2cmdline(argv))
                   environment = C.create_unicode_buffer(environment_block(env))
                   job = self._ok(self.k.CreateJobObjectW(None, None))  # Unnamed, noninheritable.
+                  self.active_jobs.add(job)
                   attributes, initialized, process = None, False, PROCESS_INFORMATION()
                   try:
                       limits = EXTENDED_LIMITS()
@@ -445,7 +446,13 @@ jobs:
                           self._verify_token(process.hProcess)
                       if self.k.ResumeThread(process.hThread) == WAIT_FAILED:
                           raise C.WinError(C.get_last_error())
-                      wait = self.k.WaitForSingleObject(process.hProcess, math.ceil(self.timeout * 1000))
+                      deadline = time.monotonic() + self.timeout * (3 if cancel is not None else 1)
+                      while True:
+                          if cancel is not None and cancel.is_set():
+                              return 0  # finally terminates and verifies the whole owned service job.
+                          wait = self.k.WaitForSingleObject(process.hProcess, 100)
+                          if wait != WAIT_TIMEOUT or time.monotonic() >= deadline:
+                              break
                       if wait == WAIT_TIMEOUT:
                           raise TimeoutError("process exceeded configured time bound")
                       if wait != WAIT_OBJECT_0:
@@ -459,6 +466,7 @@ jobs:
                           if process.hProcess and self.k.WaitForSingleObject(process.hProcess, 0) == WAIT_TIMEOUT:
                               self._ok(self.k.TerminateProcess(process.hProcess, 1))
                           self._drain(job)
+                          self.active_jobs.remove(job)
                       finally:
                           try:
                               self._ok(self.k.CloseHandle(job))
@@ -641,6 +649,11 @@ jobs:
 
           def serve(config_path):
               config = json.loads(Path(config_path).read_text())
+              if sys.platform == 'linux':
+                  status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines() if ':' in line)
+                  require_unprivileged(status, os.geteuid(), os.getgroups())
+                  config['fixture_privilege'] = {key: status[key].strip() for key in ('NoNewPrivs', 'CapEff', 'CapBnd', 'CapInh', 'CapAmb')}
+                  config['fixture_uid'] = os.geteuid()
               sockets, threads, errors = [], [], []
               stop = threading.Event()
               def worker(sock, protocol):
@@ -724,6 +737,20 @@ jobs:
               if mode == 'deny':
                   if sys.platform == 'win32':
                       WindowsGuard.attest_current(config['package_sid'])
+                      for path in config['protected_write_targets']:
+                          try:
+                              with Path(path).open('ab') as target:
+                                  target.write(b'UNEXPECTED-CONTROL-WRITE')
+                          except PermissionError:
+                              pass
+                          else:
+                              raise RuntimeError('Protected control/runtime/PG path was writable: ' + path)
+                      try:
+                          Path(config['protected_pid']).unlink()
+                      except PermissionError:
+                          pass
+                      else:
+                          raise RuntimeError('Protected PostgreSQL PID file was removable')
                   elif sys.platform == 'linux':
                       status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines() if ':' in line)
                       if (os.geteuid() == 0 or status['NoNewPrivs'].strip() != '1'
@@ -814,7 +841,55 @@ jobs:
                   else:
                       raise RuntimeError('Removed guard escaped the denial checker')
               if not descendant:
-                  checked([sys.executable, __file__, 'probe-child', config_path, mode, phase], timeout=config['command_timeout'])
+                  checked([sys.executable, '-I', __file__, 'probe-child', config_path, mode, phase], timeout=config['command_timeout'])
+
+
+          def windows_acl_plan(root, sid):
+              # Protected medium controls; package RX only on required runtime/config paths.
+              plan = [[str(root), '/setintegritylevel', '(OI)(CI)M', '/T', '/L'],
+                      [str(root), '/grant:r', f'*{sid}:RX', '/L']]
+              for name in ('python', 'toolchain'):
+                  plan.append([str(root / name), '/grant:r', f'*{sid}:(OI)(CI)RX', '/T', '/L'])
+              for name in ('helper.py', 'tests.py', 'probe.json'):
+                  plan.append([str(root / name), '/grant:r', f'*{sid}:R', '/L'])
+              for name in writable_directories():
+                  plan.append([str(root / name), '/grant:r', f'*{sid}:(OI)(CI)M', '/T', '/L'])
+                  plan.append([str(root / name), '/setintegritylevel', '(OI)(CI)L', '/T', '/L'])
+              return plan
+
+
+          def require_unprivileged(status, uid, groups):
+              if (uid == 0 or groups or status['NoNewPrivs'].strip() != '1'
+                      or any(int(status[key].strip(), 16) for key in ('CapEff', 'CapBnd', 'CapInh', 'CapAmb'))):
+                  raise RuntimeError('Fixture retained privilege or escalation')
+
+
+          def writable_directories():
+              return ('work', 'home', 'temp', 'cargo', 'rustup', 'output')
+
+
+          def trusted_system(path):
+              path = Path(path).resolve(strict=True)
+              for entry in (path, *path.parents):
+                  info = entry.stat()
+                  if info.st_uid != 0 or info.st_mode & 0o022 or os.access(entry, os.W_OK):
+                      raise RuntimeError('Privileged tool chain is writable: ' + str(entry))
+              if not path.is_file():
+                  raise RuntimeError('Missing trusted system executable')
+              return str(path)
+
+
+          def privileged(argv):
+              # No privileged Python/imports, PATH lookup, caller cwd or inherited environment.
+              return [trusted_system('/usr/bin/sudo'), '-n', trusted_system('/usr/bin/env'), '-i',
+                      'PATH=/usr/bin:/bin:/usr/sbin:/sbin', trusted_system(argv[0]), *map(str, argv[1:])]
+
+
+          def drop_identity():
+              if os.getuid() == 0 or os.getgid() == 0:
+                  raise RuntimeError('Expected an unprivileged runner identity')
+              return [trusted_system('/usr/bin/setpriv'), '--reuid', str(os.getuid()), '--regid', str(os.getgid()),
+                      '--clear-groups', '--inh-caps=-all', '--ambient-caps=-all', '--bounding-set=-all', '--no-new-privs', '--']
 
 
           def safe_env(root):
@@ -862,7 +937,7 @@ jobs:
                       pid = subprocess.check_output(['docker', 'inspect', '--format', '{{.State.Pid}}', self.container], text=True).strip()
                       if not re.fullmatch(r'[1-9][0-9]*', pid):
                           raise RuntimeError('Invalid owned namespace PID')
-                      self.prefix = ['sudo', '-n', 'nsenter', '--target', pid, '--net', '--']
+                      self.prefix = privileged(['/usr/bin/nsenter', '--target', pid, '--net', '--'])
                       if subprocess.check_output(self.prefix + ['nft', 'list', 'tables'], text=True).strip():
                           raise RuntimeError('Unexpected policy in owned namespace')
                       checked(self.prefix + ['sysctl', '-w', 'net.ipv6.conf.all.disable_ipv6=0'], timeout=timeout)
@@ -875,7 +950,9 @@ jobs:
                       checked(self.prefix + ['ip', 'addr', 'add', fixture['ipv4'] + '/32', 'dev', 'fixture0'], timeout=timeout)
                       checked(self.prefix + ['ip', '-6', 'addr', 'add', fixture['ipv6'] + '/128', 'dev', 'fixture0', 'nodad'], timeout=timeout)
                       fixture['dns_port'] = 53
-                      self.fixture_prefix = self.prefix
+                      # Low ports are unprivileged only inside this owned network namespace.
+                      checked(self.prefix + ['/usr/sbin/sysctl', '-w', 'net.ipv4.ip_unprivileged_port_start=0'], cwd='/', timeout=timeout)
+                      self.fixture_prefix = self.prefix + drop_identity()
                       ready = ['docker', 'exec', self.container, 'pg_isready', '-h', '127.0.0.1', '-p', str(fixture['pg_port']), '-U', 'postgres']
                       deadline = time.monotonic() + timeout
                       while subprocess.run(ready, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
@@ -902,12 +979,17 @@ jobs:
                   if sys.platform == 'darwin':
                       self.resolver = Path(self.config.values['MC_WS03_CI_MACOS_RESOLVER_DIRECTORY']) / fixture['domain']
                       # mkdir of standard resolver directory is bounded; preexisting per-job file is never reused.
-                      checked(['sudo', '-n', 'mkdir', '-p', str(self.resolver.parent)])
+                      checked(privileged(['/bin/mkdir', '-p', str(self.resolver.parent)]), cwd='/')
+                      self.resolver = self.resolver.parent.resolve(strict=True) / self.resolver.name
+                      for directory in (self.resolver.parent, *self.resolver.parent.parents):
+                          info = directory.lstat()
+                          if directory.is_symlink() or info.st_uid != 0 or info.st_mode & 0o022:
+                              raise RuntimeError('Resolver parent is not root-owned and immutable')
                       content = ('nameserver ' + fixture['ipv4'] + '\nport ' + str(fixture['dns_port']) + '\n')
-                      checked(['sudo', '-n', 'python3', '-c',
-                               'import os,sys; fd=os.open(sys.argv[1],os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o644); os.write(fd,sys.argv[2].encode()); os.close(fd)',
-                               self.resolver, content], timeout=self.config.seconds('SETUP'))
-                      self.resolver_hash = hashlib.sha256(content.encode()).hexdigest()
+                      checked(privileged(['/bin/bash', '--noprofile', '--norc', '-c',
+                          'set -eC; umask 022; printf "%s" "$2" > "$1"', 'ws03-resolver', self.resolver, content]),
+                          cwd='/', timeout=self.config.seconds('SETUP'))
+                      self.resolver_content = content
                   else:
                       resolver_file = self.root / 'resolv.conf'
                       resolver_file.write_text('nameserver ' + fixture['ipv4'] + '\noptions attempts:1 timeout:1\n')
@@ -916,8 +998,7 @@ jobs:
                       script = 'set -euo pipefail\nmount --bind "$1" /etc/resolv.conf\nshift\nexec "$@"\n'
                       self.resolver_prefix = self.prefix + ['unshare', '--mount', '--propagation', 'private',
                           '--pid', '--fork', '--kill-child', '--mount-proc', '--', 'bash', '-c', script, 'ws03-resolver',
-                          str(resolver_file), 'setpriv', '--reuid', str(os.getuid()), '--regid', str(os.getgid()),
-                          '--clear-groups', '--inh-caps=-all', '--ambient-caps=-all', '--bounding-set=-all', '--no-new-privs', '--']
+                          str(resolver_file)] + drop_identity()
 
               def install(self):
                   if sys.platform == 'linux':
@@ -943,8 +1024,11 @@ jobs:
 
               def kill_session(self, pid):
                   if sys.platform == 'linux':
-                      body = 'import os,signal,sys\ntry: os.killpg(int(sys.argv[1]),signal.SIGKILL)\nexcept ProcessLookupError: pass\n'
-                      checked(['sudo', '-n', sys.executable, '-c', body, str(pid)], timeout=self.config.seconds('CLEANUP'))
+                      if not isinstance(pid, int) or pid <= 1:
+                          raise ValueError('Invalid owned session PID')
+                      body = 'if kill -0 -- -"$1" 2>/dev/null; then kill -KILL -- -"$1"; fi'
+                      checked(privileged(['/bin/bash', '--noprofile', '--norc', '-c', body, 'ws03-kill', pid]),
+                              cwd='/', timeout=self.config.seconds('CLEANUP'))
                   else:
                       try:
                           os.killpg(pid, signal.SIGKILL)
@@ -969,9 +1053,11 @@ jobs:
                           self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
                   if self.resolver:
                       try:
-                          checked(['sudo', '-n', 'python3', '-c',
-                              'import pathlib,hashlib,sys; p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(p.read_bytes()).hexdigest()==sys.argv[2]; p.unlink()',
-                              self.resolver, self.resolver_hash], timeout=self.config.seconds('CLEANUP'))
+                          compare, remove = trusted_system('/usr/bin/cmp'), trusted_system('/bin/rm')
+                          checked(privileged(['/bin/bash', '--noprofile', '--norc', '-c',
+                              'set -e; [[ -f "$1" && ! -L "$1" ]]; "$2" -s "$1" -; "$3" -- "$1"',
+                              'ws03-resolver', self.resolver, compare, remove]), input=self.resolver_content,
+                              text=True, cwd='/', timeout=self.config.seconds('CLEANUP'))
                       except BaseException as error:
                           failures.append(str(error))
                   if self.container:
@@ -998,6 +1084,23 @@ jobs:
                       pass
                   else:
                       raise AssertionError('Invalid guard control accepted')
+              clean = {'NoNewPrivs': '1', 'CapEff': '0', 'CapBnd': '0', 'CapInh': '0', 'CapAmb': '0'}
+              require_unprivileged(clean, 1000, [])
+              for status, uid, groups in [(clean, 0, []), (clean, 1000, [1])]+[
+                      (dict(clean, **{key: value}), 1000, []) for key, value in
+                      [('NoNewPrivs', '0'), ('CapEff', '1'), ('CapBnd', '1'), ('CapInh', '1'), ('CapAmb', '1')]]:
+                  try:
+                      require_unprivileged(status, uid, groups)
+                  except RuntimeError:
+                      pass
+                  else:
+                      raise AssertionError('Privilege drop guard removed')
+              root = Path('synthetic-root')
+              plan = windows_acl_plan(root, 'synthetic-sid')
+              writable = {str(root / name) for name in writable_directories()}
+              assert {args[0] for args in plan if args[1] == '/grant:r' and args[2].endswith(')M')} == writable
+              assert {args[0] for args in plan if '(OI)(CI)L' in args} == writable
+              assert all(not args[2].endswith(')M') for args in plan if args[0] == str(root) and args[1] == '/grant:r')
               env = safe_env(Path('synthetic-root'))
               assert not any('TOKEN' in key or 'PASSWORD' in key or 'SECRET' in key for key in env)
               packet = b'\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x01a\x04test\0\0\1\0\1'
@@ -1015,6 +1118,7 @@ jobs:
                   self.rule_name = None
                   self.rule_domain = None
                   self.wfp_handle = ctypes.c_void_p()
+                  self.wfp = None
 
               def ps(self, body, arguments=()):
                   script = self.root / ('setup-' + secrets.token_hex(4) + '.ps1')
@@ -1036,6 +1140,11 @@ jobs:
                   fixture['dns_port'] = 53
                   self.native.setup()
                   fixture['package_sid'] = self.native.sid_text
+                  fixture['protected_write_targets'] = [str(self.root / name) for name in
+                      ('helper.py', 'tests.py', 'python/Lib/os.py', 'python/Lib/__ws03_denied__.py',
+                       'toolchain/bin/rustc.exe', 'wfp_scope.dll', 'probe.json', 'fixture.json', 'ready.json',
+                       'dns.log', 'compile-wfp.cmd', 'postgres-data/postmaster.pid', 'postgres-data/__ws03_denied__')]
+                  fixture['protected_pid'] = str(self.root / 'postgres-data/postmaster.pid')
 
               def resolver_setup(self, fixture):
                   # One job-owned DNS suffix rule; never rewrite an adapter's/global DNS configuration.
@@ -1056,13 +1165,14 @@ jobs:
               def wfp_open(self):
                   if self.wfp_handle.value:
                       raise RuntimeError('WFP session already installed')
-                  self.wfp = ctypes.WinDLL(str(self.root / 'wfp_scope.dll'))
-                  self.wfp.ScopeOpen.restype = ctypes.c_uint32
-                  self.wfp.ScopeOpen.argtypes = [ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_void_p)]
-                  self.wfp.ScopeAttest.restype = ctypes.c_uint32
-                  self.wfp.ScopeAttest.argtypes = [ctypes.c_void_p]
-                  self.wfp.ScopeClose.restype = ctypes.c_uint32
-                  self.wfp.ScopeClose.argtypes = [ctypes.c_void_p]
+                  if self.wfp is None:
+                      self.wfp = ctypes.WinDLL(str(self.root / 'wfp_scope.dll'))
+                      self.wfp.ScopeOpen.restype = ctypes.c_uint32
+                      self.wfp.ScopeOpen.argtypes = [ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_void_p)]
+                      self.wfp.ScopeAttest.restype = ctypes.c_uint32
+                      self.wfp.ScopeAttest.argtypes = [ctypes.c_void_p]
+                      self.wfp.ScopeClose.restype = ctypes.c_uint32
+                      self.wfp.ScopeClose.argtypes = [ctypes.c_void_p]
                   code = self.wfp.ScopeOpen(self.native.sid_text, ctypes.byref(self.wfp_handle))
                   if code:
                       raise RuntimeError('Owned WFP setup failed: ' + str(code))
@@ -1086,12 +1196,9 @@ jobs:
                       raise RuntimeError('Owned WFP mutation cleanup failed: ' + str(code))
 
               def cleanup(self):
+                  if self.native.active_jobs:
+                      raise RuntimeError('Owned Jobs not verified drained; retaining WFP and control storage')
                   failures = []
-                  if self.wfp_handle.value:
-                      code = self.wfp.ScopeClose(self.wfp_handle)
-                      self.wfp_handle = ctypes.c_void_p()
-                      if code:
-                          failures.append('WFP session cleanup/readback failed: ' + str(code))
                   if self.fixture:
                       (self.root / 'stop').touch()
                       try:
@@ -1101,6 +1208,18 @@ jobs:
                           self.fixture.kill()
                           self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
                           failures.append(str(error))
+                  if self.wfp_handle.value and not failures:
+                      code = self.wfp.ScopeClose(self.wfp_handle)
+                      self.wfp_handle = ctypes.c_void_p()
+                      if code:
+                          failures.append('WFP session cleanup/readback failed: ' + str(code))
+                  if self.wfp is not None and not failures:
+                      release = self.native.k.FreeLibrary
+                      release.argtypes, release.restype = [ctypes.c_void_p], ctypes.c_int
+                      if not release(self.wfp._handle):
+                          failures.append('FreeLibrary failed: ' + str(ctypes.get_last_error()))
+                      else:
+                          self.wfp = None  # No native calls or function references after release.
                   if self.rule_domain:
                       try:
                           self.ps("param($name,$owner,$suffix)\n"
@@ -1112,12 +1231,54 @@ jobs:
                               (self.rule_name or '', self.native.name, self.rule_domain))
                       except BaseException as error:
                           failures.append(str(error))
+                  if failures:
+                      raise RuntimeError('Owned Windows cleanup failed; retaining guard: ' + ';'.join(failures))
                   try:
                       self.native.cleanup()
                   except BaseException as error:
                       failures.append(str(error))
                   if failures:
                       raise RuntimeError('Owned Windows cleanup failed: ' + ';'.join(failures))
+
+
+          class WindowsPostgres:
+              """Foreground postgres in an owned, drained Job; no postmaster.pid authority."""
+              def __init__(self, native, config):
+                  self.native, self.config = native, config
+                  self.cancel = threading.Event()
+                  self.errors = []
+                  self.thread = None
+
+              def start(self, argv, root, env, port):
+                  def serve_owned():
+                      try:
+                          code = self.native.run(argv, str(root), env, False, cancel=self.cancel)
+                          if code or not self.cancel.is_set():
+                              raise RuntimeError('Owned PostgreSQL exited before cancellation: ' + str(code))
+                      except BaseException as error:
+                          self.errors.append(str(error))
+                  self.thread = threading.Thread(target=serve_owned)
+                  self.thread.start()
+                  deadline = time.monotonic() + self.config.seconds('SETUP')
+                  while True:
+                      if self.errors or not self.thread.is_alive():
+                          raise RuntimeError('Owned PostgreSQL startup failed: ' + ';'.join(self.errors))
+                      try:
+                          query_pg(port, self.config.seconds('PROBE'))
+                          return
+                      except (OSError, RuntimeError):
+                          if time.monotonic() >= deadline:
+                              raise TimeoutError('Owned PostgreSQL readiness exceeded bound')
+                          self.cancel.wait(0.1)
+
+              def stop(self):
+                  self.cancel.set()
+                  if self.thread is not None:
+                      self.thread.join(self.config.seconds('CLEANUP'))
+                      if self.thread.is_alive():
+                          raise RuntimeError('Owned PostgreSQL Job drain incomplete')
+                  if self.errors:
+                      raise RuntimeError('Owned PostgreSQL Job failure: ' + ';'.join(self.errors))
 
 
           def run_ci():
@@ -1224,9 +1385,16 @@ jobs:
                   'canary': secrets.token_hex(16), 'domain': secrets.token_hex(8) + '.' + config.values['MC_WS03_CI_DNS_SUFFIX'],
                   'ready': str(root / 'ready.json'), 'stop': str(root / 'stop'),
                   'dns_log': str(root / 'dns.log'), 'output': str(root / 'output')}
+              test_script = root / 'tests.py'
+              test_script.write_text('import pathlib,subprocess,sys\n'
+                  'with pathlib.Path(sys.argv[2]).open("w") as log:\n'
+                  ' r=subprocess.run([sys.argv[1],"test","--workspace","--all-features","--locked","--offline"],stdout=log,stderr=subprocess.STDOUT)\n'
+                  'sys.exit(r.returncode)\n')
+              (root / 'probe.json').write_text('{}')
               guard = WindowsCI(root, config) if sys.platform == 'win32' else PosixGuard(root, config)
               native_pg = None
               pg_bin = None
+              pg_service = None
               failures = []
               try:
                   guard.setup(fixture)
@@ -1248,19 +1416,42 @@ jobs:
                           checked(['brew', 'install', formula], timeout=config.seconds('SETUP'))
                           pg_bin = Path(subprocess.check_output(['brew', '--prefix', formula], text=True).strip()) / 'bin'
                       else:
-                          pg_bin = Path(os.environ['PGBIN'])
+                          configured = config.values['MC_WS03_CI_WINDOWS_PGBIN'] or os.environ.get('PGBIN')
+                          discovered = shutil.which('postgres.exe')
+                          if not configured and not discovered:
+                              raise RuntimeError('Native PostgreSQL unavailable: configure MC_WS03_CI_WINDOWS_PGBIN or installed PATH')
+                          selected = Path(configured) if configured else Path(discovered).parent
+                          if not selected.is_absolute():
+                              raise RuntimeError('Native PostgreSQL bin directory must be absolute')
+                          installed_bin = selected.resolve(strict=True)
+                          provenance['postgres_install_bin'] = str(installed_bin)
+                          # Copy only installed runtime components, never an existing host data cluster.
+                          runtime = root / 'postgres-runtime'
+                          runtime.mkdir()
+                          for component in ('bin', 'lib', 'share'):
+                              source = installed_bin if component == 'bin' else installed_bin.parent / component
+                              if not source.is_dir():
+                                  raise RuntimeError('Missing installed PostgreSQL runtime component ' + component)
+                              shutil.copytree(source, runtime / component)
+                          pg_bin = runtime / 'bin'
+                      pg_tools = {}
                       for tool in ('initdb', 'pg_ctl', 'postgres'):
                           executable = pg_bin / (tool + ('.exe' if os.name == 'nt' else ''))
                           if not executable.is_file():
                               raise RuntimeError('Missing native PostgreSQL tool ' + tool)
-                          provenance['tools'][tool] = {'sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
+                          pg_tools[tool] = executable
+                          provenance['tools'][tool] = {'path': str(executable), 'sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
                               'version': subprocess.check_output([executable, '--version'], text=True).strip()}
                       native_pg = root / 'postgres-data'
-                      checked([pg_bin / 'initdb', '-D', native_pg, '-U', 'postgres', '-A', 'trust'], timeout=config.seconds('SETUP'))
-                      checked([pg_bin / 'pg_ctl', '-D', native_pg, '-l', root / 'postgres.log', '-o',
-                               '-h 127.0.0.1 -p ' + str(pg_port), '-w', 'start'], timeout=config.seconds('SETUP'))
+                      checked([pg_tools['initdb'], '-D', native_pg, '-U', 'postgres', '-A', 'trust'], timeout=config.seconds('SETUP'))
+                      if sys.platform == 'win32':
+                          pg_service = WindowsPostgres(guard.native, config)
+                          pg_service.start([str(pg_tools['postgres']), '-D', str(native_pg), '-h', '127.0.0.1', '-p', str(pg_port)], root, env, pg_port)
+                      else:
+                          checked([pg_tools['pg_ctl'], '-D', native_pg, '-l', root / 'postgres.log', '-o',
+                                   '-h 127.0.0.1 -p ' + str(pg_port), '-w', 'start'], timeout=config.seconds('SETUP'))
                   (root / 'fixture.json').write_text(json.dumps(fixture))
-                  guard.fixture = subprocess.Popen(guard.fixture_prefix + [str(python), str(helper), 'serve', str(root / 'fixture.json')],
+                  guard.fixture = subprocess.Popen(guard.fixture_prefix + [str(python), '-I', str(helper), 'serve', str(root / 'fixture.json')],
                                                    start_new_session=os.name != 'nt')
                   wait_file(root / 'ready.json', guard.fixture, config.seconds('SETUP'))
                   fixture = json.loads((root / 'ready.json').read_text())
@@ -1270,7 +1461,7 @@ jobs:
                           raise RuntimeError('Trusted CI probe source was modified')
                       with (root / 'probe.json').open('w') as output:
                           json.dump(fixture, output)
-                      guard.run([str(python), str(helper), 'probe', str(root / 'probe.json'), mode, phase], root, env, guarded)
+                      guard.run([str(python), '-I', str(helper), 'probe', str(root / 'probe.json'), mode, phase], root, env, guarded)
                       if hashlib.sha256(helper.read_bytes()).hexdigest() != provenance['helper_sha256']:
                           raise RuntimeError('Trusted CI probe source changed during execution')
                       if guard.fixture.poll() is not None:
@@ -1298,26 +1489,39 @@ jobs:
                   execute('deny', 'restored', True)
                   # Native token/profile/namespace inheritance also guards cargo, rustdoc and every spawned test.
                   env['DATABASE_URL'] = 'postgresql://postgres@127.0.0.1:' + str(pg_port) + '/postgres'
-                  test_script = root / 'tests.py'
-                  test_script.write_text('import pathlib,subprocess,sys\n'
-                      'with pathlib.Path(sys.argv[2]).open("w") as log:\n'
-                      ' r=subprocess.run([sys.argv[1],"test","--workspace","--all-features","--locked","--offline"],stdout=log,stderr=subprocess.STDOUT)\n'
-                      'sys.exit(r.returncode)\n')
-                  guard.run([str(python), str(test_script), str(cargo), str(root / 'output/test.log')], lane, env, True)
+                  guard.run([str(python), '-I', str(test_script), str(cargo), str(root / 'output/test.log')], lane, env, True)
                   # A test must not have mutated this policy/control state unnoticed.
                   execute('deny', 'after-tests', True)
+                  if sys.platform == 'win32':
+                      # Runner-side native negative: cleanup authority survives both corrupt and missing PID files.
+                      pid_file = native_pg / 'postmaster.pid'
+                      pid_file.write_text('invalid-owned-pid-control\n')
+                      query_pg(pg_port, config.seconds('PROBE'))
+                      pid_file.unlink()
+                      query_pg(pg_port, config.seconds('PROBE'))
+                      provenance['postgres_pid_controls'] = ['corrupt-live', 'missing-live']
                   provenance['runtime_result'] = 'NATIVE_CONTROLS_AND_TESTS_EXECUTED'
               except BaseException as error:
                   failures.append(type(error).__name__ + ': ' + str(error))
                   raise
               finally:
+                  if pg_service is not None:
+                      try:
+                          pg_service.stop()
+                          try:
+                              with socket.create_connection(('127.0.0.1', pg_port), config.seconds('PROBE')):
+                                  raise RuntimeError('PostgreSQL listener remained after owned Job drain')
+                          except OSError:
+                              pass
+                      except BaseException as error:
+                          failures.append('postgres-job-cleanup:' + str(error))
                   try:
                       guard.cleanup()
                   except BaseException as error:
                       failures.append('cleanup:' + str(error))
-                  if native_pg and (native_pg / 'postmaster.pid').exists():
+                  if native_pg and sys.platform != 'win32':
                       try:
-                          checked([pg_bin / 'pg_ctl', '-D', native_pg, '-m', 'immediate', '-w', 'stop'], timeout=config.seconds('CLEANUP'))
+                          checked([pg_tools['pg_ctl'], '-D', native_pg, '-m', 'immediate', '-w', 'stop'], timeout=config.seconds('CLEANUP'))
                       except BaseException as error:
                           failures.append('postgres-cleanup:' + str(error))
                   provenance['failures'] = failures
