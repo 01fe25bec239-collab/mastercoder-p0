@@ -614,7 +614,7 @@ jobs:
 
           def bootstrap_pg(tools, data, timeout):
               # Offline single-user mode has no socket/listener and takes SQL only on owned stdin.
-              checked([tools['initdb'], '-D', data, '-U', 'postgres', '-A', 'scram-sha-256'], timeout=timeout)
+              checked([tools['initdb'], '-D', data, '-U', 'postgres', '-A', 'reject'], timeout=timeout)
               (data / 'pg_hba.conf').write_text(PG_HBA)
               result = checked([tools['postgres'], '--single', '-D', data, '-c', 'exit_on_error=on', 'postgres'],
                                input=PG_BOOTSTRAP, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
@@ -626,7 +626,7 @@ jobs:
               # Bypass the image's trust/admin TCP bootstrap; no listener until role and HBA are final.
               script = ('set -eu\ncommand -v initdb; command -v postgres\n'
                         'data=/tmp/ws03-postgres-data\n'
-                        'initdb -D "$data" -U postgres -A scram-sha-256\n'
+                        'initdb -D "$data" -U postgres -A reject\n'
                         'printf "%s" "$WS03_PG_HBA" > "$data/pg_hba.conf"\n'
                         'printf "%s" "$WS03_PG_BOOTSTRAP" | postgres --single -D "$data" -c exit_on_error=on postgres\n'
                         'exec postgres -D "$data" -h 127.0.0.1 -p "$WS03_PG_PORT" -c unix_socket_directories=\n')
