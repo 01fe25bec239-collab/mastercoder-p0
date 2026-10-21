@@ -754,12 +754,12 @@ jobs:
                       ('pg_execute_server_program', PG_DATABASE, False), ('ws03_other', PG_DATABASE, False),
                       (PG_ROLE, 'postgres', False), (PG_ROLE, PG_DATABASE, True)]:
                   pg_denied(lambda: pg_request(port, timeout, user=user, database=database, replication=replication),
-                            '28000', 'pg_hba.conf rejects connection')
+                            '28000', 'pg_hba.conf rejects replication connection' if replication else 'pg_hba.conf rejects connection')
               path = config['pg_server_canary'].replace("'", "''")
               for query, reason, detail in [
                       ('SET ROLE postgres', 'permission denied to set role', None),
                       ('SET ROLE pg_execute_server_program', 'permission denied to set role', None),
-                      ('ALTER ROLE ws03_ci SUPERUSER', 'superuser', None),
+                      ('ALTER ROLE ws03_ci SUPERUSER', 'permission denied to alter role', 'SUPERUSER'),
                       ('GRANT pg_execute_server_program TO ws03_ci', 'permission denied', None),
                       ("COPY (SELECT 'canary') TO PROGRAM 'exit 0'",
                        'permission denied to COPY to or from an external program', 'pg_execute_server_program'),
