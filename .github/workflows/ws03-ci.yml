@@ -538,7 +538,7 @@ jobs:
           import json
           import math
           import os
-          from pathlib import Path
+          from pathlib import Path, PurePosixPath
           import platform
           import re
           import secrets
@@ -569,7 +569,7 @@ jobs:
                   if not re.fullmatch(r'[a-z][a-z0-9-]*\.test', self.values['MC_WS03_CI_DNS_SUFFIX']):
                       raise ValueError('Expected synthetic .test suffix')
                   for key in ('MC_WS03_CI_SEATBELT_LIBRARY', 'MC_WS03_CI_MACOS_RESOLVER_DIRECTORY'):
-                      if self.values[key] != defaults[key] or not Path(self.values[key]).is_absolute():
+                      if self.values[key] != defaults[key] or not PurePosixPath(self.values[key]).is_absolute():
                           raise ValueError(key + ': this adapter requires the documented native system interface')
 
               def seconds(self, name):
@@ -730,6 +730,17 @@ jobs:
               raise RuntimeError('PostgreSQL authority negative unexpectedly succeeded')
 
 
+          def attest_pg_service(pid_text, options, port):
+              # PostgreSQL src/include/utils/pidfile.h: runtime socket directory, port and ready status.
+              # https://github.com/postgres/postgres/blob/REL_17_STABLE/src/include/utils/pidfile.h
+              lines = pid_text.splitlines()
+              if (len(lines) != 8 or not lines[0].isdigit() or int(lines[0]) <= 0
+                      or lines[3] != str(port) or lines[4] != '' or lines[5] != '127.0.0.1'
+                      or lines[7].strip() != 'ready'
+                      or not re.search(r'(?:^|\s)"?-c"?\s+"?unix_socket_directories="?(?:\s|$)', options)):
+                  raise RuntimeError('PostgreSQL owned runtime channel attestation failed')
+
+
           def pg_authority(config):
               """Authored native controls, executed by the actual guarded parent probe, never locally."""
               port, timeout = config['pg_port'], config['timeout']
@@ -743,7 +754,7 @@ jobs:
                   "FROM pg_roles r WHERE rolname = current_user")
               if sql(predicate) != [['t']]:
                   raise RuntimeError('PostgreSQL role attributes/membership differ from least authority')
-              if sql('SHOW listen_addresses') != [['127.0.0.1']] or sql('SHOW unix_socket_directories') != [['']]:
+              if sql('SHOW listen_addresses') != [['127.0.0.1']]:
                   raise RuntimeError('PostgreSQL alternate channel was enabled')
               name = 'ws03_migration_' + secrets.token_hex(8)
               if sql('BEGIN; CREATE SCHEMA ' + name + '; CREATE TABLE ' + name + '.t(id integer); '
@@ -794,6 +805,47 @@ jobs:
                       + packet[12:end] + answer), '.'.join(labels)
 
 
+          def fixture_sockaddr(family, address, port):
+              return socket.getaddrinfo(address, port, family, socket.SOCK_DGRAM,
+                                        0, socket.AI_NUMERICHOST | socket.AI_NUMERICSERV)[0][4]
+
+
+          def mac_fixture_addresses(listing):
+              candidates = {socket.AF_INET: [], socket.AF_INET6: []}
+              usable = False
+              interface = None
+              for line in listing.splitlines():
+                  if line and not line[0].isspace():
+                      interface = line.split(':', 1)[0]
+                      flags = set(line.partition('<')[2].partition('>')[0].split(','))
+                      usable = 'UP' in flags and 'LOOPBACK' not in flags
+                  fields = line.split()
+                  if not usable or len(fields) < 2 or fields[0] not in ('inet', 'inet6'):
+                      continue
+                  address = fields[1]
+                  ip = ipaddress.ip_address(address.split('%')[0])
+                  if ip.is_loopback or ip.is_unspecified or ip.is_multicast or {'tentative', 'duplicated'} & set(fields):
+                      continue
+                  if ip.version == 6 and ip.is_link_local and '%' not in address:
+                      address += '%' + interface
+                  candidates[socket.AF_INET if ip.version == 4 else socket.AF_INET6].append(address)
+              selected, failures = [], []
+              for family in (socket.AF_INET, socket.AF_INET6):
+                  for address in candidates[family]:
+                      try:
+                          for kind in (socket.SOCK_STREAM, socket.SOCK_DGRAM):
+                              with socket.socket(family, kind) as sock:
+                                  sock.bind(fixture_sockaddr(family, address, 0))
+                      except OSError as error:
+                          failures.append({'family': family, 'address': address, 'errno': error.errno, 'error': str(error)[:512]})
+                      else:
+                          selected.append(address)
+                          break
+                  else:
+                      raise RuntimeError('No bindable nonloopback fixture address: ' + json.dumps({'family': family, 'selected': selected, 'rejected': failures})[:4096])
+              return selected, failures
+
+
           def serve(config_path):
               config = json.loads(Path(config_path).read_text())
               if sys.platform == 'linux':
@@ -826,35 +878,39 @@ jobs:
                           except socket.timeout:
                               continue
                   except BaseException as error:
-                      errors.append(type(error).__name__)
+                      errors.append(type(error).__name__ + ': ' + str(error)[:512])
                       stop.set()
-              endpoints = []
-              for family, address in ((socket.AF_INET, config['ipv4']), (socket.AF_INET6, config['ipv6']),
-                                      (socket.AF_INET, '127.0.0.1'), (socket.AF_INET6, '::1')):
-                  for protocol in ('tcp', 'udp'):
-                      sock = socket.socket(family, socket.SOCK_STREAM if protocol == 'tcp' else socket.SOCK_DGRAM)
-                      sock.settimeout(config['timeout'])
-                      sock.bind((address, 0))
-                      if protocol == 'tcp':
-                          sock.listen()
-                      sockets.append(sock)
-                      endpoints.append({'family': family, 'address': address, 'port': sock.getsockname()[1],
-                                        'protocol': protocol, 'loopback': ipaddress.ip_address(address.split('%')[0]).is_loopback})
-                      threads.append(threading.Thread(target=worker, args=(sock, protocol)))
-              dns = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-              dns.settimeout(config['timeout'])
-              dns.bind((config['ipv4'], config['dns_port']))
-              sockets.append(dns)
-              threads.append(threading.Thread(target=worker, args=(dns, 'dns')))
-              config['dns_port'] = dns.getsockname()[1]
-              config['endpoints'] = endpoints
-              for thread in threads:
-                  thread.start()
-              ready = Path(config['ready'])
-              temporary = ready.with_suffix('.new')
-              temporary.write_text(json.dumps(config))
-              temporary.replace(ready)
               try:
+                  endpoints = []
+                  for family, address in ((socket.AF_INET, config['ipv4']), (socket.AF_INET6, config['ipv6']),
+                                          (socket.AF_INET, '127.0.0.1'), (socket.AF_INET6, '::1')):
+                      for protocol in ('tcp', 'udp'):
+                          sock = socket.socket(family, socket.SOCK_STREAM if protocol == 'tcp' else socket.SOCK_DGRAM)
+                          sock.settimeout(config['timeout'])
+                          sockets.append(sock)
+                          try:
+                              sock.bind(fixture_sockaddr(family, address, 0))
+                          except OSError as error:
+                              raise RuntimeError('Fixture bind failed: ' + json.dumps({'family': family, 'address': address,
+                                  'protocol': protocol, 'errno': error.errno, 'error': str(error)[:512]})) from error
+                          if protocol == 'tcp':
+                              sock.listen()
+                          endpoints.append({'family': family, 'address': address, 'port': sock.getsockname()[1],
+                                            'protocol': protocol, 'loopback': ipaddress.ip_address(address.split('%')[0]).is_loopback})
+                          threads.append(threading.Thread(target=worker, args=(sock, protocol)))
+                  dns = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                  dns.settimeout(config['timeout'])
+                  sockets.append(dns)
+                  dns.bind(fixture_sockaddr(socket.AF_INET, config['ipv4'], config['dns_port']))
+                  threads.append(threading.Thread(target=worker, args=(dns, 'dns')))
+                  config['dns_port'] = dns.getsockname()[1]
+                  config['endpoints'] = endpoints
+                  for thread in threads:
+                      thread.start()
+                  ready = Path(config['ready'])
+                  temporary = ready.with_suffix('.new')
+                  temporary.write_text(json.dumps(config))
+                  temporary.replace(ready)
                   deadline = time.monotonic() + config['lifetime']
                   while not stop.wait(min(config['timeout'], max(0, deadline - time.monotonic()))):
                       if Path(config['stop']).exists() or time.monotonic() >= deadline:
@@ -862,7 +918,8 @@ jobs:
               finally:
                   stop.set()
                   for thread in threads:
-                      thread.join(config['timeout'] + 1)
+                      if thread.ident is not None:
+                          thread.join(config['timeout'] + 1)
                   for sock in sockets:
                       sock.close()
               if errors or any(thread.is_alive() for thread in threads):
@@ -920,7 +977,7 @@ jobs:
                       conn.settimeout(config['timeout'])
                       try:
                           if endpoint['protocol'] == 'tcp':
-                              conn.connect((endpoint['address'], endpoint['port']))
+                              conn.connect(fixture_sockaddr(endpoint['family'], endpoint['address'], endpoint['port']))
                               data = b''
                               while len(data) < len(config['canary']):
                                   part = conn.recv(len(config['canary']) - len(data))
@@ -928,7 +985,7 @@ jobs:
                                       break
                                   data += part
                           else:
-                              conn.sendto(config['canary'].encode(), (endpoint['address'], endpoint['port']))
+                              conn.sendto(config['canary'].encode(), fixture_sockaddr(endpoint['family'], endpoint['address'], endpoint['port']))
                               data, peer = conn.recvfrom(4096)
                               if peer[1] != endpoint['port']:
                                   raise RuntimeError('Fixture response from wrong port')
@@ -1109,10 +1166,9 @@ jobs:
                   else:
                       # Existing native interface addresses; no adapter/global firewall mutation.
                       listing = subprocess.check_output(['ifconfig'], text=True, timeout=timeout)
-                      ipv4 = re.findall(r'\binet (\S+)', listing)
-                      ipv6 = re.findall(r'\binet6 (\S+)', listing)
-                      fixture['ipv4'] = next(x for x in ipv4 if not ipaddress.ip_address(x).is_loopback)
-                      fixture['ipv6'] = next(x for x in ipv6 if not ipaddress.ip_address(x.split('%')[0]).is_loopback)
+                      addresses, failures = mac_fixture_addresses(listing)
+                      fixture['ipv4'], fixture['ipv6'] = addresses
+                      (self.root / 'fixture-addresses.json').write_text(json.dumps({'selected': addresses, 'rejected': failures}))
                       fixture['dns_port'] = 0
                       self.fixture_prefix = []
                       self.seatbelt = shutil.which('sandbox-exec')
@@ -1192,12 +1248,15 @@ jobs:
                       (self.root / 'stop').touch()
                       try:
                           code = self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
+                      except subprocess.TimeoutExpired:
+                          try:
+                              self.kill_session(self.fixture.pid)
+                              self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
+                          except BaseException as error:
+                              failures.append('Fixture drain: ' + str(error))
+                      else:
                           if code:
-                              raise RuntimeError('Fixture cleanup exit ' + str(code))
-                      except BaseException as error:
-                          failures.append(str(error))
-                          self.kill_session(self.fixture.pid)
-                          self.fixture.wait(timeout=self.config.seconds('CLEANUP'))
+                              failures.append('Fixture cleanup exit ' + str(code))
                   if self.resolver:
                       try:
                           compare, remove = trusted_system('/usr/bin/cmp'), trusted_system('/bin/rm')
@@ -1264,9 +1323,113 @@ jobs:
                       raise AssertionError('Unrelated PostgreSQL failure accepted')
 
 
+          def repair_selftest(lane):
+              from pathlib import PureWindowsPath
+              from unittest.mock import MagicMock, Mock, patch
+              # The host path class must never interpret the admitted macOS constants.
+              with patch.dict(globals(), Path=PureWindowsPath):
+                  Config(lane)
+              for key in ('MC_WS03_CI_SEATBELT_LIBRARY', 'MC_WS03_CI_MACOS_RESOLVER_DIRECTORY'):
+                  with patch.dict(os.environ, {key: 'C:\\unadmitted'}):
+                      try:
+                          Config(lane)
+                      except ValueError as error:
+                          assert str(error).startswith(key + ': this adapter requires')
+                      else:
+                          raise AssertionError('Unadmitted POSIX interface accepted')
+              pid = '123\n/owned/data\n1234\n5432\n\n127.0.0.1\n123\nready   \n'
+              options = '"/owned/postgres" "-D" "/owned/data" "-c" "unix_socket_directories="\n'
+              attest_pg_service(pid, options, 5432)
+              for bad_pid, bad_options in [(pid.replace('123\n', '-123\n', 1), options),
+                      (pid.replace('5432', '5433'), options), (pid.replace('\n\n127.', '\n/tmp\n127.'), options),
+                      (pid.replace('127.0.0.1', '*'), options), (pid.replace('ready', 'starting'), options),
+                      (pid, options.replace('unix_socket_directories=', 'unix_socket_directories=/tmp')),
+                      (pid, ''), ('', options)]:
+                  try:
+                      attest_pg_service(bad_pid, bad_options, 5432)
+                  except RuntimeError as error:
+                      assert str(error) == 'PostgreSQL owned runtime channel attestation failed'
+                  else:
+                      raise AssertionError('Unsafe runtime channel accepted')
+              with patch.object(socket, 'getaddrinfo', return_value=[(0, 0, 0, '', ('fe80::1', 9, 0, 7))]) as resolve:
+                  assert fixture_sockaddr(socket.AF_INET6, 'fe80::1%en7', 9) == ('fe80::1', 9, 0, 7)
+                  assert resolve.call_args.args[-1] == socket.AI_NUMERICHOST | socket.AI_NUMERICSERV
+              for family, address, result in [(socket.AF_INET, '127.0.0.1', ('127.0.0.1', 9)),
+                      (socket.AF_INET6, '::1', ('::1', 9, 0, 0)),
+                      (socket.AF_INET6, '2001:db8::1', ('2001:db8::1', 9, 0, 0))]:
+                  with patch.object(socket, 'getaddrinfo', return_value=[(0, 0, 0, '', result)]):
+                      assert fixture_sockaddr(family, address, 9) == result
+              listing = ('lo0: flags=1<UP,LOOPBACK>\n inet 127.0.0.1\n inet6 fe80::1%lo0\n'
+                  'en7: flags=1<UP,RUNNING>\n inet 192.0.2.1\n inet6 fe80::2 tentative\n'
+                  ' inet6 fe80::3\n')
+              sock = Mock()
+              sock.__enter__ = Mock(return_value=sock)
+              sock.__exit__ = Mock(return_value=False)
+              with patch.object(socket, 'socket', return_value=sock), patch.dict(globals(), fixture_sockaddr=lambda f, a, p: (a, p)):
+                  addresses, rejected = mac_fixture_addresses(listing)
+                  assert addresses == ['192.0.2.1', 'fe80::3%en7'] and rejected == []
+                  sock.bind.side_effect = OSError(49, 'cannot assign address')
+                  try:
+                      mac_fixture_addresses(listing)
+                  except RuntimeError as error:
+                      assert '192.0.2.1' in str(error) and '49' in str(error)
+                  else:
+                      raise AssertionError('Failed bind accepted as a reachable fixture')
+              # Startup failure must close even the socket whose bind failed.
+              first, second = Mock(), Mock()
+              first.getsockname.return_value = ('192.0.2.1', 12345)
+              second.bind.side_effect = OSError(49, 'cannot assign address')
+              fake_path = Mock()
+              fake_path.read_text.return_value = json.dumps({'ipv4': '192.0.2.1', 'ipv6': 'fe80::3%en7', 'timeout': 1})
+              with patch.dict(globals(), Path=Mock(return_value=fake_path), fixture_sockaddr=lambda f, a, p: (a, p)), \
+                      patch.object(sys, 'platform', 'darwin'), patch.object(socket, 'socket', side_effect=[first, second]):
+                  try:
+                      serve('synthetic-config')
+                  except RuntimeError as error:
+                      assert 'Fixture bind failed:' in str(error) and '192.0.2.1' in str(error) and 'udp' in str(error) and '49' in str(error)
+                  else:
+                      raise AssertionError('Bind failure was hidden')
+              first.close.assert_called_once()
+              second.close.assert_called_once()
+              # An already-exited child is recorded, never sent a signal through a stale PID.
+              guard = PosixGuard(MagicMock(), Mock())
+              guard.fixture = Mock()
+              guard.fixture.wait.return_value = 1
+              guard.kill_session = Mock(side_effect=AssertionError('Exited fixture signalled'))
+              try:
+                  guard.cleanup()
+              except RuntimeError as error:
+                  assert 'Fixture cleanup exit 1' in str(error)
+              else:
+                  raise AssertionError('Fixture failure lost')
+              # Initialization errors retain bounded evidence before any copied root or service exists.
+              repo, temp, evidence, root = [MagicMock() for _ in range(4)]
+              temp.__truediv__.return_value = root
+              root.exists.return_value = False
+              evidence.iterdir.return_value = []
+              failure_file = evidence.__truediv__.return_value
+              with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true', 'RUNNER_ENVIRONMENT': 'github-hosted',
+                      'GITHUB_WORKSPACE': 'repo', 'RUNNER_TEMP': 'temp', 'WS03_CI_EVIDENCE': 'evidence'}), \
+                      patch.dict(globals(), Path=Mock(side_effect=[repo, evidence, temp]),
+                          Config=Mock(side_effect=ValueError('x' * 5000))):
+                  try:
+                      run_ci()
+                  except ValueError:
+                      pass
+                  else:
+                      raise AssertionError('Initialization failure hidden')
+              writes = [call.args[0] for call in failure_file.write_text.call_args_list]
+              failure = json.loads(writes[0])
+              assert failure == {'type': 'ValueError', 'reason': 'x' * 4096}
+              assert json.loads(writes[-1]) == {}
+              root.mkdir.assert_not_called()
+              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence')
+
+
           def self_test(lane):
               Config(lane)
               pg_policy_selftest()
+              repair_selftest(lane)
               positive = [{'name': 'fixture', 'loopback': False, 'reachable': True, 'error': None},
                           {'name': 'loopback', 'loopback': True, 'reachable': True, 'error': None}]
               negative = [dict(positive[0], reachable=False, error='policy'), positive[1]]
@@ -1481,15 +1644,15 @@ jobs:
               if os.environ.get('GITHUB_ACTIONS') != 'true' or os.environ.get('RUNNER_ENVIRONMENT') != 'github-hosted':
                   raise RuntimeError('Native probes require the admitted standard GitHub-hosted job')
               repo = Path(os.environ['GITHUB_WORKSPACE'])
-              config = Config(repo / 'ws03-runner-sandbox-acquisition')
-              root = Path(os.environ['RUNNER_TEMP']) / ('ws03-' + secrets.token_hex(8))
-              root.mkdir()
               evidence = Path(os.environ['WS03_CI_EVIDENCE'])
               evidence.mkdir()
+              root = Path(os.environ['RUNNER_TEMP']) / ('ws03-' + secrets.token_hex(8))
               try:
+                  config = Config(repo / 'ws03-runner-sandbox-acquisition')
+                  root.mkdir()
                   run_ci_owned(repo, config, root, evidence)
               except BaseException as error:
-                  (evidence / 'failure.json').write_text(json.dumps({'type': type(error).__name__, 'reason': str(error)}))
+                  (evidence / 'failure.json').write_text(json.dumps({'type': type(error).__name__, 'reason': str(error)[:4096]}))
                   raise
               finally:
                   # Early build/acquisition failure starts no native guard/service. Once services
@@ -1649,8 +1812,9 @@ jobs:
                           checked([pg_tools['pg_ctl'], '-D', native_pg, '-l', root / 'postgres.log', '-o',
                                    '-h 127.0.0.1 -p ' + str(pg_port) + ' -c unix_socket_directories=', '-w', 'start'], timeout=config.seconds('SETUP'))
                   (root / 'fixture.json').write_text(json.dumps(fixture))
-                  guard.fixture = subprocess.Popen(guard.fixture_prefix + [str(python), '-I', str(helper), 'serve', str(root / 'fixture.json')],
-                                                   start_new_session=os.name != 'nt')
+                  with (evidence / 'fixture.log').open('w') as fixture_log:
+                      guard.fixture = subprocess.Popen(guard.fixture_prefix + [str(python), '-I', str(helper), 'serve', str(root / 'fixture.json')],
+                          stdout=fixture_log, stderr=subprocess.STDOUT, start_new_session=os.name != 'nt')
                   wait_file(root / 'ready.json', guard.fixture, config.seconds('SETUP'))
                   fixture = json.loads((root / 'ready.json').read_text())
                   guard.resolver_setup(fixture)
@@ -1658,6 +1822,15 @@ jobs:
                       actual_hba = (subprocess.check_output(['docker', 'exec', guard.container, 'cat',
                           '/tmp/ws03-postgres-data/pg_hba.conf'], text=True, timeout=config.seconds('PROBE'))
                           if sys.platform == 'linux' else (native_pg / 'pg_hba.conf').read_text())
+                      if sys.platform == 'linux':
+                          control = ['docker', 'exec', guard.container, 'cat']
+                          pid_text = subprocess.check_output(control + ['/tmp/ws03-postgres-data/postmaster.pid'], text=True, timeout=config.seconds('PROBE'))
+                          options = subprocess.check_output(control + ['/tmp/ws03-postgres-data/postmaster.opts'], text=True, timeout=config.seconds('PROBE'))
+                      else:
+                          pid_text = (native_pg / 'postmaster.pid').read_text()
+                          options = (native_pg / 'postmaster.opts').read_text()
+                      attest_pg_service(pid_text, options, pg_port)
+                      (evidence / 'postgres-channel.json').write_text(json.dumps({'runtime': pid_text.splitlines(), 'options': options}))
                       if actual_hba != PG_HBA:
                           raise RuntimeError('PostgreSQL HBA changed from exact allow/reject policy')
                       if helper.read_bytes() != Path(__file__).read_bytes():
@@ -1732,7 +1905,7 @@ jobs:
                   for path in (root / 'output').iterdir():
                       if path.is_file():
                           shutil.copy2(path, evidence / path.name)
-                  for name in ('ready.json', 'dns.log', 'seatbelt.sb', 'postgres.log'):
+                  for name in ('ready.json', 'dns.log', 'seatbelt.sb', 'postgres.log', 'fixture-addresses.json'):
                       path = root / name
                       if path.is_file():
                           shutil.copy2(path, evidence / name)
