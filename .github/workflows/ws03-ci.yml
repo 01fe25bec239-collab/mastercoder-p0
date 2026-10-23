@@ -1146,7 +1146,9 @@ jobs:
 
           def safe_env(root):
               # No inherited GitHub credentials, provider secrets, proxy or host key variables.
-              allowed = ('PATH', 'SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT', 'NUMBER_OF_PROCESSORS')
+              # ProgramData/ProgramFiles* are non-secret and vswhere cannot find Visual Studio instances without them.
+              allowed = ('PATH', 'SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT', 'NUMBER_OF_PROCESSORS',
+                         'ProgramData', 'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432')
               env = {key: os.environ[key] for key in allowed if key in os.environ}
               env.update({'HOME': str(root / 'home'), 'USERPROFILE': str(root / 'home'),
                           'TEMP': str(root / 'temp'), 'TMP': str(root / 'temp'),
@@ -1572,7 +1574,7 @@ jobs:
                   return self.native(['/sbin/pfctl', *args], **kwargs)
 
               def setup(self, fixture):
-                  import uuid
+                  import plistlib, uuid
                   super().setup(fixture)
                   self.seatbelt = trusted_system('/usr/bin/sandbox-exec')
                   # Random names and an unused numeric pair are checked before the first record creation.
@@ -1609,6 +1611,24 @@ jobs:
                       if not re.fullmatch(r'PrimaryGroupID: [1-9][0-9]*', value):
                           raise RuntimeError('Universal native group is absent or malformed')
                       self.allowed_groups.add(int(value.split()[-1]))
+                  # macOS nests everyone/localaccounts inside groups such as com.apple.access_ssh, _developer and
+                  # com.apple.sharepoint.group.1, so every local account inherits them. Allow exactly the
+                  # transitive closure of groups nested under those two; admin/staff are never allowed.
+                  records = plistlib.loads(self.native(['/usr/bin/dscl', '-plist', '.', '-readall', '/Groups', 'RecordName',
+                                           'GeneratedUID', 'NestedGroups', 'PrimaryGroupID']).stdout.encode())
+                  groups = [(r['dsAttrTypeStandard:RecordName'][0], r['dsAttrTypeStandard:GeneratedUID'][0],
+                             r.get('dsAttrTypeStandard:NestedGroups', []), int(r['dsAttrTypeStandard:PrimaryGroupID'][0]))
+                            for r in records if all('dsAttrTypeStandard:' + k in r for k in ('RecordName', 'GeneratedUID', 'PrimaryGroupID'))]
+                  universal = {guid for name, guid, _, _ in groups if name in ('everyone', 'localaccounts')}
+                  grew = True
+                  while grew:
+                      grew = False
+                      for name, guid, nested, gid in groups:
+                          if guid not in universal and universal.intersection(nested):
+                              universal.add(guid)
+                              if name not in ('admin', 'staff'):
+                                  self.allowed_groups.add(gid)
+                              grew = True
                   self.attest_account()
                   self.identity_ready = True
                   fixture.update(mac_uid=self.uid, mac_gid=self.gid, mac_groups=sorted(self.actual_groups))
