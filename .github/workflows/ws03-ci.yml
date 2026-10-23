@@ -269,7 +269,7 @@ jobs:
                   for entry in (path, *path.parents):
                       stat = entry.stat(follow_symlinks=False)
                       if entry.is_symlink() or stat.st_file_attributes & REPARSE_POINT:
-                          raise ValueError("reparse point forbidden in copied path")
+                          raise ValueError("reparse point forbidden in copied path: " + str(entry))
 
               def _utility(self, executable, args):
                   subprocess.run([str(self.system / executable), *args], check=True,
@@ -2580,7 +2580,16 @@ jobs:
                       provenance['mac_account'] = {'name': guard.account, 'uid': guard.uid, 'gid': guard.gid, 'guid': guard.guid, 'group_guid': guard.group_guid}
                       for executable in [*guard.native_tools, *[Path(trusted_system(path)) for path in (
                               '/sbin/pfctl', '/usr/bin/dscl', '/usr/bin/sudo', '/usr/bin/env', '/usr/bin/pkill', '/usr/bin/pgrep')]]:
-                          provenance['tools'][str(executable)] = {'sha256': hashlib.sha256(executable.read_bytes()).hexdigest()}
+                          try:
+                              provenance['tools'][str(executable)] = {'sha256': hashlib.sha256(executable.read_bytes()).hexdigest()}
+                          except PermissionError:
+                              # setuid /usr/bin/sudo is mode 4111 (execute-only) so unprivileged bytes cannot be read;
+                              # record its Apple code-signature CDHash plus stat instead of a file digest.
+                              sign = subprocess.run(['/usr/bin/codesign', '-dvvv', str(executable)], capture_output=True, text=True, timeout=config.seconds('PROBE'))
+                              cdhash = re.search(r'^CDHash=([0-9a-f]{40,})$', sign.stderr, re.M)
+                              if sign.returncode or not cdhash:
+                                  raise
+                              provenance['tools'][str(executable)] = {'cdhash': cdhash.group(1), 'size': executable.stat().st_size, 'mode': oct(executable.stat().st_mode)}
                       provenance['mac_scope'] = 'Hosted CI TCP/UDP only; F3/VM/P0 ownership remains OPEN'
                   guard.resolver_setup(fixture)
                   def execute(mode, phase, guarded):
