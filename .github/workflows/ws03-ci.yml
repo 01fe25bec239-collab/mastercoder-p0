@@ -2519,6 +2519,15 @@ jobs:
                       cache = root / 'home/AppData/Local/Microsoft/Windows/INetCache'
                       if cache.exists():
                           subprocess.run(['cmd', '/c', 'rmdir', '/s', '/q', str(cache)], check=True, timeout=config.seconds('PROBE'))
+                      # Cargo hard-links uplifted artifacts (target/debug/x.exe <-> deps/x-hash.exe). Every link name lives in this
+                      # freshly built target dir, so split them into independent copies; the guard's hard-link refusal stays intact.
+                      for directory, _, files in os.walk(lane / 'target', followlinks=False):
+                          for name in files:
+                              path = Path(directory) / name
+                              if not path.is_symlink() and path.stat().st_nlink > 1:
+                                  split = path.with_name(path.name + '.ws03-split')
+                                  shutil.copy2(path, split)
+                                  os.replace(split, path)
                   guard.setup(fixture)
                   if sys.platform == 'linux':
                       provenance['namespace'] = subprocess.check_output(guard.prefix + ['readlink', '/proc/self/ns/net'], text=True).strip()
