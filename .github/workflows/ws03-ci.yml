@@ -1163,7 +1163,7 @@ jobs:
               path = PureWindowsPath(value)
               if (not path.is_absolute() or '..' in path.parts or any(c in value for c in '"&|<>^%\r\n!')
                       or not any(path.is_relative_to(PureWindowsPath(root)) for root in roots)):
-                  raise ValueError('Native toolkit path is outside installed roots')
+                  raise ValueError('Native toolkit path is outside installed roots: ' + value)
               native = Path(str(path))
               if not native.exists() or native.is_symlink() or native.resolve() != native:
                   raise ValueError('Native toolkit path is absent or redirected')
@@ -1191,7 +1191,8 @@ jobs:
               sdk_roots = [str(PureWindowsPath(root) / 'Windows Kits') for root in program_files]
               vc = windows_tool_path(entries['VCTOOLSINSTALLDIR'], [vs])
               sdk = windows_tool_path(entries['WINDOWSSDKDIR'], sdk_roots)
-              roots = [vs, sdk, str(PureWindowsPath(system_root) / 'Microsoft.NET')]
+              # LIB/INCLUDE also list Windows Kits siblings of the SDK dir, e.g. NETFXSDK.
+              roots = [vs, *sdk_roots, str(PureWindowsPath(system_root) / 'Microsoft.NET')]
               result = {}
               for key in ('LIB', 'INCLUDE', 'LIBPATH'):
                   parts = entries[key].rstrip(';').split(';')
@@ -1495,7 +1496,7 @@ jobs:
           def mac_pf_attachment(main, nested, interfaces):
               # Accept only the standard empty dynamic facility, not an assumed ordering around other filters.
               if main.strip() != 'anchor "com.apple/*" all' or nested.strip() or not interfaces.strip() or re.search(r'\bskip\b', interfaces):
-                  raise RuntimeError('PF default anchor is absent, conflicting or skipped')
+                  raise RuntimeError('PF default anchor is absent, conflicting or skipped: ' + repr((main, nested, interfaces))[:2000])
 
 
           def attest_mac_identity(config):
