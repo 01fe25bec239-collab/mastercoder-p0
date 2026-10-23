@@ -612,14 +612,16 @@ jobs:
               return 'postgresql://' + PG_ROLE + '@127.0.0.1:' + str(port) + '/' + PG_DATABASE
 
 
-          def bootstrap_pg(tools, data, timeout):
+          def bootstrap_pg(tools, data, timeout, log):
               # Offline single-user mode has no socket/listener and takes SQL only on owned stdin.
               checked([tools['initdb'], '-D', data, '-U', 'postgres', '-A', 'reject'], timeout=timeout)
               (data / 'pg_hba.conf').write_text(PG_HBA)
-              result = checked([tools['postgres'], '--single', '-D', data, '-c', 'exit_on_error=on', 'postgres'],
-                               input=PG_BOOTSTRAP, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
-              if re.search(r'\b(ERROR|FATAL|PANIC):', result.stdout):
-                  raise RuntimeError('Offline PostgreSQL bootstrap failed')
+              result = subprocess.run([str(x) for x in (tools['postgres'], '--single', '-D', data, '-c', 'exit_on_error=on', 'postgres')],
+                                      input=PG_BOOTSTRAP, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+              # Bounded native output survives a failed exit; fixed SQL/HBA carry no credentials and no env is recorded.
+              log.write_text(result.stdout[-65536:])
+              if result.returncode or re.search(r'\b(ERROR|FATAL|PANIC):', result.stdout):
+                  raise RuntimeError('Offline PostgreSQL bootstrap failed (exit ' + str(result.returncode) + '): ' + result.stdout[-1024:])
 
 
           def linux_pg_command(image, port):
@@ -1493,15 +1495,23 @@ jobs:
                       f'block drop quick proto {{ tcp, udp }} all user = {uid}\n')
 
 
-          def mac_pf_attachment(main, nested, interfaces):
-              # Accept only the standard empty dynamic facility, not an assumed ordering around other filters.
-              # macOS ships a default scrub-anchor beside it and prints empty 'anchor "*" all { }' wrappers for nested rules.
+          def mac_pf_parent(main, listing):
+              # Stock /etc/pf.conf prints a scrub-anchor beside the filter anchor. Stock /etc/pf.anchors/com.apple holds only
+              # wildcard child references (200.AirDrop/*, 250.ApplicationFirewall/*); main's 'com.apple/*' wildcard evaluates
+              # child rulesets, never these own rules, and every child's rules are bound separately. Any filter rule fails.
               rules = [line.strip() for line in main.splitlines() if line.strip()]
               rules = [line for line in rules if line != 'scrub-anchor "com.apple/*" all fragment reassemble']
+              own = [line.strip() for line in listing.splitlines() if line.strip()]
+              return rules == ['anchor "com.apple/*" all'] and all(re.fullmatch(r'anchor "[0-9A-Za-z._-]+/\*" all', line) for line in own)
+
+
+          def mac_pf_attachment(main, nested, interfaces, listing):
+              # Accept only the standard empty dynamic facility, not an assumed ordering around other filters.
+              # macOS prints empty 'anchor "*" all { }' wrappers for nested rules.
               wrappers = {'anchor "*" all {', '}'}
-              if (rules != ['anchor "com.apple/*" all'] or not wrappers.issuperset(line.strip() for line in nested.splitlines() if line.strip())
+              if (not mac_pf_parent(main, listing) or not wrappers.issuperset(line.strip() for line in nested.splitlines() if line.strip())
                       or not interfaces.strip() or re.search(r'\bskip\b', interfaces)):
-                  raise RuntimeError('PF default anchor is absent, conflicting or skipped: ' + repr((main, nested, interfaces))[:2000])
+                  raise RuntimeError('PF default anchor is absent, conflicting or skipped: ' + repr((main, listing, nested, interfaces))[:2000])
 
 
           def attest_mac_identity(config):
@@ -1654,7 +1664,7 @@ jobs:
                   if self.pf('-a', self.anchor, '-sr').stdout.strip():
                       raise RuntimeError('Owned PF anchor collision')
                   mac_pf_attachment(self.pf('-sr').stdout, self.pf('-a', 'com.apple/*', '-sr').stdout,
-                                    self.pf('-v', '-s', 'Interfaces').stdout)
+                                    self.pf('-v', '-s', 'Interfaces').stdout, self.pf('-a', 'com.apple', '-sr').stdout)
                   result = self.pf('-E')
                   tokens = re.findall(r'^Token\s*:\s*([0-9]+)\s*$', result.stdout + result.stderr, re.MULTILINE)
                   if len(tokens) != 1:
@@ -1746,9 +1756,9 @@ jobs:
                   # A quick rule in our child terminates the main evaluation. Reject every other active filter.
                   main = self.pf('-sr').stdout
                   listing = self.pf('-a', 'com.apple', '-sr').stdout
-                  if (main.strip() != 'anchor "com.apple/*" all' or listing.strip()
-                          or self.pf('-a', 'com.apple/*', '-sr').stdout != self.tree_expected):
-                      raise RuntimeError('PF parent attachment changed')
+                  tree = self.pf('-a', 'com.apple/*', '-sr').stdout
+                  if not mac_pf_parent(main, listing) or tree != self.tree_expected:
+                      raise RuntimeError('PF parent attachment changed: ' + repr((main, listing, tree))[:2000])
                   if re.search(r'\bskip\b', self.pf('-v', '-s', 'Interfaces').stdout):
                       raise RuntimeError('PF interface filtering was skipped')
                   if 'Status: Enabled' not in self.pf('-s', 'info').stdout:
@@ -1863,12 +1873,19 @@ jobs:
                       assert str(error) == 'Invalid exclusive CI UID'
                   else:
                       raise AssertionError('Invalid PF UID accepted')
-              mac_pf_attachment('anchor "com.apple/*" all\n', '', 'lo0\nen0\n')
-              for main, child, interfaces in [('', '', 'lo0'), ('pass all', '', 'lo0'),
-                      ('anchor "com.apple/*" all', 'pass all', 'lo0'),
-                      ('anchor "com.apple/*" all', '', ''), ('anchor "com.apple/*" all', '', 'lo0 (skip)')]:
+              mac_pf_attachment('anchor "com.apple/*" all\n', '', 'lo0\nen0\n', '')
+              # Stock pfctl output for /etc/pf.conf and /etc/pf.anchors/com.apple.
+              stock_main = 'scrub-anchor "com.apple/*" all fragment reassemble\nanchor "com.apple/*" all\n'
+              stock_listing = 'anchor "200.AirDrop/*" all\nanchor "250.ApplicationFirewall/*" all\n'
+              mac_pf_attachment(stock_main, 'anchor "*" all {\n}\n', 'lo0\nen0\n', stock_listing)
+              for main, child, interfaces, listing in [('', '', 'lo0', ''), ('pass all', '', 'lo0', ''),
+                      ('anchor "com.apple/*" all', 'pass all', 'lo0', ''),
+                      ('anchor "com.apple/*" all', '', '', ''), ('anchor "com.apple/*" all', '', 'lo0 (skip)', ''),
+                      (stock_main + 'pass all\n', '', 'lo0', stock_listing), (stock_main, '', 'lo0', 'pass all'),
+                      (stock_main, '', 'lo0', 'anchor "200.AirDrop" all'), (stock_main, '', 'lo0', 'anchor "x/*" all user = 1001'),
+                      ('scrub-anchor "com.apple/*" all fragment reassemble\n', '', 'lo0', '')]:
                   try:
-                      mac_pf_attachment(main, child, interfaces)
+                      mac_pf_attachment(main, child, interfaces, listing)
                   except RuntimeError as error:
                       assert 'absent, conflicting or skipped' in str(error)
                   else:
@@ -1924,6 +1941,28 @@ jobs:
               else:
                   raise AssertionError('PF parser error ignored')
               assert guard.pf.call_count == 1
+              # Post-install attestation must accept the same stock parent install() admitted and reject real changes.
+              guard.loaded, guard.pf_expected, guard.tree_expected = True, normalized, 'anchor "*" all {\n  rules\n}\n'
+              stock = {('-a', guard.anchor, '-sr'): normalized, ('-sr',): stock_main, ('-a', 'com.apple', '-sr'): stock_listing,
+                       ('-a', 'com.apple/*', '-sr'): guard.tree_expected, ('-v', '-s', 'Interfaces'): 'lo0\nen0\n',
+                       ('-s', 'info'): 'Status: Enabled for 0 days\n', ('-a', guard.anchor, '-v', '-s', 'rules'): normalized}
+              def fake_pf(state):
+                  return lambda *args, **kwargs: Mock(stdout=state[args])
+              guard.pf = fake_pf(stock)
+              MacCI.attest_policy(guard)
+              for key, value, message in [(('-sr',), stock_main + 'pass all\n', 'PF parent attachment changed'),
+                      (('-a', 'com.apple', '-sr'), 'pass all\n', 'PF parent attachment changed'),
+                      (('-a', 'com.apple/*', '-sr'), 'anchor "*" all {\n}\n', 'PF parent attachment changed'),
+                      (('-a', guard.anchor, '-sr'), 'rule-0\n', 'Owned PF policy changed'),
+                      (('-v', '-s', 'Interfaces'), 'lo0 (skip)\n', 'interface filtering was skipped'),
+                      (('-s', 'info'), 'Status: Disabled\n', 'PF was disabled')]:
+                  guard.pf = fake_pf({**stock, key: value})
+                  try:
+                      MacCI.attest_policy(guard)
+                  except RuntimeError as error:
+                      assert message in str(error)
+                  else:
+                      raise AssertionError('PF attestation accepted a changed parent/owned/skip/disabled state')
               guard.pf = Mock(side_effect=[Mock(stdout=''), Mock(stdout='')])
               guard.mutation()
               assert not guard.loaded and guard.pf.call_args_list[0].kwargs == {'input': ''}
@@ -2002,6 +2041,26 @@ jobs:
                       assert type(error) is RuntimeError
                   else:
                       raise AssertionError('Unrelated PostgreSQL failure accepted')
+              # Offline bootstrap retains bounded native output before failing; synthetic text, no host PostgreSQL.
+              from unittest.mock import MagicMock, Mock, patch
+              tools = {'initdb': 'synthetic-initdb', 'postgres': 'synthetic-postgres'}
+              for code, output, failed in [(0, 'backend> ', False), (1, 'synthetic native refusal\n', True),
+                                           (0, 'ERROR:  synthetic\n', True), (1, 'x' * 70000 + 'tail', True)]:
+                  data, log, initdb = MagicMock(), Mock(), Mock()
+                  with patch.dict(globals(), checked=initdb), \
+                          patch.object(subprocess, 'run', return_value=Mock(returncode=code, stdout=output)) as run:
+                      try:
+                          bootstrap_pg(tools, data, 1, log)
+                      except RuntimeError as error:
+                          assert failed and str(error).startswith('Offline PostgreSQL bootstrap failed (exit ' + str(code) + '): ')
+                          assert str(error).endswith(output[-1024:]) and len(str(error)) < 1100
+                      else:
+                          assert not failed
+                  assert initdb.call_args.args[0] == ['synthetic-initdb', '-D', data, '-U', 'postgres', '-A', 'reject']
+                  data.__truediv__.return_value.write_text.assert_called_once_with(PG_HBA)
+                  assert run.call_args.args[0][:2] == ['synthetic-postgres', '--single'] and run.call_args.kwargs['input'] == PG_BOOTSTRAP
+                  assert 'check' not in run.call_args.kwargs and log.write_text.call_args.args[0] == output[-65536:]
+              print('PASS: PostgreSQL fixture policy, denial fields, bounded offline bootstrap diagnostics')
 
 
           def nft_parser_selftest():
@@ -2574,7 +2633,7 @@ jobs:
                           provenance['tools'][tool] = {'path': str(executable), 'sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
                               'version': subprocess.check_output([executable, '--version'], text=True).strip()}
                       native_pg = root / 'postgres-data'
-                      bootstrap_pg(pg_tools, native_pg, config.seconds('SETUP'))
+                      bootstrap_pg(pg_tools, native_pg, config.seconds('SETUP'), evidence / 'postgres-bootstrap.log')
                       fixture['pg_server_canary'] = str(native_pg / '__ws03_denied__')
                       if sys.platform == 'win32':
                           pg_service = WindowsPostgres(guard.native, config)
