@@ -2583,13 +2583,14 @@ jobs:
                           try:
                               provenance['tools'][str(executable)] = {'sha256': hashlib.sha256(executable.read_bytes()).hexdigest()}
                           except PermissionError:
-                              # setuid /usr/bin/sudo is mode 4111 (execute-only) so unprivileged bytes cannot be read;
-                              # record its Apple code-signature CDHash plus stat instead of a file digest.
-                              sign = subprocess.run(['/usr/bin/codesign', '-dvvv', str(executable)], capture_output=True, text=True, timeout=config.seconds('PROBE'))
-                              cdhash = re.search(r'^CDHash=([0-9a-f]{40,})$', sign.stderr, re.M)
-                              if sign.returncode or not cdhash:
+                              # setuid /usr/bin/sudo is mode 4111 (execute-only, SIP-protected): neither Python nor
+                              # codesign can read its bytes unprivileged. trusted_system() already proved the root-owned,
+                              # non-writable chain, so record metadata and mark the digest unavailable.
+                              info = executable.stat()
+                              if info.st_uid != 0 or not info.st_mode & 0o4000 or os.access(executable, os.R_OK):
                                   raise
-                              provenance['tools'][str(executable)] = {'cdhash': cdhash.group(1), 'size': executable.stat().st_size, 'mode': oct(executable.stat().st_mode)}
+                              provenance['tools'][str(executable)] = {'sha256': None, 'unreadable_setuid': True,
+                                                                      'size': info.st_size, 'mode': oct(info.st_mode)}
                       provenance['mac_scope'] = 'Hosted CI TCP/UDP only; F3/VM/P0 ownership remains OPEN'
                   guard.resolver_setup(fixture)
                   def execute(mode, phase, guarded):
