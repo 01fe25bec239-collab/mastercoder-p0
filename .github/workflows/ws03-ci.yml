@@ -1218,10 +1218,22 @@ jobs:
               program_files = [os.environ['ProgramFiles'], os.environ['ProgramFiles(x86)']]
               system_root = os.environ['SystemRoot']
               vswhere = windows_tool_path(str(Path(program_files[1]) / 'Microsoft Visual Studio/Installer/vswhere.exe'), program_files)
-              installation = subprocess.check_output([vswhere, '-latest', '-products', '*', '-requires',
-                  'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', '-property', 'installationPath'],
-                  env=env, text=True, timeout=timeout).strip()
-              installation = windows_tool_path(installation, program_files)
+              discovery = ''
+              try:
+                  # vswhere's redirected default encoding is console-dependent; request UTF-8 explicitly.
+                  discovery = subprocess.check_output([vswhere, '-latest', '-products', '*', '-requires',
+                      'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', '-property', 'installationPath', '-utf8'],
+                      env=env, text=True, encoding='utf-8-sig', errors='strict', timeout=timeout)
+                  paths = discovery.splitlines()
+                  if len(paths) != 1 or not paths[0] or '\0' in paths[0]:
+                      raise ValueError('Expected exactly one installation path')
+                  installation = windows_tool_path(paths[0], program_files)
+              except (ValueError, UnicodeError) as error:
+                  # Only discovery/tool roots, never the inherited or captured developer environment.
+                  diagnostic = {'phase': 'vswhere-installation-validation', 'allowed_roots': program_files,
+                                'discovery': discovery[:1024], 'discovery_length': len(discovery),
+                                'reason': str(error)[:256]}
+                  raise ValueError('MSVC discovery refused: ' + json.dumps(diagnostic)) from error
               devcmd = windows_tool_path(str(Path(installation) / 'Common7/Tools/VsDevCmd.bat'), [installation])
               command = windows_tool_path(str(Path(system_root) / 'System32/cmd.exe'), [system_root])
               script = root / 'developer-env.cmd'
@@ -2350,6 +2362,26 @@ jobs:
                   (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
 
 
+          def copy_mac_python(installed_prefix, destination):
+              excluded = []
+              optional_headers = {'Frameworks/Tk.framework/PrivateHeaders', 'Frameworks/Tcl.framework/PrivateHeaders'}
+              def ignore(directory, names):
+                  ignored = set(names) & {'__pycache__', 'site-packages'}
+                  for name in set(names) - ignored:
+                      source = Path(directory) / name
+                      relative = source.relative_to(installed_prefix).as_posix()
+                      # These exact optional developer headers are unused by the CI runtime callers.
+                      if relative in optional_headers:
+                          ignored.add(name)
+                          excluded.append(relative)
+                      elif source.is_symlink():
+                          if not source.resolve(strict=True).is_relative_to(installed_prefix):
+                              raise ValueError('Python runtime link escapes installed prefix: ' + relative)
+                  return ignored
+              shutil.copytree(installed_prefix, destination, ignore=ignore)
+              return sorted(excluded)
+
+
           def run_ci_owned(repo, config, root, evidence):
               for name in ('home', 'temp', 'cargo', 'rustup', 'output'):
                   (root / name).mkdir()
@@ -2388,8 +2420,8 @@ jobs:
                       shutil.copytree(active_toolchain, root / 'toolchain')
                       installed_prefix = Path(sys.base_prefix).resolve(strict=True)
                       installed_python = Path(sys.executable).resolve(strict=True)
-                      shutil.copytree(installed_prefix, root / 'python',
-                                      ignore=shutil.ignore_patterns('__pycache__', 'site-packages'))
+                      excluded = copy_mac_python(installed_prefix, root / 'python')
+                      (evidence / 'mac-python-copy.json').write_text(json.dumps({'excluded_developer_headers': excluded}))
                       python = root / 'python' / installed_python.relative_to(installed_prefix)
                       active_toolchain = root / 'toolchain'
                       cargo = active_toolchain / 'bin/cargo'
