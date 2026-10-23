@@ -1495,7 +1495,12 @@ jobs:
 
           def mac_pf_attachment(main, nested, interfaces):
               # Accept only the standard empty dynamic facility, not an assumed ordering around other filters.
-              if main.strip() != 'anchor "com.apple/*" all' or nested.strip() or not interfaces.strip() or re.search(r'\bskip\b', interfaces):
+              # macOS ships a default scrub-anchor beside it and prints empty 'anchor "*" all { }' wrappers for nested rules.
+              rules = [line.strip() for line in main.splitlines() if line.strip()]
+              rules = [line for line in rules if line != 'scrub-anchor "com.apple/*" all fragment reassemble']
+              wrappers = {'anchor "*" all {', '}'}
+              if (rules != ['anchor "com.apple/*" all'] or not wrappers.issuperset(line.strip() for line in nested.splitlines() if line.strip())
+                      or not interfaces.strip() or re.search(r'\bskip\b', interfaces)):
                   raise RuntimeError('PF default anchor is absent, conflicting or skipped: ' + repr((main, nested, interfaces))[:2000])
 
 
@@ -2429,6 +2434,8 @@ jobs:
                   env['PATH'] = str(root / 'toolchain/bin') + os.pathsep + env['PATH']
                   # Install-derived SDK paths and exact compiler/linker apply to all Cargo build scripts too.
                   msvc_tools = setup_msvc(root, env, config.seconds('SETUP'))
+                  # The MSVC environment replaces PATH; cargo-fmt and cargo-clippy live beside cargo.
+                  env['PATH'] = str(root / 'toolchain/bin') + os.pathsep + env['PATH']
                   source = root / 'wfp_scope.cpp'
                   source.write_bytes((Path(os.environ['RUNNER_TEMP']) / 'ws03-wfp.cpp').read_bytes())
                   with (evidence / 'wfp-compile.log').open('w') as output:
