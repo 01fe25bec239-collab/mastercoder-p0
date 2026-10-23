@@ -2510,6 +2510,12 @@ jobs:
               pg_service = None
               failures = []
               try:
+                  if sys.platform == 'win32':
+                      # WinINet (via rustup/cargo/MSVC tools) creates this reparse-point cache under the scratch USERPROFILE.
+                      # Remove only that exact cache; the guard's reparse-point refusal still covers everything else.
+                      cache = root / 'home/AppData/Local/Microsoft/Windows/INetCache'
+                      if cache.exists():
+                          subprocess.run(['cmd', '/c', 'rmdir', '/s', '/q', str(cache)], check=True, timeout=config.seconds('PROBE'))
                   guard.setup(fixture)
                   if sys.platform == 'linux':
                       provenance['namespace'] = subprocess.check_output(guard.prefix + ['readlink', '/proc/self/ns/net'], text=True).strip()
