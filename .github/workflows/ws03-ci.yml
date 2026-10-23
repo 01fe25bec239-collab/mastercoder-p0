@@ -1720,7 +1720,7 @@ jobs:
                   for parent in self.root.parents:
                       info = parent.stat()
                       if not info.st_mode & 0o001:
-                          raise RuntimeError('Copied CI root has an inaccessible parent; refusing broad parent permission changes')
+                          raise RuntimeError('Copied CI root has an inaccessible parent; refusing broad parent permission changes: ' + str(parent))
 
               def install(self):
                   policy = mac_pf_policy(self.uid)
@@ -2369,7 +2369,10 @@ jobs:
               repo = Path(os.environ['GITHUB_WORKSPACE'])
               evidence = Path(os.environ['WS03_CI_EVIDENCE'])
               evidence.mkdir()
-              root = Path(os.environ['RUNNER_TEMP']) / ('ws03-' + secrets.token_hex(8))
+              # The sandbox account must traverse every parent. /Users/runner is not world-searchable on hosted macOS and
+              # widening it is refused, so the disposable macOS root lives under the standard shared directory instead.
+              base = Path('/Users/Shared') if sys.platform == 'darwin' else Path(os.environ['RUNNER_TEMP'])
+              root = base / ('ws03-' + secrets.token_hex(8))
               try:
                   config = Config(repo / 'ws03-runner-sandbox-acquisition')
                   root.mkdir()
