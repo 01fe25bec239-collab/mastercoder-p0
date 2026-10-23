@@ -1205,7 +1205,21 @@ jobs:
 
               def install(self):
                   if sys.platform == 'linux':
-                      policy = 'table inet ws03_guard { chain output { type filter hook output priority 0; policy drop; ip daddr 127.0.0.0/8 accept; ip6 daddr ::1 accept; } }\n'
+                      policy = ('table inet ws03_guard {\n'
+                          '    chain output {\n'
+                          '        type filter hook output priority 0; policy drop;\n'
+                          '        ip daddr 127.0.0.0/8 accept\n'
+                          '        ip6 daddr ::1 accept\n'
+                          '    }\n'
+                          '}\n')
+                      # Exercise the real parser, including the original missing block separator.
+                      invalid = 'table inet ws03_guard { chain output { type filter hook output priority 0; policy drop; } }\n'
+                      rejected = subprocess.run(self.prefix + ['nft', '--check', '-f', '-'], input=invalid,
+                          text=True, capture_output=True, timeout=self.config.seconds('SETUP'))
+                      if rejected.returncode == 0 or 'syntax error' not in rejected.stderr:
+                          raise RuntimeError('nft parser negative control failed')
+                      checked(self.prefix + ['nft', '--check', '-f', '-'], input=policy, text=True,
+                          timeout=self.config.seconds('SETUP'))
                       checked(self.prefix + ['nft', '-f', '-'], input=policy, text=True)
                       self.policy = policy
 
@@ -1323,6 +1337,45 @@ jobs:
                       raise AssertionError('Unrelated PostgreSQL failure accepted')
 
 
+          def nft_parser_selftest():
+              from unittest.mock import Mock, patch
+              guard = PosixGuard(Path('synthetic-root'), Mock())
+              guard.config.seconds.return_value = 1
+              guard.prefix = ['owned-namespace']
+              with patch.object(sys, 'platform', 'linux'), \
+                      patch.object(subprocess, 'run', return_value=Mock(returncode=1, stderr='syntax error')) as run:
+                  guard.install()
+                  calls = run.call_args_list
+                  assert len(calls) == 3
+                  assert calls[0].args[0] == guard.prefix + ['nft', '--check', '-f', '-']
+                  assert calls[1].args[0] == guard.prefix + ['nft', '--check', '-f', '-']
+                  assert calls[2].args[0] == guard.prefix + ['nft', '-f', '-']
+                  assert calls[1].kwargs['input'] == calls[2].kwargs['input'] == guard.policy
+                  assert '    }\n}\n' in guard.policy
+                  assert 'policy drop;' in guard.policy
+                  assert 'ip daddr 127.0.0.0/8 accept\n' in guard.policy
+                  assert 'ip6 daddr ::1 accept\n' in guard.policy
+              for result in (Mock(returncode=0, stderr=''), Mock(returncode=1, stderr='Operation not permitted')):
+                  with patch.object(sys, 'platform', 'linux'), patch.object(subprocess, 'run', return_value=result) as run:
+                      try:
+                          guard.install()
+                      except RuntimeError as error:
+                          assert str(error) == 'nft parser negative control failed'
+                      else:
+                          raise AssertionError('nft parser negative control bypassed')
+                      assert run.call_count == 1
+              with patch.object(sys, 'platform', 'linux'), patch.object(subprocess, 'run', side_effect=[
+                      Mock(returncode=1, stderr='syntax error'), subprocess.CalledProcessError(1, 'nft')]) as run:
+                  try:
+                      guard.install()
+                  except subprocess.CalledProcessError:
+                      pass
+                  else:
+                      raise AssertionError('Invalid policy applied after parser failure')
+                  assert run.call_count == 2
+              print('PASS: nft parser controls, newline block grammar, dual-family loopback/default-drop, check before apply')
+
+
           def repair_selftest(lane):
               from pathlib import PureWindowsPath
               from unittest.mock import MagicMock, Mock, patch
@@ -1428,6 +1481,7 @@ jobs:
 
           def self_test(lane):
               Config(lane)
+              nft_parser_selftest()
               pg_policy_selftest()
               repair_selftest(lane)
               positive = [{'name': 'fixture', 'loopback': False, 'reachable': True, 'error': None},
@@ -1964,6 +2018,9 @@ jobs:
               UINT64 filters[4]{};
           };
 
+          static constexpr FWP_ACTION_TYPE loopback_action = FWP_ACTION_PERMIT;
+          static constexpr FWP_ACTION_TYPE external_action = FWP_ACTION_BLOCK;
+
           static DWORD guid(GUID* value) {
               const RPC_STATUS result = UuidCreate(value);
               return result == RPC_S_OK || result == RPC_S_UUID_LOCAL_ONLY ? ERROR_SUCCESS : result;
@@ -1979,7 +2036,7 @@ jobs:
               conditions[0].fieldKey = FWPM_CONDITION_ALE_PACKAGE_ID;
               conditions[0].matchType = FWP_MATCH_EQUAL;
               conditions[0].conditionValue.type = FWP_SID;
-              conditions[0].conditionValue.sid = scope->sid;
+              conditions[0].conditionValue.sid = static_cast<SID*>(scope->sid);
               conditions[1].fieldKey = FWPM_CONDITION_IP_REMOTE_ADDRESS;
               conditions[1].matchType = FWP_MATCH_EQUAL;
               conditions[1].conditionValue.type = ipv6 ? FWP_V6_ADDR_MASK : FWP_V4_ADDR_MASK;
@@ -1996,7 +2053,7 @@ jobs:
               // hard block. Other providers' blocks are never overridden.
               filter.weight.type = FWP_UINT8;
               filter.weight.uint8 = loopback ? 15 : 0;
-              filter.action.type = loopback ? FWP_ACTION_PERMIT : FWP_ACTION_BLOCK;
+              filter.action.type = loopback ? loopback_action : external_action;
               filter.numFilterConditions = loopback ? 2 : 1;
               filter.filterCondition = conditions;
               return FwpmFilterAdd0(scope->engine, &filter, nullptr, &scope->filters[(ipv6 ? 2 : 0) + (loopback ? 1 : 0)]);
@@ -2025,7 +2082,7 @@ jobs:
                   const GUID& layer = ipv6 ? FWPM_LAYER_ALE_AUTH_CONNECT_V6 : FWPM_LAYER_ALE_AUTH_CONNECT_V4;
                   bool valid = filter && IsEqualGUID(filter->layerKey, layer) &&
                       IsEqualGUID(filter->subLayerKey, scope->sublayer) &&
-                      filter->action.type == (loopback ? FWP_ACTION_PERMIT : FWP_ACTION_BLOCK) &&
+                      filter->action.type == (loopback ? loopback_action : external_action) &&
                       filter->weight.type == FWP_UINT8 && filter->weight.uint8 == (loopback ? 15 : 0) &&
                       filter->flags == 0 && filter->numFilterConditions == (loopback ? 2u : 1u) && filter->filterCondition;
                   if (valid) {
