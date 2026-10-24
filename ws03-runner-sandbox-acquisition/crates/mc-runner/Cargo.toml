@@ -1,0 +1,33 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "mc-runner"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+mc-sandbox-core.workspace = true
+mc-contracts.workspace = true
+mc-wire.workspace = true
+mc-negotiation.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+tokio-rustls.workspace = true
+rcgen.workspace = true
+ed25519-dalek.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+sha2.workspace = true
+hex.workspace = true
+clap.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+async-trait.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+tempfile.workspace = true
+runner-control-double.workspace = true
+fake-sandbox.workspace = true

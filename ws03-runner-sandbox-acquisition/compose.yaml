@@ -1,0 +1,10 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+services:
+  postgres:
+    image: ${MC_WS03_POSTGRES_IMAGE:?set the verified immutable PostgreSQL image}
+    environment:
+      POSTGRES_USER: ${MC_WS03_PG_USER:?set the disposable database user}
+      POSTGRES_DB: ${MC_WS03_PG_DATABASE:?set the disposable database name}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set the local disposable password}
+    ports:
+      - "${MC_WS03_PG_BIND_ADDRESS:?set the loopback bind address}:${MC_WS03_PG_PORT:?set the local PostgreSQL port}:5432"
