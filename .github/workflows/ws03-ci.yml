@@ -1188,7 +1188,8 @@ jobs:
                       # sandbox_check's varargs ABI: pid, operation, filter=0 (no path), no extra argument.
                       if sandbox.sandbox_check(ctypes.c_int(os.getpid()), ctypes.c_char_p(b'network-outbound'), ctypes.c_int(0)) != 1:
                           raise RuntimeError('Seatbelt network policy denial is absent or unsupported')
-                      for operation in (b'mach-lookup', b'mach-register', b'ipc-posix-shm'):
+                      # sandbox_check needs concrete operation names; the 'ipc-posix-shm' class name returns -1 (unknown).
+                      for operation in (b'mach-lookup', b'mach-register', b'ipc-posix-shm-write-create', b'ipc-posix-sem-create'):
                           if sandbox.sandbox_check(ctypes.c_int(os.getpid()), ctypes.c_char_p(operation), ctypes.c_int(0)) != 1:
                               raise RuntimeError('Seatbelt IPC denial is absent or unsupported')
                       try:
@@ -1749,7 +1750,9 @@ jobs:
                       '(deny file-link)\n(deny process-exec)\n(allow process-exec ' + ' '.join([literal(path) for path in mac_python_runtime(python, python_prefix)] + [literal(cargo),
                           literal(cargo.parent / 'rustc'), literal(cargo.parent / 'rustdoc'), subtree(target),
                           subtree(root / 'temp')] + [literal(path) for path in native_tools]) + ')\n'
-                      '(deny file-read* file-write*)\n(allow file-read-metadata ' +
+                      # The python.org framework launcher reads the root directory itself (sandbox log: deny file-read-data /) and
+                      # aborts silently without it; only the literal '/' entry list, never a subpath.
+                      '(deny file-read* file-write*)\n(allow file-read-data (literal "/"))\n(allow file-read-metadata ' +
                       ' '.join(literal(path) for path in [root, *root.parents, *python.parents, *cargo.parents]) + ')\n(allow file-read* ' + ' '.join(read) + ')\n'
                       '(allow file-write* ' + ' '.join([subtree(path) for path in writable] + [literal(path) for path in locks]) + ' ' + literal(Path('/dev/null')) + ')\n')
 
@@ -2117,6 +2120,8 @@ jobs:
               # Regression: the framework launcher loads/re-executes its installed prefix, so it must be readable and exec-allowed.
               assert '(subpath "' + str(prefix) + '")' in profile and '"' + str(root / 'python') + '"' not in profile
               assert '(literal "' + str(python) + '")' in profile
+              # Regression: without the root entry list the framework launcher aborts (SIGABRT) before Python starts.
+              assert '(allow file-read-data (literal "/"))' in profile and '(allow file-read* (literal "/")' not in profile
               import tempfile
               with tempfile.TemporaryDirectory() as scratch:
                   framework = Path(scratch)
@@ -2447,7 +2452,45 @@ jobs:
                   with patch.object(shutil, 'rmtree', side_effect=OSError('busy')):
                       record = finish_owned_root(owned, [], 0)
                   assert record['owned_services_stopped'] and not record['copied_root_removed'] and record['failures'] == ['copied-root-cleanup:busy']
-              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting')
+              # Windows reports link-local IPv6 with its zone already; never double the %zone.
+              assert windows_scoped_ipv6('fe80::1%12', 12) == 'fe80::1%12'
+              assert windows_scoped_ipv6('fe80::1', 12) == 'fe80::1%12'
+              assert windows_scoped_ipv6('2001:db8::1', 12) == '2001:db8::1'
+              # The drained listener check waits for refusal within its bound and still fails on a persistent listener.
+              refused = Mock(side_effect=[MagicMock(), MagicMock(), ConnectionRefusedError()])
+              with patch.object(socket, 'create_connection', refused), patch.object(time, 'sleep'):
+                  wait_listener_closed(5432, 1, 60)
+              assert refused.call_count == 3
+              clock = iter(range(0, 1000, 10))
+              with patch.object(socket, 'create_connection', MagicMock()), patch.object(time, 'sleep'), \
+                      patch.object(time, 'monotonic', lambda: next(clock)):
+                  try:
+                      wait_listener_closed(5432, 1, 30)
+                  except RuntimeError as error:
+                      assert 'listener remained' in str(error)
+                  else:
+                      raise AssertionError('Persistent PostgreSQL listener accepted')
+              # Every Windows native child gets owned stdio (never the controller's handle values); a failure surfaces its log tail.
+              with tempfile.TemporaryDirectory() as scratch:
+                  ci = object.__new__(WindowsCI)
+                  ci.root = Path(scratch)
+                  (ci.root / 'output').mkdir()
+                  ci.wfp_handle, ci.wfp = ctypes.c_void_p(1), Mock()
+                  ci.wfp.ScopeAttest.return_value = 0
+                  def child(argv, cwd, env, guarded, stdio=None):
+                      assert stdio[0] is None and stdio[1].parent == ci.root / 'output'
+                      stdio[1].write_text('child traceback')
+                      return 1
+                  ci.native = Mock(run=Mock(side_effect=child))
+                  with patch.object(sys, 'stderr', Mock()) as stderr:
+                      try:
+                          ci.run(['probe'], ci.root, {}, True)
+                      except subprocess.CalledProcessError:
+                          pass
+                      else:
+                          raise AssertionError('Failed Windows child accepted')
+                  stderr.write.assert_called_once_with('child traceback')
+              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting, Windows zone/listener drain/owned stdio')
 
 
           def self_test(lane):
@@ -2496,6 +2539,13 @@ jobs:
               print('PASS: config, reachable controls, denial, removed-guard mutation, outage rejection, loopback failure, env, DNS fixture')
 
 
+          def windows_scoped_ipv6(address, index):
+              # Get-NetIPAddress already reports link-local addresses with their %zone; append it only when absent.
+              if ipaddress.ip_address(address).is_link_local and '%' not in address:
+                  return address + '%' + str(index)
+              return address
+
+
           class WindowsCI:
               def __init__(self, root, config):
                   self.root, self.config = root, config
@@ -2523,7 +2573,7 @@ jobs:
                   fixture['ipv4'] = next(x['IPAddress'] for x in addresses if ':' not in x['IPAddress']
                                         and not ipaddress.ip_address(x['IPAddress']).is_loopback)
                   v6 = next(x for x in addresses if ':' in x['IPAddress'] and not ipaddress.ip_address(x['IPAddress']).is_loopback)
-                  fixture['ipv6'] = v6['IPAddress'] + ('%' + str(v6['InterfaceIndex']) if ipaddress.ip_address(v6['IPAddress']).is_link_local else '')
+                  fixture['ipv6'] = windows_scoped_ipv6(v6['IPAddress'], v6['InterfaceIndex'])
                   fixture['dns_port'] = 53
                   self.native.setup()
                   fixture['package_sid'] = self.native.sid_text
@@ -2569,10 +2619,14 @@ jobs:
               def run(self, argv, cwd, env, guarded=True):
                   if guarded and (not self.wfp_handle.value or self.wfp.ScopeAttest(self.wfp_handle)):
                       raise RuntimeError('Missing owned WFP policy before restricted process')
-                  code = self.native.run(list(map(str, argv)), str(cwd), env, guarded)
+                  # Without owned std handles the child inherits invalid controller handle values: Python's subprocess then
+                  # fails DuplicateHandle (WinError 6) and its traceback is lost. Bounded log, retained via output/.
+                  log = self.root / 'output' / ('native-' + secrets.token_hex(4) + '.log')
+                  code = self.native.run(list(map(str, argv)), str(cwd), env, guarded, stdio=(None, log))
                   if guarded and self.wfp.ScopeAttest(self.wfp_handle):
                       raise RuntimeError('Owned WFP policy changed during restricted process')
                   if code:
+                      sys.stderr.write(log.read_text(errors='replace')[-8192:])
                       raise subprocess.CalledProcessError(code, argv)
 
               def mutation(self):
@@ -2704,6 +2758,21 @@ jobs:
                   manifest = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in evidence.iterdir()
                               if p.is_file() and p.name != 'sha256.json'}
                   (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
+
+
+          def wait_listener_closed(port, timeout, bound):
+              # A Job reports zero active processes before process rundown closes the dead postmaster's socket handles,
+              # so one immediate connect can still reach it. Poll until refused; a listener beyond the bound fails.
+              deadline = time.monotonic() + bound
+              while True:
+                  try:
+                      with socket.create_connection(('127.0.0.1', port), timeout):
+                          pass
+                  except OSError:
+                      return
+                  if time.monotonic() >= deadline:
+                      raise RuntimeError('PostgreSQL listener remained after owned Job drain')
+                  time.sleep(0.1)
 
 
           def finish_owned_root(root, failures, primary):
@@ -2977,10 +3046,13 @@ jobs:
                   if sys.platform == 'win32':
                       # Runner-side native negative: cleanup authority survives both corrupt and missing PID files.
                       pid_file = native_pg / 'postmaster.pid'
+                      # Restored afterwards: the postmaster rechecks its lock file and shuts down if it stays wrong/missing.
+                      original = pid_file.read_text()
                       pid_file.write_text('invalid-owned-pid-control\n')
                       query_pg(pg_port, config.seconds('PROBE'))
                       pid_file.unlink()
                       query_pg(pg_port, config.seconds('PROBE'))
+                      pid_file.write_text(original)
                       provenance['postgres_pid_controls'] = ['corrupt-live', 'missing-live']
                   provenance['runtime_result'] = 'NATIVE_CONTROLS_AND_TESTS_EXECUTED'
               except BaseException as error:
@@ -2992,11 +3064,7 @@ jobs:
                   if pg_service is not None:
                       try:
                           pg_service.stop()
-                          try:
-                              with socket.create_connection(('127.0.0.1', pg_port), config.seconds('PROBE')):
-                                  raise RuntimeError('PostgreSQL listener remained after owned Job drain')
-                          except OSError:
-                              pass
+                          wait_listener_closed(pg_port, config.seconds('PROBE'), config.seconds('CLEANUP'))
                       except BaseException as error:
                           failures.append('postgres-job-cleanup:' + str(error))
                   try:
