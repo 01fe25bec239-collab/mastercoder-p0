@@ -1704,11 +1704,25 @@ jobs:
                   raise RuntimeError('PF default anchor is absent, conflicting or skipped: ' + repr((main, listing, nested, interfaces))[:2000])
 
 
+          def mac_kernel_groups():
+              # The process's kernel credential groups via the plain getgroups(2) symbol (NGROUPS_MAX 16). Python's
+              # os.getgroups uses the Darwin extension, which asks opendirectoryd over mach-lookup; the profile denies
+              # that, so it fails EINVAL inside the sandbox (observed in CI and reproduced locally).
+              libc = ctypes.CDLL(None, use_errno=True)
+              groups = (ctypes.c_uint32 * 16)()
+              count = libc.getgroups(len(groups), groups)
+              if count < 0:
+                  raise OSError(ctypes.get_errno(), 'kernel getgroups failed')
+              return set(groups[:count])
+
+
           def attest_mac_identity(config):
               uid, gid = config['mac_uid'], config['mac_gid']
+              groups = mac_kernel_groups()
               if (os.getuid() != uid or os.geteuid() != uid or os.getgid() != gid or os.getegid() != gid
-                      or set(os.getgroups()) | {gid} != set(config['mac_groups']) or uid == 0 or gid == 0):
-                  raise RuntimeError('Exclusive CI identity/group attestation failed')
+                      or groups | {gid} != set(config['mac_groups']) or uid == 0 or gid == 0):
+                  raise RuntimeError('Exclusive CI identity/group attestation failed: ' + json.dumps(
+                      {'groups': sorted(groups), 'expected': sorted(config['mac_groups'])}))
               try:
                   os.seteuid(0)
               except PermissionError:
@@ -2095,11 +2109,20 @@ jobs:
               config = {'mac_uid': uid, 'mac_gid': gid, 'mac_groups': [gid, 12, 61]}
               with patch.object(os, 'getuid', return_value=uid), patch.object(os, 'geteuid', return_value=uid), \
                       patch.object(os, 'getgid', return_value=gid), patch.object(os, 'getegid', return_value=gid), \
-                      patch.object(os, 'getgroups', return_value=[gid, 12, 61]), \
+                      patch.dict(globals(), mac_kernel_groups=lambda: {gid, 12, 61}), \
+                      patch.object(os, 'getgroups', side_effect=OSError(22, 'Darwin extension unavailable in sandbox')), \
                       patch.object(os, 'seteuid', side_effect=PermissionError):
                   attest_mac_identity(config)
-                  for operation, value in [('getuid', 0), ('geteuid', 0), ('getgid', 0), ('getegid', 0), ('getgroups', [gid, 80])]:
+                  for operation, value in [('getuid', 0), ('geteuid', 0), ('getgid', 0), ('getegid', 0)]:
                       with patch.object(os, operation, return_value=value):
+                          try:
+                              attest_mac_identity(config)
+                          except RuntimeError as error:
+                              assert 'identity/group attestation failed' in str(error)
+                          else:
+                              raise AssertionError('Credential/group guard removed')
+                  for groups in ({gid, 80}, {gid}, {gid, 12, 61, 20}):
+                      with patch.dict(globals(), mac_kernel_groups=lambda: groups):
                           try:
                               attest_mac_identity(config)
                           except RuntimeError as error:
@@ -2452,6 +2475,22 @@ jobs:
                   with patch.object(shutil, 'rmtree', side_effect=OSError('busy')):
                       record = finish_owned_root(owned, [], 0)
                   assert record['owned_services_stopped'] and not record['copied_root_removed'] and record['failures'] == ['copied-root-cleanup:busy']
+              # The DNS fixture skips an IPv4 whose port 53 is owned elsewhere, and fails with evidence when none is free.
+              busy = Mock()
+              busy.__enter__ = Mock(return_value=busy)
+              busy.__exit__ = Mock(return_value=False)
+              busy.bind.side_effect = [OSError(98, 'in use'), None]
+              listing = [{'IPAddress': '127.0.0.1'}, {'IPAddress': 'fe80::1%3'}, {'IPAddress': '172.16.0.1'}, {'IPAddress': '10.1.0.4'}]
+              with patch.object(socket, 'socket', return_value=busy):
+                  assert windows_dns_ipv4(listing, 53) == ('10.1.0.4', [{'address': '172.16.0.1', 'errno': 98, 'winerror': None}])
+                  assert [call.args[0] for call in busy.bind.call_args_list] == [('172.16.0.1', 53), ('10.1.0.4', 53)]
+                  busy.bind.side_effect = OSError(98, 'in use')
+                  try:
+                      windows_dns_ipv4(listing, 53)
+                  except RuntimeError as error:
+                      assert '172.16.0.1' in str(error) and '10.1.0.4' in str(error)
+                  else:
+                      raise AssertionError('Occupied DNS port accepted')
               # Windows reports link-local IPv6 with its zone already; never double the %zone.
               assert windows_scoped_ipv6('fe80::1%12', 12) == 'fe80::1%12'
               assert windows_scoped_ipv6('fe80::1', 12) == 'fe80::1%12'
@@ -2490,7 +2529,7 @@ jobs:
                       else:
                           raise AssertionError('Failed Windows child accepted')
                   stderr.write.assert_called_once_with('child traceback')
-              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting, Windows zone/listener drain/owned stdio')
+              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting, Windows zone/listener drain/owned stdio/free DNS port')
 
 
           def self_test(lane):
@@ -2539,6 +2578,24 @@ jobs:
               print('PASS: config, reachable controls, denial, removed-guard mutation, outage rejection, loopback failure, env, DNS fixture')
 
 
+          def windows_dns_ipv4(addresses, port):
+              # NRPT name servers are port 53 only. A hosted adapter (e.g. an ICS/Hyper-V DNS proxy) may already own
+              # address:53 (WinError 10048), so take the first preferred IPv4 whose DNS port is actually free.
+              rejected = []
+              for entry in addresses:
+                  address = entry['IPAddress']
+                  if ':' in address or ipaddress.ip_address(address).is_loopback:
+                      continue
+                  try:
+                      with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                          sock.bind((address, port))
+                  except OSError as error:
+                      rejected.append({'address': address, 'errno': error.errno, 'winerror': getattr(error, 'winerror', None)})
+                  else:
+                      return address, rejected
+              raise RuntimeError('No IPv4 fixture address with a free DNS port: ' + json.dumps(rejected)[:4096])
+
+
           def windows_scoped_ipv6(address, index):
               # Get-NetIPAddress already reports link-local addresses with their %zone; append it only when absent.
               if ipaddress.ip_address(address).is_link_local and '%' not in address:
@@ -2570,8 +2627,7 @@ jobs:
 
               def setup(self, fixture):
                   addresses = json.loads(self.ps("Get-NetIPAddress -AddressState Preferred | Select-Object IPAddress,InterfaceIndex | ConvertTo-Json\n"))
-                  fixture['ipv4'] = next(x['IPAddress'] for x in addresses if ':' not in x['IPAddress']
-                                        and not ipaddress.ip_address(x['IPAddress']).is_loopback)
+                  fixture['ipv4'], fixture['dns_rejected'] = windows_dns_ipv4(addresses if isinstance(addresses, list) else [addresses], 53)
                   v6 = next(x for x in addresses if ':' in x['IPAddress'] and not ipaddress.ip_address(x['IPAddress']).is_loopback)
                   fixture['ipv6'] = windows_scoped_ipv6(v6['IPAddress'], v6['InterfaceIndex'])
                   fixture['dns_port'] = 53
