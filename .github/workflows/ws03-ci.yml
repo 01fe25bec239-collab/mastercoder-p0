@@ -179,11 +179,6 @@ jobs:
               _fields_ = [("AceCount", DWORD), ("AclBytesInUse", DWORD), ("AclBytesFree", DWORD)]
 
 
-          def windows_parent_grant(path, sid, remove=False):
-              # Exactly one non-inherited read-attributes ACE for the owned package SID; removal names only that SID.
-              return [str(path), "/remove:g", f"*{sid}", "/L"] if remove else [str(path), "/grant", f"*{sid}:(RD,RA)", "/L"]
-
-
           def validate_token_shape(is_container, same_sid, capability_count, integrity):
               if (is_container, same_sid, capability_count, integrity) != (1, True, 0, LOW_INTEGRITY):
                   raise RuntimeError("AppContainer token shape differs from zero-capability low-IL policy")
@@ -228,7 +223,6 @@ jobs:
                   self.sid, self.created, self.exempt, self.closed = PTR(), False, False, False
                   self.sid_text = None
                   self.profile_folder = None
-                  self.parent_grants = []
                   self.active_jobs = set()
                   self.k = C.WinDLL("kernel32", use_last_error=True)
                   self.a = C.WinDLL("advapi32", use_last_error=True)
@@ -361,14 +355,6 @@ jobs:
                       self.o.CoTaskMemFree(folder)
                   for arguments in windows_acl_plan(self.root, sid_text):
                       self._utility("icacls.exe", arguments)
-                  # Cargo's member glob stats every ancestor (D:\a, D:\a\_temp); without it the glob matches nothing and cargo
-                  # reads the literal 'crates\*' (os error 123, CI runs 40069147208/40075842686). Rust's fs::metadata opens
-                  # with zero access, so read-attributes comes only from NTFS's implicit grant to a caller that can list the
-                  # parent: list+read-attributes per ancestor (names only, files unreadable), this package SID only, not
-                  # inherited; recorded before mutation, removed in cleanup. Mirrors the macOS parent metadata literals.
-                  for parent in self.root.parents:
-                      self.parent_grants.append(parent)
-                      self._utility("icacls.exe", windows_parent_grant(parent, sid_text))
                   # Fresh profile cannot legitimately have a preexisting exemption.
                   # Mark intent before invocation: a timeout can happen after mutation.
                   self.exempt = True
@@ -631,9 +617,6 @@ jobs:
                   if self.closed:
                       return
                   # No global -c, no deletion of an unowned name, no guessed ACL restore.
-                  while self.parent_grants:
-                      self._utility("icacls.exe", windows_parent_grant(self.parent_grants[-1], self.sid_text, remove=True))
-                      self.parent_grants.pop()
                   if self.exempt:
                       if self._exemption_present():
                           self._utility("CheckNetIsolation.exe", ["LoopbackExempt", "-d", f"-n={self.name}"])
@@ -657,17 +640,6 @@ jobs:
           def selftest():
               """Pure shape checks; this never invokes a Windows API or native guard."""
               validate_token_shape(1, True, 0, LOW_INTEGRITY)
-              assert windows_parent_grant("D:\\a", "S-1-15-2-1") == ["D:\\a", "/grant", "*S-1-15-2-1:(RD,RA)", "/L"]
-              assert windows_parent_grant("D:\\a", "S-1-15-2-1", remove=True) == ["D:\\a", "/remove:g", "*S-1-15-2-1", "/L"]
-              # Parent grants are read-attributes only (never inherited, never list/read/write) and every one is removed.
-              from unittest.mock import Mock
-              grants = object.__new__(WindowsGuard)
-              grants.closed, grants.exempt, grants.created, grants.sid = False, False, False, C.c_void_p()
-              grants.sid_text, grants.parent_grants, grants._utility = "S-1-15-2-1", ["D:\\", "D:\\a"], Mock()
-              grants.cleanup()
-              assert [call.args[1] for call in grants._utility.call_args_list] == [
-                  ["D:\\a", "/remove:g", "*S-1-15-2-1", "/L"], ["D:\\", "/remove:g", "*S-1-15-2-1", "/L"]]
-              assert grants.parent_grants == [] and grants.closed
               for shape in ((0, True, 0, LOW_INTEGRITY), (1, False, 0, LOW_INTEGRITY),
                             (1, True, 1, LOW_INTEGRITY), (1, True, 0, 0x2000)):
                   try:
@@ -2519,6 +2491,23 @@ jobs:
                   with patch.object(shutil, 'rmtree', side_effect=OSError('busy')):
                       record = finish_owned_root(owned, [], 0)
                   assert record['owned_services_stopped'] and not record['copied_root_removed'] and record['failures'] == ['copied-root-cleanup:busy']
+              # Windows test listing: only cargo's built test artifacts inside the copied lane, as (executable, package dir).
+              test_lane = Path('/owned/work/lane')
+              def artifact(executable, manifest, test=True):
+                  return json.dumps({'reason': 'compiler-artifact', 'profile': {'test': test}, 'executable': executable,
+                                     'manifest_path': manifest})
+              listing = '\n'.join([artifact('/owned/work/lane/target/debug/deps/a-1.exe', '/owned/work/lane/crates/a/Cargo.toml'),
+                                    artifact('/owned/work/lane/target/debug/b.exe', '/owned/work/lane/crates/b/Cargo.toml', test=False),
+                                    json.dumps({'reason': 'build-finished', 'success': True}), 'Finished test profile'])
+              assert windows_test_executables(listing, test_lane) == [str(Path('/owned/work/lane/target/debug/deps/a-1.exe')),
+                                                                 str(Path('/owned/work/lane/crates/a'))]
+              for bad in (artifact('/elsewhere/a.exe', '/owned/work/lane/crates/a/Cargo.toml'),
+                          artifact('/owned/work/lane/target/debug/deps/a.exe', '/elsewhere/Cargo.toml'), 'Finished'):
+                  try:
+                      windows_test_executables(bad, test_lane)
+                  except RuntimeError:
+                      continue
+                  raise AssertionError('Unsafe or empty Windows test listing accepted')
               # The DNS fixture skips an IPv4 whose port 53 is owned elsewhere, and fails with evidence when none is free.
               busy = Mock()
               busy.__enter__ = Mock(return_value=busy)
@@ -2573,7 +2562,7 @@ jobs:
                       else:
                           raise AssertionError('Failed Windows child accepted')
                   stderr.write.assert_called_once_with('child traceback')
-              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting, Windows zone/listener drain/owned stdio/free DNS port')
+              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting, Windows zone/listener drain/owned stdio/free DNS port/test listing')
 
 
           def self_test(lane):
@@ -2875,6 +2864,21 @@ jobs:
                   time.sleep(0.1)
 
 
+          def windows_test_executables(listing, lane):
+              # (executable, package directory) for every test artifact cargo built; each must live in the copied lane.
+              pairs = []
+              for line in listing.splitlines():
+                  message = json.loads(line) if line.startswith('{') else {}
+                  if message.get('reason') == 'compiler-artifact' and message.get('profile', {}).get('test') and message.get('executable'):
+                      executable, directory = Path(message['executable']), Path(message['manifest_path']).parent
+                      if not executable.is_relative_to(lane / 'target') or not directory.is_relative_to(lane):
+                          raise RuntimeError('Test executable outside the copied lane: ' + str(executable))
+                      pairs += [str(executable), str(directory)]
+              if not pairs:
+                  raise RuntimeError('Cargo listed no test executables')
+              return pairs
+
+
           def finish_owned_root(root, failures, primary):
               # failures[:primary] are probe/test failures; any later entry is an owned-cleanup failure that keeps the root.
               stopped = len(failures) == primary
@@ -2962,6 +2966,15 @@ jobs:
               for index, command in enumerate(commands):
                   with (evidence / ('build-' + str(index) + '.log')).open('w') as log:
                       checked(command, cwd=lane, env=env, timeout=config.seconds('COMMAND'), stdout=log, stderr=subprocess.STDOUT)
+              windows_tests = []
+              if sys.platform == 'win32':
+                  # Inside the AppContainer Rust's fs::metadata fails even on explicitly granted paths: cargo's member glob saw
+                  # no 'crates' directory while every ancestor was statable (CI runs 40069147208, 40075842686, 40077961712).
+                  # Cargo therefore lists the test executables it already built, outside; tests.py runs every one of them
+                  # inside the AppContainer from its package directory, as cargo test would. The code under test stays guarded.
+                  listing = subprocess.check_output([cargo, 'test', '--workspace', '--all-features', '--locked', '--offline', '--no-run',
+                      '--message-format=json'], cwd=lane, env=env, text=True, timeout=config.seconds('COMMAND'))
+                  windows_tests = windows_test_executables(listing, lane)
               tree = subprocess.check_output([cargo, 'tree', '-p', 'mc-pack-parser', '-e', 'normal', '--target', 'all', '--locked', '--offline'],
                                              cwd=lane, env=env, text=True, timeout=config.seconds('COMMAND'))
               (evidence / 'parser-tree.log').write_text(tree)
@@ -2983,11 +2996,10 @@ jobs:
                   ' c=json.loads(pathlib.Path(__file__).with_name("probe.json").read_text())\n'
                   ' runpy.run_path(str(pathlib.Path(__file__).with_name("helper.py")))["attest_mac_identity"](c)\n'
                   'with pathlib.Path(sys.argv[2]).open("w") as log:\n'
-                  # Bounded native evidence for cargo's member glob: which ancestor the guarded process can stat.
-                  ' for a in [pathlib.Path.cwd() / "crates", *(pathlib.Path.cwd() / "crates").parents]:\n'
-                  '  try: a.stat(); log.write("stat ok: %s\\n" % a)\n'
-                  '  except OSError as e: log.write("stat %s: %s\\n" % (a, e))\n'
-                  ' log.flush()\n'
+                  # Windows passes (executable, package directory) pairs listed by cargo outside the AppContainer.
+                  ' if len(sys.argv) > 3:\n'
+                  '  codes=[subprocess.run([e],cwd=c,stdout=log,stderr=subprocess.STDOUT).returncode for e,c in zip(sys.argv[3::2],sys.argv[4::2])]\n'
+                  '  sys.exit(next((c for c in codes if c),0))\n'
                   ' r=subprocess.run([sys.argv[1],"test","--workspace","--all-features","--locked","--offline"],stdout=log,stderr=subprocess.STDOUT)\n'
                   'sys.exit(r.returncode)\n')
               (root / 'probe.json').write_text('{}')
@@ -3149,7 +3161,7 @@ jobs:
                   execute('deny', 'restored', True)
                   # Native token/profile/namespace inheritance also guards cargo, rustdoc and every spawned test.
                   env['DATABASE_URL'] = pg_url(pg_port)
-                  guard.run([str(python), '-I', str(test_script), str(cargo), str(root / 'output/test.log')], lane, env, True)
+                  guard.run([str(python), '-I', str(test_script), str(cargo), str(root / 'output/test.log'), *windows_tests], lane, env, True)
                   # A test must not have mutated this policy/control state unnoticed.
                   execute('deny', 'after-tests', True)
                   if sys.platform == 'win32':
