@@ -179,6 +179,11 @@ jobs:
               _fields_ = [("AceCount", DWORD), ("AclBytesInUse", DWORD), ("AclBytesFree", DWORD)]
 
 
+          def windows_parent_grant(path, sid, remove=False):
+              # Exactly one non-inherited read-attributes ACE for the owned package SID; removal names only that SID.
+              return [str(path), "/remove:g", f"*{sid}", "/L"] if remove else [str(path), "/grant", f"*{sid}:(RA)", "/L"]
+
+
           def validate_token_shape(is_container, same_sid, capability_count, integrity):
               if (is_container, same_sid, capability_count, integrity) != (1, True, 0, LOW_INTEGRITY):
                   raise RuntimeError("AppContainer token shape differs from zero-capability low-IL policy")
@@ -223,6 +228,7 @@ jobs:
                   self.sid, self.created, self.exempt, self.closed = PTR(), False, False, False
                   self.sid_text = None
                   self.profile_folder = None
+                  self.parent_grants = []
                   self.active_jobs = set()
                   self.k = C.WinDLL("kernel32", use_last_error=True)
                   self.a = C.WinDLL("advapi32", use_last_error=True)
@@ -355,6 +361,12 @@ jobs:
                       self.o.CoTaskMemFree(folder)
                   for arguments in windows_acl_plan(self.root, sid_text):
                       self._utility("icacls.exe", arguments)
+                  # Cargo's member glob stats every ancestor (D:\a, D:\a\_temp); without it the glob matches nothing and cargo
+                  # reads the literal 'crates\*' (os error 123, CI run 40069147208). Like the macOS parent metadata literals:
+                  # read-attributes only, this package SID only, not inherited; recorded before mutation, removed in cleanup.
+                  for parent in self.root.parents:
+                      self.parent_grants.append(parent)
+                      self._utility("icacls.exe", windows_parent_grant(parent, sid_text))
                   # Fresh profile cannot legitimately have a preexisting exemption.
                   # Mark intent before invocation: a timeout can happen after mutation.
                   self.exempt = True
@@ -617,6 +629,9 @@ jobs:
                   if self.closed:
                       return
                   # No global -c, no deletion of an unowned name, no guessed ACL restore.
+                  while self.parent_grants:
+                      self._utility("icacls.exe", windows_parent_grant(self.parent_grants[-1], self.sid_text, remove=True))
+                      self.parent_grants.pop()
                   if self.exempt:
                       if self._exemption_present():
                           self._utility("CheckNetIsolation.exe", ["LoopbackExempt", "-d", f"-n={self.name}"])
@@ -640,6 +655,17 @@ jobs:
           def selftest():
               """Pure shape checks; this never invokes a Windows API or native guard."""
               validate_token_shape(1, True, 0, LOW_INTEGRITY)
+              assert windows_parent_grant("D:\\a", "S-1-15-2-1") == ["D:\\a", "/grant", "*S-1-15-2-1:(RA)", "/L"]
+              assert windows_parent_grant("D:\\a", "S-1-15-2-1", remove=True) == ["D:\\a", "/remove:g", "*S-1-15-2-1", "/L"]
+              # Parent grants are read-attributes only (never inherited, never list/read/write) and every one is removed.
+              from unittest.mock import Mock
+              grants = object.__new__(WindowsGuard)
+              grants.closed, grants.exempt, grants.created, grants.sid = False, False, False, C.c_void_p()
+              grants.sid_text, grants.parent_grants, grants._utility = "S-1-15-2-1", ["D:\\", "D:\\a"], Mock()
+              grants.cleanup()
+              assert [call.args[1] for call in grants._utility.call_args_list] == [
+                  ["D:\\a", "/remove:g", "*S-1-15-2-1", "/L"], ["D:\\", "/remove:g", "*S-1-15-2-1", "/L"]]
+              assert grants.parent_grants == [] and grants.closed
               for shape in ((0, True, 0, LOW_INTEGRITY), (1, False, 0, LOW_INTEGRITY),
                             (1, True, 1, LOW_INTEGRITY), (1, True, 0, 0x2000)):
                   try:
