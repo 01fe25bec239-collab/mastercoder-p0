@@ -181,7 +181,7 @@ jobs:
 
           def windows_parent_grant(path, sid, remove=False):
               # Exactly one non-inherited read-attributes ACE for the owned package SID; removal names only that SID.
-              return [str(path), "/remove:g", f"*{sid}", "/L"] if remove else [str(path), "/grant", f"*{sid}:(RA)", "/L"]
+              return [str(path), "/remove:g", f"*{sid}", "/L"] if remove else [str(path), "/grant", f"*{sid}:(RD,RA)", "/L"]
 
 
           def validate_token_shape(is_container, same_sid, capability_count, integrity):
@@ -362,8 +362,10 @@ jobs:
                   for arguments in windows_acl_plan(self.root, sid_text):
                       self._utility("icacls.exe", arguments)
                   # Cargo's member glob stats every ancestor (D:\a, D:\a\_temp); without it the glob matches nothing and cargo
-                  # reads the literal 'crates\*' (os error 123, CI run 40069147208). Like the macOS parent metadata literals:
-                  # read-attributes only, this package SID only, not inherited; recorded before mutation, removed in cleanup.
+                  # reads the literal 'crates\*' (os error 123, CI runs 40069147208/40075842686). Rust's fs::metadata opens
+                  # with zero access, so read-attributes comes only from NTFS's implicit grant to a caller that can list the
+                  # parent: list+read-attributes per ancestor (names only, files unreadable), this package SID only, not
+                  # inherited; recorded before mutation, removed in cleanup. Mirrors the macOS parent metadata literals.
                   for parent in self.root.parents:
                       self.parent_grants.append(parent)
                       self._utility("icacls.exe", windows_parent_grant(parent, sid_text))
@@ -655,7 +657,7 @@ jobs:
           def selftest():
               """Pure shape checks; this never invokes a Windows API or native guard."""
               validate_token_shape(1, True, 0, LOW_INTEGRITY)
-              assert windows_parent_grant("D:\\a", "S-1-15-2-1") == ["D:\\a", "/grant", "*S-1-15-2-1:(RA)", "/L"]
+              assert windows_parent_grant("D:\\a", "S-1-15-2-1") == ["D:\\a", "/grant", "*S-1-15-2-1:(RD,RA)", "/L"]
               assert windows_parent_grant("D:\\a", "S-1-15-2-1", remove=True) == ["D:\\a", "/remove:g", "*S-1-15-2-1", "/L"]
               # Parent grants are read-attributes only (never inherited, never list/read/write) and every one is removed.
               from unittest.mock import Mock
@@ -2981,6 +2983,11 @@ jobs:
                   ' c=json.loads(pathlib.Path(__file__).with_name("probe.json").read_text())\n'
                   ' runpy.run_path(str(pathlib.Path(__file__).with_name("helper.py")))["attest_mac_identity"](c)\n'
                   'with pathlib.Path(sys.argv[2]).open("w") as log:\n'
+                  # Bounded native evidence for cargo's member glob: which ancestor the guarded process can stat.
+                  ' for a in [pathlib.Path.cwd() / "crates", *(pathlib.Path.cwd() / "crates").parents]:\n'
+                  '  try: a.stat(); log.write("stat ok: %s\\n" % a)\n'
+                  '  except OSError as e: log.write("stat %s: %s\\n" % (a, e))\n'
+                  ' log.flush()\n'
                   ' r=subprocess.run([sys.argv[1],"test","--workspace","--all-features","--locked","--offline"],stdout=log,stderr=subprocess.STDOUT)\n'
                   'sys.exit(r.returncode)\n')
               (root / 'probe.json').write_text('{}')
