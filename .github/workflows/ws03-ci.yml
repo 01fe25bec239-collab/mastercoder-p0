@@ -2481,16 +2481,58 @@ jobs:
               # failure keeps the root and is never reported as stopped.
               import tempfile
               with tempfile.TemporaryDirectory() as scratch:
-                  owned = Path(scratch) / 'owned'
+                  owned, evidence = Path(scratch) / 'owned', Path(scratch) / 'evidence'
                   owned.mkdir()
-                  assert finish_owned_root(owned, ['probe'], 1) == {'owned_services_stopped': True, 'copied_root_removed': True, 'failures': ['probe']}
+                  evidence.mkdir()
+                  assert finalize_owned(owned, evidence, ['probe'], 1, lambda: None) == {'owned_services_stopped': True,
+                      'evidence_collected': True, 'copied_root_removed': True, 'failures': ['probe']}
                   owned.mkdir()
-                  assert finish_owned_root(owned, ['probe', 'cleanup:x'], 1) == {
-                      'owned_services_stopped': False, 'copied_root_removed': False, 'failures': ['probe', 'cleanup:x']}
+                  assert finalize_owned(owned, evidence, ['probe', 'cleanup:x'], 1, lambda: None) == {'owned_services_stopped': False,
+                      'evidence_collected': True, 'copied_root_removed': False, 'failures': ['probe', 'cleanup:x']}
+                  assert owned.is_dir()
+                  # Review F2: cleanup failure plus an evidence enumeration/copy error keeps the root, never claims early setup,
+                  # and still writes the receipt; an evidence error alone also keeps the root.
+                  def redirected():
+                      raise RuntimeError('Refusing redirected retained CI output')
+                  with patch.object(shutil, 'rmtree', side_effect=AssertionError('root removed')):
+                      for failures, stopped in ((['probe', 'cleanup:x'], False), (['probe'], True)):
+                          record = finalize_owned(owned, evidence, failures, 1, redirected)
+                          assert record['owned_services_stopped'] is stopped and not record['evidence_collected']
+                          assert not record['copied_root_removed'] and failures[-1] == 'evidence:Refusing redirected retained CI output'
+                          assert json.loads((evidence / 'cleanup.json').read_text()) == record and 'early_setup' not in record
                   assert owned.is_dir()
                   with patch.object(shutil, 'rmtree', side_effect=OSError('busy')):
-                      record = finish_owned_root(owned, [], 0)
+                      record = finish_owned_root(owned, [], True)
                   assert record['owned_services_stopped'] and not record['copied_root_removed'] and record['failures'] == ['copied-root-cleanup:busy']
+                  # Review F2: once native setup began, the outer fallback never deletes the root on a missing receipt.
+                  def interrupted(repo, config, root, evidence, lifecycle):
+                      lifecycle['native'] = True
+                      raise RuntimeError('finalizer interrupted before its receipt')
+                  for name, owned_run, receipt, kept in [
+                          ('native', interrupted, {'finalizer_incomplete': True, 'copied_root_removed': False}, True),
+                          ('early', Mock(side_effect=RuntimeError('build failed')), {'early_setup': True, 'copied_root_removed': True}, False)]:
+                      base = Path(scratch) / name
+                      base.mkdir()
+                      with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true', 'RUNNER_ENVIRONMENT': 'github-hosted', 'GITHUB_WORKSPACE': scratch,
+                              'RUNNER_TEMP': str(base), 'WS03_CI_EVIDENCE': str(base / 'evidence')}), patch.object(sys, 'platform', 'linux'), \
+                              patch.dict(globals(), Config=Mock(), run_ci_owned=owned_run):
+                          try:
+                              run_ci()
+                          except RuntimeError:
+                              pass
+                          else:
+                              raise AssertionError('Native failure hidden')
+                      assert json.loads((base / 'evidence/cleanup.json').read_text()) == receipt
+                      assert any(path.name.startswith('ws03-') for path in base.iterdir()) is kept
+              # Review F1: any listed documentation test (here a failing control) refuses the Windows executable-only run.
+              require_no_doctests('')
+              require_no_doctests('\n0 tests, 0 benchmarks\n')
+              try:
+                  require_no_doctests('src/lib.rs - f (line 1): test\nsrc/lib.rs - g (line 6): test\n')
+              except RuntimeError as error:
+                  assert 'documentation tests' in str(error) and 'src/lib.rs - f (line 1): test' in str(error)
+              else:
+                  raise AssertionError('Windows run accepted with unexecuted doctests')
               # Windows test listing: only cargo's built test artifacts inside the copied lane, as (executable, package dir).
               test_lane = Path('/owned/work/lane')
               def artifact(executable, manifest, test=True):
@@ -2562,7 +2604,7 @@ jobs:
                       else:
                           raise AssertionError('Failed Windows child accepted')
                   stderr.write.assert_called_once_with('child traceback')
-              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting, Windows zone/listener drain/owned stdio/free DNS port/test listing')
+              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe/evidence failure lifecycle, Windows zone/listener drain/owned stdio/free DNS port/test listing/doctest refusal')
 
 
           def self_test(lane):
@@ -2831,19 +2873,22 @@ jobs:
               # widening it is refused, so the disposable macOS root lives under the standard shared directory instead.
               base = Path('/Users/Shared') if sys.platform == 'darwin' else Path(os.environ['RUNNER_TEMP'])
               root = base / ('ws03-' + secrets.token_hex(8))
+              lifecycle = {'native': False}
               try:
                   config = Config(repo / 'ws03-runner-sandbox-acquisition')
                   root.mkdir()
-                  run_ci_owned(repo, config, root, evidence)
+                  run_ci_owned(repo, config, root, evidence, lifecycle)
               except BaseException as error:
                   (evidence / 'failure.json').write_text(json.dumps({'type': type(error).__name__, 'reason': str(error)[:4096]}))
                   raise
               finally:
-                  # Early build/acquisition failure starts no native guard/service. Once services
-                  # start, run_ci_owned's finally must finish before the owned copied root is removed.
-                  if root.exists() and not (evidence / 'cleanup.json').exists():
+                  # Deletion authority is the explicit lifecycle, never a missing receipt: only a failure before native setup
+                  # removes the root here. An interrupted native finalizer keeps the root and says so.
+                  if root.exists() and not lifecycle['native']:
                       shutil.rmtree(root)
                       (evidence / 'cleanup.json').write_text(json.dumps({'early_setup': True, 'copied_root_removed': True}))
+                  elif lifecycle['native'] and not (evidence / 'cleanup.json').exists():
+                      (evidence / 'cleanup.json').write_text(json.dumps({'finalizer_incomplete': True, 'copied_root_removed': False}))
                   manifest = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in evidence.iterdir()
                               if p.is_file() and p.name != 'sha256.json'}
                   (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
@@ -2879,19 +2924,39 @@ jobs:
               return pairs
 
 
-          def finish_owned_root(root, failures, primary):
-              # failures[:primary] are probe/test failures; any later entry is an owned-cleanup failure that keeps the root.
-              stopped = len(failures) == primary
-              if stopped:
+          def require_no_doctests(listing):
+              doctests = [line for line in listing.splitlines() if line.endswith(': test')]
+              if doctests:
+                  raise RuntimeError('Windows cannot run documentation tests inside the AppContainer; refusing an executable-only '
+                                     'test run: ' + '; '.join(doctests)[:4096])
+
+
+          def finalize_owned(root, evidence, failures, primary, collect):
+              # The cleanup outcome is fixed before optional evidence work; an evidence error is reported and keeps the root.
+              stopped, collected = len(failures) == primary, True
+              try:
+                  collect()
+              except BaseException as error:
+                  collected = False
+                  failures.append('evidence:' + str(error)[:4096])
+              record = finish_owned_root(root, failures, stopped, collected)
+              (evidence / 'cleanup.json').write_text(json.dumps(record))
+              return record
+
+
+          def finish_owned_root(root, failures, stopped, collected=True):
+              # Remove only when every owned service stopped and the evidence was retained; otherwise keep the root.
+              if stopped and collected:
                   try:
                       # Only this freshly created copied root, after all owned processes have stopped; evidence is retained first.
                       shutil.rmtree(root)
                   except BaseException as error:
                       failures.append('copied-root-cleanup:' + str(error))
-              return {'owned_services_stopped': stopped, 'copied_root_removed': not root.exists(), 'failures': failures}
+              return {'owned_services_stopped': stopped, 'evidence_collected': collected,
+                      'copied_root_removed': not root.exists(), 'failures': failures}
 
 
-          def run_ci_owned(repo, config, root, evidence):
+          def run_ci_owned(repo, config, root, evidence, lifecycle):
               for name in ('home', 'temp', 'cargo', 'rustup', 'output'):
                   (root / name).mkdir()
               # Copied sources/cache contain no checkout metadata or credential/config file.
@@ -2975,6 +3040,10 @@ jobs:
                   listing = subprocess.check_output([cargo, 'test', '--workspace', '--all-features', '--locked', '--offline', '--no-run',
                       '--message-format=json'], cwd=lane, env=env, text=True, timeout=config.seconds('COMMAND'))
                   windows_tests = windows_test_executables(listing, lane)
+                  # Documentation tests run only through cargo/rustdoc, which cannot run in the AppContainer. List them without
+                  # executing (outside) and refuse an executable-only run rather than dropping their coverage.
+                  require_no_doctests(subprocess.check_output([cargo, 'test', '--doc', '--workspace', '--all-features', '--locked',
+                      '--offline', '--', '--list'], cwd=lane, env=env, text=True, timeout=config.seconds('COMMAND')))
               tree = subprocess.check_output([cargo, 'tree', '-p', 'mc-pack-parser', '-e', 'normal', '--target', 'all', '--locked', '--offline'],
                                              cwd=lane, env=env, text=True, timeout=config.seconds('COMMAND'))
               (evidence / 'parser-tree.log').write_text(tree)
@@ -2998,7 +3067,11 @@ jobs:
                   'with pathlib.Path(sys.argv[2]).open("w") as log:\n'
                   # Windows passes (executable, package directory) pairs listed by cargo outside the AppContainer.
                   ' if len(sys.argv) > 3:\n'
-                  '  codes=[subprocess.run([e],cwd=c,stdout=log,stderr=subprocess.STDOUT).returncode for e,c in zip(sys.argv[3::2],sys.argv[4::2])]\n'
+                  '  codes=[]\n'
+                  '  for e,c in zip(sys.argv[3::2],sys.argv[4::2]):\n'
+                  '   log.write("RUN %s\\n" % e); log.flush()\n'
+                  '   codes.append(subprocess.run([e],cwd=c,stdout=log,stderr=subprocess.STDOUT).returncode)\n'
+                  '   log.write("EXIT %d %s\\n" % (codes[-1], e)); log.flush()\n'
                   '  sys.exit(next((c for c in codes if c),0))\n'
                   ' r=subprocess.run([sys.argv[1],"test","--workspace","--all-features","--locked","--offline"],stdout=log,stderr=subprocess.STDOUT)\n'
                   'sys.exit(r.returncode)\n')
@@ -3009,6 +3082,7 @@ jobs:
               pg_bin = None
               pg_service = None
               failures = []
+              lifecycle['native'] = True  # From here on only the finalizer below may decide to remove the root.
               try:
                   if sys.platform == 'win32':
                       # WinINet (via rustup/cargo/MSVC tools) creates this reparse-point cache under the scratch USERPROFILE.
@@ -3197,18 +3271,19 @@ jobs:
                           checked([pg_tools['pg_ctl'], '-D', native_pg, '-m', 'immediate', '-w', 'stop'], timeout=config.seconds('CLEANUP'))
                       except BaseException as error:
                           failures.append('postgres-cleanup:' + str(error))
-                  provenance['failures'] = failures
-                  (evidence / 'provenance.json').write_text(json.dumps(provenance, indent=2))
-                  for path in (root / 'output').iterdir():
-                      if path.is_symlink():
-                          raise RuntimeError('Refusing redirected retained CI output')
-                      if path.is_file() and not (sys.platform == 'darwin' and (evidence / path.name).exists()):
-                          shutil.copy2(path, evidence / path.name)
-                  for name in ('ready.json', 'dns.log', 'seatbelt.sb', 'postgres.log', 'fixture-addresses.json', 'pf-policy.txt'):
-                      path = root / name
-                      if path.is_file():
-                          shutil.copy2(path, evidence / name)
-                  (evidence / 'cleanup.json').write_text(json.dumps(finish_owned_root(root, failures, primary)))
+                  def collect():
+                      provenance['failures'] = failures
+                      (evidence / 'provenance.json').write_text(json.dumps(provenance, indent=2))
+                      for path in (root / 'output').iterdir():
+                          if path.is_symlink():
+                              raise RuntimeError('Refusing redirected retained CI output')
+                          if path.is_file() and not (sys.platform == 'darwin' and (evidence / path.name).exists()):
+                              shutil.copy2(path, evidence / path.name)
+                      for name in ('ready.json', 'dns.log', 'seatbelt.sb', 'postgres.log', 'fixture-addresses.json', 'pf-policy.txt'):
+                          path = root / name
+                          if path.is_file():
+                              shutil.copy2(path, evidence / name)
+                  finalize_owned(root, evidence, failures, primary, collect)
                   manifest = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in evidence.iterdir() if p.is_file()}
                   (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
                   if failures:
