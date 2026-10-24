@@ -415,7 +415,9 @@ jobs:
                           self._ok(self.k.CloseHandle(current))
                   try:
                       # exec.c AddUserToTokenDacl: backends must open objects the restricted postmaster creates.
-                      acl = C.cast(self._token_info(restricted, TOKEN_DEFAULT_DACL), C.POINTER(PTR)).contents.value
+                      # Named owners: the ACL/SID addresses below point into these buffers until the copy completes.
+                      default_dacl = self._token_info(restricted, TOKEN_DEFAULT_DACL)
+                      acl = C.cast(default_dacl, C.POINTER(PTR)).contents.value
                       size = ACL_SIZE()
                       self._ok(self.a.GetAclInformation(acl, C.byref(size), C.sizeof(size), ACL_SIZE_INFO))
                       user = self._token_info(restricted, TOKEN_USER)
@@ -444,7 +446,8 @@ jobs:
                       finally:
                           if self.k.LocalFree(value):
                               raise RuntimeError("LocalFree failed")
-                  user = text(C.cast(self._token_info(token, TOKEN_USER), C.POINTER(SID_AND_ATTRIBUTES)).contents.Sid)
+                  token_user = self._token_info(token, TOKEN_USER)  # Owns the SID until text() has converted it.
+                  user = text(C.cast(token_user, C.POINTER(SID_AND_ATTRIBUTES)).contents.Sid)
                   raw = self._token_info(token, TOKEN_GROUPS)
                   groups = {}
                   for entry in (SID_AND_ATTRIBUTES * C.cast(raw, PDWORD).contents.value).from_buffer(raw, C.alignment(SID_AND_ATTRIBUTES)):
@@ -698,6 +701,31 @@ jobs:
                       raise AssertionError("failed CreateRestrictedToken accepted")
               guard.a.CreateProcessAsUserW.assert_not_called()
               assert guard.k.CloseHandle.call_count == 1 and guard.k.LocalFree.call_count == 2
+              # Token-information buffers own the ACL/SID memory native consumers read: force a collection at every consumer
+              # and require each owner to be alive (review F3).
+              import gc, weakref
+              owners = []
+              def token_info(token, kind):
+                  owner = C.create_string_buffer(64)
+                  owners.append(weakref.ref(owner))
+                  return owner
+              def alive(*args):
+                  gc.collect()
+                  assert owners and all(owner() is not None for owner in owners), "token-information buffer released early"
+                  return 1
+              native = Mock()
+              for name in ("OpenProcessToken", "ConvertStringSidToSidW", "CreateRestrictedToken", "InitializeAcl", "SetTokenInformation"):
+                  getattr(native, name).return_value = 1
+              native.GetAclInformation.side_effect = native.AddAccessAllowedAceEx.side_effect = alive
+              native.GetLengthSid.side_effect = lambda sid: alive() and 12
+              guard.a, guard._token_info = native, token_info
+              guard._restricted_token()
+              assert native.AddAccessAllowedAceEx.called and native.SetTokenInformation.called
+              owners.clear()
+              native.ConvertSidToStringSidW.side_effect = alive
+              with patch.object(C, "wstring_at", return_value="S-1-5-21-1-2-3-1000"):
+                  identity = guard._token_identity(None)
+              assert identity == ("S-1-5-21-1-2-3-1000", {}, []) and native.ConvertSidToStringSidW.call_count == 1
               guard.created, guard.exempt, guard.closed = True, True, False
               try:
                   guard.run(["synthetic"], "synthetic", {}, True)
