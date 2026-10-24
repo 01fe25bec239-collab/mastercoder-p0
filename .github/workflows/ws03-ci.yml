@@ -165,11 +165,31 @@ jobs:
           WAIT_OBJECT_0, WAIT_TIMEOUT, WAIT_FAILED = 0, 258, 0xFFFFFFFF
           TOKEN_INTEGRITY, TOKEN_APPCONTAINER, TOKEN_CAPABILITIES, TOKEN_PACKAGE = 25, 29, 30, 31
           LOW_INTEGRITY, REPARSE_POINT = 0x1000, 0x400
+          HANDLE_ATTRIBUTE, USE_STD_HANDLES, TOKEN_ALL_ACCESS, DISABLE_MAX_PRIVILEGE = 0x20002, 0x100, 0xF01FF, 0x1
+          TOKEN_USER, TOKEN_GROUPS, TOKEN_PRIVILEGES, TOKEN_DEFAULT_DACL = 1, 2, 3, 6
+          ACL_REVISION, ACL_SIZE_INFO, OBJECT_INHERIT, GENERIC_ALL = 2, 2, 0x1, 0x10000000
+          ADMINS, POWER_USERS, GROUP_ENABLED, GROUP_DENY_ONLY = "S-1-5-32-544", "S-1-5-32-547", 0x4, 0x10
+
+
+          class LUID_AND_ATTRIBUTES(C.Structure):
+              _fields_ = [("LowPart", DWORD), ("HighPart", C.c_int32), ("Attributes", DWORD)]
+
+
+          class ACL_SIZE(C.Structure):
+              _fields_ = [("AceCount", DWORD), ("AclBytesInUse", DWORD), ("AclBytesFree", DWORD)]
 
 
           def validate_token_shape(is_container, same_sid, capability_count, integrity):
               if (is_container, same_sid, capability_count, integrity) != (1, True, 0, LOW_INTEGRITY):
                   raise RuntimeError("AppContainer token shape differs from zero-capability low-IL policy")
+
+
+          def validate_restricted_token(user, expected_user, groups, privileges):
+              """PostgreSQL check_root()/pgwin32_is_admin(): same user, admin groups deny-only, only change-notify."""
+              if (user != expected_user or set(privileges) - {"SeChangeNotifyPrivilege"} or any(
+                      groups[sid] & GROUP_ENABLED or not groups[sid] & GROUP_DENY_ONLY
+                      for sid in (ADMINS, POWER_USERS) if sid in groups)):
+                  raise RuntimeError("PostgreSQL token retains another user, an administrator group or a privilege")
 
 
           def environment_block(env):
@@ -253,6 +273,16 @@ jobs:
                       (self.k, "IsProcessInJob", BOOL, [HANDLE, HANDLE, C.POINTER(BOOL)]),
                       (self.k, "TerminateJobObject", BOOL, [HANDLE, DWORD]),
                       (self.k, "CloseHandle", BOOL, [HANDLE]),
+                      (self.a, "CreateRestrictedToken", BOOL, [HANDLE, DWORD, DWORD, PTR, DWORD, PTR, DWORD, PTR, C.POINTER(HANDLE)]),
+                      (self.a, "CreateProcessAsUserW", BOOL, [HANDLE, C.c_wchar_p, C.c_wchar_p, PTR, PTR, BOOL, DWORD, PTR, C.c_wchar_p, PTR, C.POINTER(PROCESS_INFORMATION)]),
+                      (self.a, "SetTokenInformation", BOOL, [HANDLE, C.c_int32, PTR, DWORD]),
+                      (self.a, "GetAclInformation", BOOL, [PTR, PTR, DWORD, C.c_int32]),
+                      (self.a, "GetAce", BOOL, [PTR, DWORD, C.POINTER(PTR)]),
+                      (self.a, "InitializeAcl", BOOL, [PTR, DWORD, DWORD]),
+                      (self.a, "AddAce", BOOL, [PTR, DWORD, DWORD, PTR, DWORD]),
+                      (self.a, "AddAccessAllowedAceEx", BOOL, [PTR, DWORD, DWORD, DWORD, PTR]),
+                      (self.a, "GetLengthSid", DWORD, [PTR]),
+                      (self.a, "LookupPrivilegeNameW", BOOL, [C.c_wchar_p, PTR, C.c_wchar_p, PDWORD]),
                   ]
                   for dll, name, result, args in prototypes:
                       function = getattr(dll, name)
@@ -364,6 +394,82 @@ jobs:
                   finally:
                       self._ok(self.k.CloseHandle(token))
 
+              def _restricted_token(self):
+                  """PostgreSQL src/common/restricted_token.c: deny-only admin groups, DISABLE_MAX_PRIVILEGE, user in default DACL."""
+                  current, restricted, sids = HANDLE(), HANDLE(), []
+                  self._ok(self.a.OpenProcessToken(self.k.GetCurrentProcess(), TOKEN_ALL_ACCESS, C.byref(current)))
+                  try:
+                      drop = (SID_AND_ATTRIBUTES * 2)()
+                      for index, text in enumerate((ADMINS, POWER_USERS)):
+                          sid = PTR()
+                          self._ok(self.a.ConvertStringSidToSidW(text, C.byref(sid)))
+                          sids.append(sid)
+                          drop[index].Sid = sid
+                      self._ok(self.a.CreateRestrictedToken(current, DISABLE_MAX_PRIVILEGE, 2, drop, 0, None, 0, None, C.byref(restricted)))
+                  finally:
+                      try:
+                          for sid in sids:
+                              if self.k.LocalFree(sid):
+                                  raise RuntimeError("LocalFree failed for dropped group SID")
+                      finally:
+                          self._ok(self.k.CloseHandle(current))
+                  try:
+                      # exec.c AddUserToTokenDacl: backends must open objects the restricted postmaster creates.
+                      acl = C.cast(self._token_info(restricted, TOKEN_DEFAULT_DACL), C.POINTER(PTR)).contents.value
+                      size = ACL_SIZE()
+                      self._ok(self.a.GetAclInformation(acl, C.byref(size), C.sizeof(size), ACL_SIZE_INFO))
+                      user = self._token_info(restricted, TOKEN_USER)
+                      user_sid = C.cast(user, C.POINTER(SID_AND_ATTRIBUTES)).contents.Sid
+                      length = size.AclBytesInUse + 8 + self._ok(self.a.GetLengthSid(user_sid))
+                      dacl = C.create_string_buffer(length)
+                      self._ok(self.a.InitializeAcl(dacl, length, ACL_REVISION))
+                      if size.AceCount:
+                          first = PTR()
+                          self._ok(self.a.GetAce(acl, 0, C.byref(first)))
+                          self._ok(self.a.AddAce(dacl, ACL_REVISION, WAIT_FAILED, first, size.AclBytesInUse - 8))
+                      self._ok(self.a.AddAccessAllowedAceEx(dacl, ACL_REVISION, OBJECT_INHERIT, GENERIC_ALL, user_sid))
+                      default = PTR(C.addressof(dacl))
+                      self._ok(self.a.SetTokenInformation(restricted, TOKEN_DEFAULT_DACL, C.byref(default), C.sizeof(default)))
+                      return restricted
+                  except BaseException:
+                      self.k.CloseHandle(restricted)
+                      raise
+
+              def _token_identity(self, token):
+                  def text(sid):
+                      value = PTR()
+                      self._ok(self.a.ConvertSidToStringSidW(sid, C.byref(value)))
+                      try:
+                          return C.wstring_at(value)
+                      finally:
+                          if self.k.LocalFree(value):
+                              raise RuntimeError("LocalFree failed")
+                  user = text(C.cast(self._token_info(token, TOKEN_USER), C.POINTER(SID_AND_ATTRIBUTES)).contents.Sid)
+                  raw = self._token_info(token, TOKEN_GROUPS)
+                  groups = {}
+                  for entry in (SID_AND_ATTRIBUTES * C.cast(raw, PDWORD).contents.value).from_buffer(raw, C.alignment(SID_AND_ATTRIBUTES)):
+                      sid = text(entry.Sid)
+                      groups[sid] = groups.get(sid, 0) | entry.Attributes  # A duplicate SID never hides an enabled entry.
+                  raw = self._token_info(token, TOKEN_PRIVILEGES)
+                  privileges = []
+                  for entry in (LUID_AND_ATTRIBUTES * C.cast(raw, PDWORD).contents.value).from_buffer(raw, C.sizeof(DWORD)):
+                      name, size = C.create_unicode_buffer(256), DWORD(256)
+                      self._ok(self.a.LookupPrivilegeNameW(None, C.byref(entry), name, C.byref(size)))
+                      privileges.append(name.value)
+                  return user, groups, privileges
+
+              def _verify_restricted(self, process):
+                  identities = []
+                  for handle in (self.k.GetCurrentProcess(), process):
+                      token = HANDLE()
+                      self._ok(self.a.OpenProcessToken(handle, TOKEN_QUERY, C.byref(token)))
+                      try:
+                          identities.append(self._token_identity(token))
+                      finally:
+                          self._ok(self.k.CloseHandle(token))
+                  (expected, _, _), (user, groups, privileges) = identities
+                  validate_restricted_token(user, expected, groups, privileges)
+
               @classmethod
               def attest_current(cls, sid_text):
                   """Called by the child/grandchild itself; no profile or ACL mutation."""
@@ -398,9 +504,11 @@ jobs:
                           raise TimeoutError("job descendants did not terminate within bound")
                       time.sleep(min(0.01, max(0, deadline - time.monotonic())))
 
-              def run(self, argv, cwd, env, guarded=True, cancel=None):
+              def run(self, argv, cwd, env, guarded=True, cancel=None, restricted=False, stdio=None):
                   if not self.created or not self.exempt or self.closed:
                       raise RuntimeError("guard is not ready")
+                  if restricted and guarded:
+                      raise ValueError("restricted token is only for the unguarded owned PostgreSQL service")
                   if not isinstance(argv, (list, tuple)) or not argv or any(not isinstance(x, str) or "\0" in x for x in argv):
                       raise ValueError("argv must be a nonempty sequence of NUL-free strings")
                   executable, directory = Path(argv[0]), Path(cwd)
@@ -416,12 +524,13 @@ jobs:
                   job = self._ok(self.k.CreateJobObjectW(None, None))  # Unnamed, noninheritable.
                   self.active_jobs.add(job)
                   attributes, initialized, process = None, False, PROCESS_INFORMATION()
+                  token, streams = None, []
                   try:
                       limits = EXTENDED_LIMITS()
                       limits.BasicLimitInformation.LimitFlags = KILL_ON_CLOSE
                       self._ok(self.k.SetInformationJobObject(job, 9, C.byref(limits), C.sizeof(limits)))
                       needed = SIZE()
-                      count = 2 if guarded else 1
+                      count = 1 + bool(guarded) + (stdio is not None)
                       if self.k.InitializeProcThreadAttributeList(None, count, 0, C.byref(needed)) or C.get_last_error() != INSUFFICIENT_BUFFER:
                           raise RuntimeError("unexpected attribute-list sizing result")
                       attributes = C.create_string_buffer(needed.value)
@@ -435,15 +544,34 @@ jobs:
                       startup = STARTUPINFOEX()
                       startup.StartupInfo.cb = C.sizeof(startup)
                       startup.lpAttributeList = C.cast(attributes, PTR)
-                      self._ok(self.k.CreateProcessW(str(executable), command, None, None, False,
-                                   EXTENDED_STARTUP | UNICODE_ENVIRONMENT | SUSPENDED,
-                                   environment, str(directory), C.byref(startup), C.byref(process)))
+                      if stdio is not None:
+                          # Owned files, not pipes: nothing to drain while the child runs; inheritance limited to these two handles.
+                          import msvcrt
+                          streams = [open(stdio[0] or os.devnull, "rb"), open(stdio[1], "wb")]
+                          handles = (HANDLE * 2)(*(msvcrt.get_osfhandle(stream.fileno()) for stream in streams))
+                          for handle in handles:
+                              os.set_handle_inheritable(handle, True)
+                          self._ok(self.k.UpdateProcThreadAttribute(attributes, 0, HANDLE_ATTRIBUTE, handles, C.sizeof(handles), None, None))
+                          startup.StartupInfo.dwFlags = USE_STD_HANDLES
+                          startup.StartupInfo.hStdInput = handles[0]
+                          startup.StartupInfo.hStdOutput = startup.StartupInfo.hStdError = handles[1]
+                      flags = EXTENDED_STARTUP | UNICODE_ENVIRONMENT | SUSPENDED
+                      if restricted:
+                          # PostgreSQL refuses administrator tokens; no fallback to the runner's own token.
+                          token = self._restricted_token()
+                          self._ok(self.a.CreateProcessAsUserW(token, str(executable), command, None, None, stdio is not None,
+                                   flags, environment, str(directory), C.byref(startup), C.byref(process)))
+                      else:
+                          self._ok(self.k.CreateProcessW(str(executable), command, None, None, stdio is not None,
+                                   flags, environment, str(directory), C.byref(startup), C.byref(process)))
                       in_job = BOOL()
                       self._ok(self.k.IsProcessInJob(process.hProcess, job, C.byref(in_job)))
                       if not in_job.value:
                           raise RuntimeError("new process not in owned job")
                       if guarded:
                           self._verify_token(process.hProcess)
+                      if restricted:
+                          self._verify_restricted(process.hProcess)
                       if self.k.ResumeThread(process.hThread) == WAIT_FAILED:
                           raise C.WinError(C.get_last_error())
                       deadline = time.monotonic() + self.timeout * (3 if cancel is not None else 1)
@@ -477,6 +605,10 @@ jobs:
                                   self._ok(self.k.CloseHandle(process.hProcess))
                               if initialized:
                                   self.k.DeleteProcThreadAttributeList(attributes)
+                              for stream in streams:
+                                  stream.close()
+                              if token:
+                                  self._ok(self.k.CloseHandle(token))
 
               def cleanup(self):
                   if self.closed:
@@ -519,7 +651,59 @@ jobs:
                   except ValueError:
                       continue
                   raise AssertionError("invalid environment accepted")
+              user = "S-1-5-21-1-2-3-1000"
+              reduced = {ADMINS: GROUP_DENY_ONLY, POWER_USERS: GROUP_DENY_ONLY, "S-1-5-11": 0x7}
+              validate_restricted_token(user, user, reduced, ["SeChangeNotifyPrivilege"])
+              validate_restricted_token(user, user, {"S-1-5-11": 0x7}, [])
+              for args in ((user, user, dict(reduced, **{ADMINS: 0x7}), []),
+                           (user, user, dict(reduced, **{ADMINS: GROUP_DENY_ONLY | GROUP_ENABLED}), []),
+                           (user, user, dict(reduced, **{POWER_USERS: 0x7}), []),
+                           (user, user, reduced, ["SeChangeNotifyPrivilege", "SeDebugPrivilege"]),
+                           ("S-1-5-18", user, reduced, [])):
+                  try:
+                      validate_restricted_token(*args)
+                  except RuntimeError:
+                      continue
+                  raise AssertionError("administrator-capable PostgreSQL token accepted")
+              # A missing native token API fails closed while binding, before any process exists.
+              from unittest.mock import Mock, patch
+              guard = object.__new__(WindowsGuard)
+              guard.k, guard.a, guard.u, guard.f, guard.o = (Mock() for _ in range(5))
+              guard._bind()
+              for name in ("CreateRestrictedToken", "CreateProcessAsUserW", "SetTokenInformation", "LookupPrivilegeNameW"):
+                  guard.a = Mock()
+                  delattr(guard.a, name)
+                  try:
+                      guard._bind()
+                  except AttributeError:
+                      continue
+                  raise AssertionError("missing native token API accepted: " + name)
+              # A failed native token call raises before CreateProcessAsUserW and closes the opened token.
+              guard.a = Mock()
+              guard.a.OpenProcessToken.return_value = 1
+              guard.a.ConvertStringSidToSidW.return_value = 1
+              guard.a.CreateRestrictedToken.return_value = 0
+              guard.k.LocalFree.return_value = None
+              guard.k.CloseHandle.return_value = 1
+              with patch.object(C, "WinError", create=True, new=lambda code=None: OSError(code)), \
+                      patch.object(C, "get_last_error", create=True, new=lambda: 5):
+                  try:
+                      guard._restricted_token()
+                  except OSError:
+                      pass
+                  else:
+                      raise AssertionError("failed CreateRestrictedToken accepted")
+              guard.a.CreateProcessAsUserW.assert_not_called()
+              assert guard.k.CloseHandle.call_count == 1 and guard.k.LocalFree.call_count == 2
+              guard.created, guard.exempt, guard.closed = True, True, False
+              try:
+                  guard.run(["synthetic"], "synthetic", {}, True, restricted=True)
+              except ValueError as error:
+                  assert "restricted token" in str(error)
+              else:
+                  raise AssertionError("restricted token accepted for an AppContainer-guarded process")
               if C.sizeof(PTR) == 8:
+                  assert C.sizeof(LUID_AND_ATTRIBUTES) == 12 and C.sizeof(ACL_SIZE) == 12
                   assert C.sizeof(STARTUPINFO) == 104
                   assert C.sizeof(STARTUPINFOEX) == 112
                   assert C.sizeof(SECURITY_CAPABILITIES) == 24
@@ -612,16 +796,21 @@ jobs:
               return 'postgresql://' + PG_ROLE + '@127.0.0.1:' + str(port) + '/' + PG_DATABASE
 
 
-          def bootstrap_pg(tools, data, timeout, log):
+          def bootstrap_pg(tools, data, timeout, log, single=None):
               # Offline single-user mode has no socket/listener and takes SQL only on owned stdin.
+              # initdb restricts its own token on Windows; postgres does not, so Windows passes the owned restricted runner.
               checked([tools['initdb'], '-D', data, '-U', 'postgres', '-A', 'reject'], timeout=timeout)
               (data / 'pg_hba.conf').write_text(PG_HBA)
-              result = subprocess.run([str(x) for x in (tools['postgres'], '--single', '-D', data, '-c', 'exit_on_error=on', 'postgres')],
-                                      input=PG_BOOTSTRAP, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+              argv = [str(x) for x in (tools['postgres'], '--single', '-D', data, '-c', 'exit_on_error=on', 'postgres')]
+              if single is None:
+                  result = subprocess.run(argv, input=PG_BOOTSTRAP, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+                  code, output = result.returncode, result.stdout
+              else:
+                  code, output = single(argv, PG_BOOTSTRAP)
               # Bounded native output survives a failed exit; fixed SQL/HBA carry no credentials and no env is recorded.
-              log.write_text(result.stdout[-65536:])
-              if result.returncode or re.search(r'\b(ERROR|FATAL|PANIC):', result.stdout):
-                  raise RuntimeError('Offline PostgreSQL bootstrap failed (exit ' + str(result.returncode) + '): ' + result.stdout[-1024:])
+              log.write_text(output[-65536:])
+              if code or re.search(r'\b(ERROR|FATAL|PANIC):', output):
+                  raise RuntimeError('Offline PostgreSQL bootstrap failed (exit ' + str(code) + '): ' + output[-1024:])
 
 
           def linux_pg_command(image, port):
@@ -1527,7 +1716,17 @@ jobs:
                   raise RuntimeError('Exclusive CI identity can regain root')
 
 
-          def mac_profile(root, python, cargo, native_tools, developer):
+          def mac_python_runtime(python, prefix):
+              # python.org framework bin/python3.X is a hardened-runtime launcher: absolute install names load <prefix>/Python
+              # (+ lib/*.dylib) and it re-executes <prefix>/Resources/Python.app. A copied tree still runs the installed one.
+              python, prefix = Path(python), Path(prefix)
+              if python == prefix or not python.is_relative_to(prefix):
+                  raise RuntimeError('Python interpreter is outside its installed runtime prefix')
+              app = prefix / 'Resources/Python.app/Contents/MacOS/Python'
+              return [python] + ([app] if app.is_file() else [])
+
+
+          def mac_profile(root, python, cargo, native_tools, developer, python_prefix):
               def literal(path):
                   return '(literal ' + json.dumps(str(path)) + ')'
               def subtree(path):
@@ -1535,7 +1734,7 @@ jobs:
               target = root / 'work/ws03-runner-sandbox-acquisition/target'
               writable = [root / name for name in ('home', 'temp', 'output')] + [target]
               locks = [root / 'cargo' / name for name in ('.package-cache', '.package-cache-mutate')]
-              read = [subtree(path) for path in (root / 'python', root / 'toolchain', root / 'work', root / 'cargo',
+              read = [subtree(path) for path in (python_prefix, root / 'toolchain', root / 'work', root / 'cargo',
                       root / 'rustup', Path('/System'), Path('/usr/lib'), Path('/usr/bin'), Path('/bin'),
                       Path('/Library/Developer'), developer, Path('/private/etc'))]
               read += [literal(root / name) for name in ('helper.py', 'tests.py', 'probe.json')]
@@ -1547,7 +1746,7 @@ jobs:
                       '(allow network-bind (local ip "*:*"))\n'
                       '(allow network-inbound (local ip "localhost:*"))\n'
                       '(deny mach-lookup mach-register ipc-posix* iokit-open)\n'
-                      '(deny file-link)\n(deny process-exec)\n(allow process-exec ' + ' '.join([literal(python), literal(cargo),
+                      '(deny file-link)\n(deny process-exec)\n(allow process-exec ' + ' '.join([literal(path) for path in mac_python_runtime(python, python_prefix)] + [literal(cargo),
                           literal(cargo.parent / 'rustc'), literal(cargo.parent / 'rustdoc'), subtree(target),
                           subtree(root / 'temp')] + [literal(path) for path in native_tools]) + ')\n'
                       '(deny file-read* file-write*)\n(allow file-read-metadata ' +
@@ -1557,9 +1756,9 @@ jobs:
 
           class MacCI(PosixGuard):
               """Disposable hosted-CI facility only; not the production F3 descendant/VM owner."""
-              def __init__(self, root, config, python, cargo):
+              def __init__(self, root, config, python, cargo, python_prefix):
                   super().__init__(root, config)
-                  self.python, self.cargo = python, cargo
+                  self.python, self.cargo, self.python_prefix = python, cargo, python_prefix
                   self.runner_uid, self.runner_gid = os.getuid(), os.getgid()
                   if self.runner_uid == 0 or self.runner_gid == 0:
                       raise RuntimeError('CI controller must be unprivileged')
@@ -1659,7 +1858,7 @@ jobs:
                                       timeout=self.config.seconds('SETUP')).strip()).resolve(strict=True)
                   if not self.developer.is_absolute() or not self.developer.is_dir():
                       raise RuntimeError('Missing installed native SDK')
-                  self.profile.write_text(mac_profile(self.root, self.python, self.cargo, self.native_tools, self.developer))
+                  self.profile.write_text(mac_profile(self.root, self.python, self.cargo, self.native_tools, self.developer, self.python_prefix))
                   self.anchor = 'com.apple/ws03_' + secrets.token_hex(12)
                   if self.pf('-a', self.anchor, '-sr').stdout.strip():
                       raise RuntimeError('Owned PF anchor collision')
@@ -1696,7 +1895,7 @@ jobs:
               def prepare_access(self):
                   # Runner/controller owns every immutable byte. Account can traverse but not alter controls.
                   self.root.chmod(0o755)
-                  readable = [self.root / name for name in ('python', 'toolchain', 'work', 'cargo', 'rustup', 'home', 'temp', 'output')]
+                  readable = [self.root / name for name in ('toolchain', 'work', 'cargo', 'rustup', 'home', 'temp', 'output')]
                   for directory in readable:
                       for path in [directory, *directory.rglob('*')]:
                           if path.is_symlink():
@@ -1911,8 +2110,28 @@ jobs:
                           assert 'regain root' in str(error)
                       else:
                           raise AssertionError('Saved root credential accepted')
-              root, python, cargo = Path('/synthetic/owned'), Path('/synthetic/owned/python/bin/python'), Path('/synthetic/owned/toolchain/bin/cargo')
-              profile = mac_profile(root, python, cargo, [Path('/usr/bin/cc')], Path('/Library/Developer/CommandLineTools'))
+              root, cargo = Path('/synthetic/owned'), Path('/synthetic/owned/toolchain/bin/cargo')
+              prefix = Path('/synthetic/Python.framework/Versions/3.14')
+              python = prefix / 'bin/python3.14'
+              profile = mac_profile(root, python, cargo, [Path('/usr/bin/cc')], Path('/Library/Developer/CommandLineTools'), prefix)
+              # Regression: the framework launcher loads/re-executes its installed prefix, so it must be readable and exec-allowed.
+              assert '(subpath "' + str(prefix) + '")' in profile and '"' + str(root / 'python') + '"' not in profile
+              assert '(literal "' + str(python) + '")' in profile
+              import tempfile
+              with tempfile.TemporaryDirectory() as scratch:
+                  framework = Path(scratch)
+                  app = framework / 'Resources/Python.app/Contents/MacOS/Python'
+                  app.parent.mkdir(parents=True)
+                  app.write_bytes(b'')
+                  assert mac_python_runtime(framework / 'bin/python3.14', framework) == [framework / 'bin/python3.14', app]
+                  assert '(literal "' + str(app) + '")' in mac_profile(root, framework / 'bin/python3.14', cargo, [], framework, framework)
+              for outside in (Path('/synthetic/other/bin/python3.14'), prefix):
+                  try:
+                      mac_python_runtime(outside, prefix)
+                  except RuntimeError as error:
+                      assert 'outside its installed runtime prefix' in str(error)
+                  else:
+                      raise AssertionError('Interpreter outside its runtime prefix accepted')
               for mandatory in ('(deny network*)', '(allow network-bind (local ip "*:*"))',
                       '(allow network-inbound (local ip "localhost:*"))', '(deny mach-lookup mach-register ipc-posix* iokit-open)',
                       '(deny process-exec)', '(deny file-link)', '(deny file-read* file-write*)'):
@@ -1923,7 +2142,7 @@ jobs:
                   if statement.startswith('(allow file-write*'):
                       assert all('"' + str(root / part) + '"' in statement for part in ('home', 'temp', 'output'))
                       assert '"' + str(root / 'work') + '"' not in statement
-              guard = MacCI(MagicMock(), Mock(), python, cargo)
+              guard = MacCI(MagicMock(), Mock(), python, cargo, prefix)
               guard.uid, guard.anchor = uid, 'com.apple/ws03_synthetic'
               normalized = '\n'.join('rule-' + str(index) for index in range(10)) + '\n'
               guard.pf = Mock(side_effect=[Mock(stdout=normalized), Mock(), Mock(stdout=normalized), Mock(stdout='tree')])
@@ -1992,7 +2211,7 @@ jobs:
                   assert not item['loopback'] and any(peer['loopback'] and peer['family'] == item['family'] and
                       peer['protocol'] == item['protocol'] and peer['port'] == item['port'] for peer in ready['endpoints'])
               assert len(sockets) == 13 and all(sock.close.call_count == 1 for sock in sockets)
-              print('PASS: PF exact UID/dual-family/no-state/attachment/skip/parser/mutation; saved identity/groups; IPC/exec/file profile; four same-port controls and socket closure')
+              print('PASS: PF exact UID/dual-family/no-state/attachment/skip/parser/mutation; saved identity/groups; IPC/exec/file profile with installed framework runtime; four same-port controls and socket closure')
 
 
           def pg_policy_selftest():
@@ -2060,7 +2279,19 @@ jobs:
                   data.__truediv__.return_value.write_text.assert_called_once_with(PG_HBA)
                   assert run.call_args.args[0][:2] == ['synthetic-postgres', '--single'] and run.call_args.kwargs['input'] == PG_BOOTSTRAP
                   assert 'check' not in run.call_args.kwargs and log.write_text.call_args.args[0] == output[-65536:]
-              print('PASS: PostgreSQL fixture policy, denial fields, bounded offline bootstrap diagnostics')
+              # Windows single-user bootstrap routes through the owned restricted runner, never an unrestricted subprocess.
+              for code, output, failed in [(0, 'backend> ', False), (1, 'Execution of PostgreSQL by a user with administrative permissions\n', True)]:
+                  data, log, initdb, single = MagicMock(), Mock(), Mock(), Mock(return_value=(code, output))
+                  with patch.dict(globals(), checked=initdb), patch.object(subprocess, 'run', side_effect=AssertionError('unrestricted')):
+                      try:
+                          bootstrap_pg(tools, data, 1, log, single)
+                      except RuntimeError as error:
+                          assert failed and 'administrative permissions' in str(error)
+                      else:
+                          assert not failed
+                  assert single.call_args.args[0][:2] == ['synthetic-postgres', '--single'] and single.call_args.args[1] == PG_BOOTSTRAP
+                  assert log.write_text.call_args.args[0] == output
+              print('PASS: PostgreSQL fixture policy, denial fields, bounded offline bootstrap diagnostics, restricted Windows bootstrap route')
 
 
           def nft_parser_selftest():
@@ -2202,11 +2433,26 @@ jobs:
               assert failure == {'type': 'ValueError', 'reason': 'x' * 4096}
               assert json.loads(writes[-1]) == {}
               root.mkdir.assert_not_called()
-              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence')
+              # A failed probe with successful owned cleanup is reported as stopped/removed, failure retained; a cleanup
+              # failure keeps the root and is never reported as stopped.
+              import tempfile
+              with tempfile.TemporaryDirectory() as scratch:
+                  owned = Path(scratch) / 'owned'
+                  owned.mkdir()
+                  assert finish_owned_root(owned, ['probe'], 1) == {'owned_services_stopped': True, 'copied_root_removed': True, 'failures': ['probe']}
+                  owned.mkdir()
+                  assert finish_owned_root(owned, ['probe', 'cleanup:x'], 1) == {
+                      'owned_services_stopped': False, 'copied_root_removed': False, 'failures': ['probe', 'cleanup:x']}
+                  assert owned.is_dir()
+                  with patch.object(shutil, 'rmtree', side_effect=OSError('busy')):
+                      record = finish_owned_root(owned, [], 0)
+                  assert record['owned_services_stopped'] and not record['copied_root_removed'] and record['failures'] == ['copied-root-cleanup:busy']
+              print('PASS: repair POSIX grammar, runtime channel negatives, scoped numeric addresses, bind failure closure, exited-child cleanup, bounded early evidence, cleanup-vs-probe failure reporting')
 
 
           def self_test(lane):
               Config(lane)
+              print(selftest())
               msvc_selftest()
               mac_ci_selftest()
               nft_parser_selftest()
@@ -2390,10 +2636,20 @@ jobs:
                   self.errors = []
                   self.thread = None
 
+              def single(self, argv, sql, root, env):
+                  # Fixed SQL from an owned file on stdin; output to an owned file, read back as a bounded tail.
+                  source, output = root / 'postgres-bootstrap.sql', root / 'postgres-bootstrap.out'
+                  source.write_text(sql)
+                  code = self.native.run(argv, str(root), env, False, restricted=True, stdio=(source, output))
+                  with output.open('rb') as stream:
+                      stream.seek(max(0, stream.seek(0, os.SEEK_END) - 65536))
+                      return code, stream.read().decode('utf-8', 'replace').replace('\r\n', '\n')
+
               def start(self, argv, root, env, port):
                   def serve_owned():
                       try:
-                          code = self.native.run(argv, str(root), env, False, cancel=self.cancel)
+                          code = self.native.run(argv, str(root), env, False, cancel=self.cancel,
+                                                 restricted=True, stdio=(None, root / 'postgres.log'))
                           if code or not self.cancel.is_set():
                               raise RuntimeError('Owned PostgreSQL exited before cancellation: ' + str(code))
                       except BaseException as error:
@@ -2450,24 +2706,16 @@ jobs:
                   (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
 
 
-          def copy_mac_python(installed_prefix, destination):
-              excluded = []
-              optional_headers = {'Frameworks/Tk.framework/PrivateHeaders', 'Frameworks/Tcl.framework/PrivateHeaders'}
-              def ignore(directory, names):
-                  ignored = set(names) & {'__pycache__', 'site-packages'}
-                  for name in set(names) - ignored:
-                      source = Path(directory) / name
-                      relative = source.relative_to(installed_prefix).as_posix()
-                      # These exact optional developer headers are unused by the CI runtime callers.
-                      if relative in optional_headers:
-                          ignored.add(name)
-                          excluded.append(relative)
-                      elif source.is_symlink():
-                          if not source.resolve(strict=True).is_relative_to(installed_prefix):
-                              raise ValueError('Python runtime link escapes installed prefix: ' + relative)
-                  return ignored
-              shutil.copytree(installed_prefix, destination, ignore=ignore)
-              return sorted(excluded)
+          def finish_owned_root(root, failures, primary):
+              # failures[:primary] are probe/test failures; any later entry is an owned-cleanup failure that keeps the root.
+              stopped = len(failures) == primary
+              if stopped:
+                  try:
+                      # Only this freshly created copied root, after all owned processes have stopped; evidence is retained first.
+                      shutil.rmtree(root)
+                  except BaseException as error:
+                      failures.append('copied-root-cleanup:' + str(error))
+              return {'owned_services_stopped': stopped, 'copied_root_removed': not root.exists(), 'failures': failures}
 
 
           def run_ci_owned(repo, config, root, evidence):
@@ -2506,13 +2754,13 @@ jobs:
                           env=env, cwd=root, timeout=config.seconds('SETUP'), stdout=output, stderr=subprocess.STDOUT)
               else:
                   if sys.platform == 'darwin':
-                      # Dedicated copied runtimes are RX for the test UID; no runner home/tool-cache access.
+                      # Dedicated copied toolchain is RX for the test UID; no runner home/tool-cache access. The framework
+                      # interpreter cannot be relocated (see mac_python_runtime), so the profile reads its installed prefix.
                       shutil.copytree(active_toolchain, root / 'toolchain')
-                      installed_prefix = Path(sys.base_prefix).resolve(strict=True)
-                      installed_python = Path(sys.executable).resolve(strict=True)
-                      excluded = copy_mac_python(installed_prefix, root / 'python')
-                      (evidence / 'mac-python-copy.json').write_text(json.dumps({'excluded_developer_headers': excluded}))
-                      python = root / 'python' / installed_python.relative_to(installed_prefix)
+                      python_prefix = Path(sys.base_prefix).resolve(strict=True)
+                      python = Path(sys.executable).resolve(strict=True)
+                      (evidence / 'mac-python-runtime.json').write_text(json.dumps(
+                          {'prefix': str(python_prefix), 'exec': [str(path) for path in mac_python_runtime(python, python_prefix)]}))
                       active_toolchain = root / 'toolchain'
                       cargo = active_toolchain / 'bin/cargo'
                   else:
@@ -2566,7 +2814,7 @@ jobs:
                   'sys.exit(r.returncode)\n')
               (root / 'probe.json').write_text('{}')
               guard = (WindowsCI(root, config) if sys.platform == 'win32' else
-                       MacCI(root, config, python, cargo) if sys.platform == 'darwin' else PosixGuard(root, config))
+                       MacCI(root, config, python, cargo, python_prefix) if sys.platform == 'darwin' else PosixGuard(root, config))
               native_pg = None
               pg_bin = None
               pg_service = None
@@ -2633,10 +2881,12 @@ jobs:
                           provenance['tools'][tool] = {'path': str(executable), 'sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
                               'version': subprocess.check_output([executable, '--version'], text=True).strip()}
                       native_pg = root / 'postgres-data'
-                      bootstrap_pg(pg_tools, native_pg, config.seconds('SETUP'), evidence / 'postgres-bootstrap.log')
-                      fixture['pg_server_canary'] = str(native_pg / '__ws03_denied__')
                       if sys.platform == 'win32':
                           pg_service = WindowsPostgres(guard.native, config)
+                      bootstrap_pg(pg_tools, native_pg, config.seconds('SETUP'), evidence / 'postgres-bootstrap.log',
+                                   (lambda argv, sql: pg_service.single(argv, sql, root, env)) if pg_service else None)
+                      fixture['pg_server_canary'] = str(native_pg / '__ws03_denied__')
+                      if sys.platform == 'win32':
                           pg_service.start([str(pg_tools['postgres']), '-D', str(native_pg), '-h', '127.0.0.1', '-p', str(pg_port),
                               '-c', 'unix_socket_directories='], root, env, pg_port)
                       else:
@@ -2737,6 +2987,8 @@ jobs:
                   failures.append(type(error).__name__ + ': ' + str(error))
                   raise
               finally:
+                  # A probe/test failure is retained separately; it never means owned services failed to stop.
+                  primary = len(failures)
                   if pg_service is not None:
                       try:
                           pg_service.stop()
@@ -2767,14 +3019,7 @@ jobs:
                       path = root / name
                       if path.is_file():
                           shutil.copy2(path, evidence / name)
-                  if not failures:
-                      try:
-                          # Only this freshly created copied root, after all owned processes have stopped.
-                          shutil.rmtree(root)
-                      except BaseException as error:
-                          failures.append('copied-root-cleanup:' + str(error))
-                  (evidence / 'cleanup.json').write_text(json.dumps({'owned_services_stopped': not failures,
-                                                                    'copied_root_removed': not root.exists(), 'failures': failures}))
+                  (evidence / 'cleanup.json').write_text(json.dumps(finish_owned_root(root, failures, primary)))
                   manifest = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in evidence.iterdir() if p.is_file()}
                   (evidence / 'sha256.json').write_text(json.dumps(manifest, indent=2))
                   if failures:
