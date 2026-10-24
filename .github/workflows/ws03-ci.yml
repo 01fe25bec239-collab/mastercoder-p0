@@ -1682,6 +1682,10 @@ jobs:
                       f'pass in quick inet proto {{ tcp, udp }} from 127.0.0.0/8 to any user = {uid} flags any no state\n'
                       f'pass out quick inet6 proto {{ tcp, udp }} from any to ::1 user = {uid} flags any no state\n'
                       f'pass in quick inet6 proto {{ tcp, udp }} from ::1 to any user = {uid} flags any no state\n'
+                      # CI run 40051997546: TCP to the host's own fe80::%en0 passed while every uid-scoped rule was evaluated
+                      # with zero matches (PF's link-local socket/uid lookup). Seatbelt treats own addresses as localhost, so drop
+                      # link-local TCP/UDP by address too; owned anchor only, removed by mutation/cleanup with the rest.
+                      'block drop out quick inet6 proto { tcp, udp } from any to fe80::/10\n'
                       f'block drop quick proto {{ tcp, udp }} all user = {uid}\n')
 
 
@@ -1959,7 +1963,7 @@ jobs:
                   self.loaded = True
                   rules = self.pf('-a', self.anchor, '-sr').stdout
                   lines = rules.splitlines()
-                  if len(lines) != 10 or rules.strip() != parsed.stdout.strip():
+                  if len(lines) != 12 or rules.strip() != parsed.stdout.strip():
                       raise RuntimeError('PF UID rule expansion did not match the owned policy')
                   # PF expands the TCP/UDP brace list. Bind exact normalized output for every subsequent entry.
                   self.pf_expected = rules
@@ -2075,7 +2079,10 @@ jobs:
               uid, gid = 1001, 1001
               policy = mac_pf_policy(uid)
               lines = policy.splitlines()
-              assert len(lines) == 5 and all('quick' in line and 'user = 1001' in line and '{ tcp, udp }' in line for line in lines)
+              assert len(lines) == 6 and all('quick' in line and '{ tcp, udp }' in line for line in lines)
+              assert all('user = 1001' in line for line in lines[:4] + lines[-1:])
+              # Regression: own link-local TCP escaped the uid-scoped rules in CI; the address rule is unconditional.
+              assert lines[4] == 'block drop out quick inet6 proto { tcp, udp } from any to fe80::/10'
               assert lines[:4] == [
                   'pass out quick inet proto { tcp, udp } from any to 127.0.0.0/8 user = 1001 flags any no state',
                   'pass in quick inet proto { tcp, udp } from 127.0.0.0/8 to any user = 1001 flags any no state',
@@ -2172,7 +2179,7 @@ jobs:
                       assert '"' + str(root / 'work') + '"' not in statement
               guard = MacCI(MagicMock(), Mock(), python, cargo, prefix)
               guard.uid, guard.anchor = uid, 'com.apple/ws03_synthetic'
-              normalized = '\n'.join('rule-' + str(index) for index in range(10)) + '\n'
+              normalized = '\n'.join('rule-' + str(index) for index in range(12)) + '\n'
               guard.pf = Mock(side_effect=[Mock(stdout=normalized), Mock(), Mock(stdout=normalized), Mock(stdout='tree')])
               guard.attest_policy = Mock()
               guard.install()
@@ -2668,7 +2675,7 @@ jobs:
                       self.wfp.ScopeClose.argtypes = [ctypes.c_void_p]
                   code = self.wfp.ScopeOpen(self.native.sid_text, ctypes.byref(self.wfp_handle))
                   if code:
-                      raise RuntimeError('Owned WFP setup failed: ' + str(code))
+                      raise RuntimeError('Owned WFP setup failed: ' + str(code) + ' (0x%08x)' % code)
                   if self.wfp.ScopeAttest(self.wfp_handle):
                       raise RuntimeError('Owned WFP policy readback failed')
 
@@ -3253,11 +3260,19 @@ jobs:
                   const DWORD error = FwpmFilterGetById0(scope->engine, scope->filters[i], &filter);
                   if (error) return error;
                   const GUID& layer = ipv6 ? FWPM_LAYER_ALE_AUTH_CONNECT_V6 : FWPM_LAYER_ALE_AUTH_CONNECT_V4;
-                  bool valid = filter && IsEqualGUID(filter->layerKey, layer) &&
-                      IsEqualGUID(filter->subLayerKey, scope->sublayer) &&
-                      filter->action.type == (loopback ? loopback_action : external_action) &&
-                      filter->weight.type == FWP_UINT8 && filter->weight.uint8 == (loopback ? 15 : 0) &&
-                      filter->flags == 0 && filter->numFilterConditions == (loopback ? 2u : 1u) && filter->filterCondition;
+                  // BFE normalizes read-back filters: it sets FWPM_FILTER_FLAG_INDEXED itself, and an FWP_UINT8 weight w is the
+                  // high 4 bits of the 64-bit weight. Accept exactly those representations; every distinct failure is coded below.
+                  const UINT8 weight = loopback ? 15 : 0;
+                  DWORD failed = 0;
+                  if (!filter) failed = 1;
+                  else if (!IsEqualGUID(filter->layerKey, layer) || !IsEqualGUID(filter->subLayerKey, scope->sublayer)) failed = 2;
+                  else if (filter->action.type != (loopback ? loopback_action : external_action)) failed = 3;
+                  else if (!((filter->weight.type == FWP_UINT8 && filter->weight.uint8 == weight) ||
+                             (filter->weight.type == FWP_UINT64 && filter->weight.uint64 && (*filter->weight.uint64 >> 60) == weight)))
+                      failed = 4 | (static_cast<DWORD>(filter->weight.type) << 8);
+                  else if (filter->flags & ~static_cast<UINT32>(FWPM_FILTER_FLAG_INDEXED)) failed = 5 | ((filter->flags & 0xFFF) << 8);
+                  else if (filter->numFilterConditions != (loopback ? 2u : 1u) || !filter->filterCondition) failed = 6;
+                  bool valid = !failed;
                   if (valid) {
                       const auto& package = filter->filterCondition[0];
                       valid = IsEqualGUID(package.fieldKey, FWPM_CONDITION_ALE_PACKAGE_ID) &&
@@ -3270,7 +3285,8 @@ jobs:
                       }
                   }
                   FwpmFreeMemory0(reinterpret_cast<void**>(&filter));
-                  if (!valid) return ERROR_INVALID_DATA;
+                  // 0xE<filter><code>: identifies the filter and check (7 = package/remote condition) instead of a bare 13.
+                  if (!valid) return 0xE0000000u | (static_cast<DWORD>(i) << 24) | (failed ? failed : 7);
               }
               return ERROR_SUCCESS;
           }
