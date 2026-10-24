@@ -509,6 +509,9 @@ jobs:
                       raise RuntimeError("guard is not ready")
                   if restricted and guarded:
                       raise ValueError("restricted token is only for the unguarded owned PostgreSQL service")
+                  if guarded and not env.get("LOCALAPPDATA"):
+                      # CreateProcessW fails AppContainer creation with ERROR_ENVVAR_NOT_FOUND (203) without it (CI run 40067094938).
+                      raise ValueError("AppContainer environment requires LOCALAPPDATA")
                   if not isinstance(argv, (list, tuple)) or not argv or any(not isinstance(x, str) or "\0" in x for x in argv):
                       raise ValueError("argv must be a nonempty sequence of NUL-free strings")
                   executable, directory = Path(argv[0]), Path(cwd)
@@ -696,6 +699,12 @@ jobs:
               guard.a.CreateProcessAsUserW.assert_not_called()
               assert guard.k.CloseHandle.call_count == 1 and guard.k.LocalFree.call_count == 2
               guard.created, guard.exempt, guard.closed = True, True, False
+              try:
+                  guard.run(["synthetic"], "synthetic", {}, True)
+              except ValueError as error:
+                  assert "LOCALAPPDATA" in str(error)
+              else:
+                  raise AssertionError("AppContainer launch without LOCALAPPDATA accepted")
               try:
                   guard.run(["synthetic"], "synthetic", {}, True, restricted=True)
               except ValueError as error:
@@ -2872,6 +2881,10 @@ jobs:
                   shutil.copytree(Path(sys.executable).parent, root / 'python', ignore=shutil.ignore_patterns('__pycache__'))
                   python = root / 'python' / Path(sys.executable).name
                   cargo = root / 'toolchain/bin/cargo.exe'
+                  # AppContainer creation looks up LOCALAPPDATA in the explicit block; keep it inside the owned writable home.
+                  env['LOCALAPPDATA'], env['APPDATA'] = str(root / 'home/AppData/Local'), str(root / 'home/AppData/Roaming')
+                  for name in ('LOCALAPPDATA', 'APPDATA'):
+                      Path(env[name]).mkdir(parents=True, exist_ok=True)
                   env['RUSTC'], env['RUSTDOC'] = str(root / 'toolchain/bin/rustc.exe'), str(root / 'toolchain/bin/rustdoc.exe')
                   env['PATH'] = str(root / 'toolchain/bin') + os.pathsep + env['PATH']
                   # Install-derived SDK paths and exact compiler/linker apply to all Cargo build scripts too.
