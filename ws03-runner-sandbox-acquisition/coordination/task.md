@@ -1217,3 +1217,25 @@ States: NOT_STARTED · DISPATCHED · RETURNED · IN_REVIEW · REPAIR · ACCEPTED
 - **OUT-OF-SCOPE:** Any untested variant or other cell (no PASS inheritance); other claims; production implementation; capability enablement in production.
 - **BLOCKERS:** G2 (external audit), G3 (execution authorization), —; external: NO (local).
 - **A3 REVIEW FOCUS:** Evidence lenses: SEC lens → fresh evidence-A3 session using the W01 lane playbook, CC lens → fresh evidence-A3 session using the W04 lane playbook. Fail condition: Any injected case violates the stated observation/threshold, or positive control fails. Missing/inaccessible evidence, unpinned participating component, unobservable required outcome or non-independent review yields INCONCLUSIVE, which disables the cell like FAIL.
+
+### W03-T000-VM-TOOLING-DELIVERY
+- **TASK_ID:** W03-T000-VM-TOOLING-DELIVERY
+- **OBJECTIVE:** Deliver the frozen, reviewed macOS VM-tooling prototype source and necessary test-path adaptation in its standalone subtree.
+- **WHY IT EXISTS:** Make the reviewed prototype source available for independent repository review without implying operational readiness.
+- **ARCHITECTURE REQUIREMENTS:** Prototype only; preserve existing architecture and contracts.
+- **P0 CLAIMS:** None established by this delivery.
+- **INPUT CONTRACTS:** Frozen, independently reviewed macOS VM tooling source and bound evidence; necessary documented test-path adaptation.
+- **OUTPUT CONTRACTS:** Source-only standalone prototype subtree with provenance and clearly stated limitations.
+- **EXACT WRITE SCOPE:** `ws03-runner-sandbox-acquisition/crates/mc-sandbox-macos/vm-tooling/**`
+- **READ-ONLY DEPENDENCIES:** Frozen source manifest, review reports and existing repository contracts.
+- **PRECONDITIONS:** Owner-directed delivery preparation; this scope must reach protected main and the packaged commit must pass independent review before a code PR can pass its guard.
+- **IMPLEMENTATION STEPS:** Place the frozen source and adapted test paths in the specified subtree; preserve provenance; exclude runtime assets, generated binaries, private material and unrelated fixtures.
+- **SECURITY INVARIANTS:** No secrets, private runtime data, VM disks, host configuration or generated binaries; no change to Rust backend or runtime contracts.
+- **FAILURE CASES:** Source drift, missing provenance, forbidden payload or a claim of runtime readiness unsupported by evidence.
+- **TESTS REQUIRED:** Verify packaged source against frozen manifest, account for test-path adaptations, and run applicable bounded checks; report unavailable checks and CI separately.
+- **NEGATIVE TESTS:** Verify excluded assets and private material are absent and no paths outside exact scope change.
+- **ACCEPTANCE CRITERIA:** Reviewed source-only subtree matches frozen inputs except explicitly documented test-path adaptation; provenance and limitations are accurate; independent review and required checks pass.
+- **EVIDENCE TO RETURN:** Source comparison, changed-path and exclusion inventory, test results and limitations, independent review and CI links when available.
+- **OUT-OF-SCOPE:** Rust backend or runtime contract changes, production readiness, runtime assets, VM execution, reinstall, and unapproved host actions.
+- **BLOCKERS:** Protected-main scope registration, final source review and required CI remain gates; this registration claims no operational readiness.
+- **A3 REVIEW FOCUS:** Frozen source fidelity, bounded test adaptation, exclusions, provenance, accurate limitations and no readiness overclaim.
