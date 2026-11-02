@@ -1,6 +1,12 @@
 {
  "_": "GENERATED from task.md EXACT WRITE SCOPE. Read by scripts/check_write_set.sh from main (trusted). FIX tasks are added by a reviewed coordination PR.",
  "tasks": {
+ "W03-T000-VM-TOOLING-DELIVERY": {
+  "allow": [
+   "ws03-runner-sandbox-acquisition/crates/mc-sandbox-macos/vm-tooling/**"
+  ],
+  "deny": []
+ },
   "W03-DEPENDENCY-UPDATE": {
    "allow": [
     "ws03-runner-sandbox-acquisition/Cargo.toml",
