@@ -1,0 +1,16 @@
+# Locally admitted configuration and generated state
+/source/config.json
+/source/native-config.json
+/source/prebegin-native-config.json
+/source/operational-native-config.json
+/source/interpreter.txt
+/source/integration.expected.json
+/source/launcher.expected.json
+/source/VMOwner
+/source/AuxiliaryPrestage
+/source/_metawalk*.so
+/source/runtime/
+/source/__pycache__/
+/tests/__pycache__/
+/new-fixtures/
+/build/

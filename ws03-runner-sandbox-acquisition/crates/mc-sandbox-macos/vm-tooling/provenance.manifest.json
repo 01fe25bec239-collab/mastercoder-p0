@@ -1,0 +1,155 @@
+{
+  "prototype": "PROTOTYPE — DISPOSABLE — NOT PRODUCTION",
+  "frozenSourceManifestSHA256": "567408501bc6c6b07ebb58ae375b0f68e78e254fb2e4af4f4d4b96c82ec611da",
+  "source": [
+    {
+      "path": "source/AuxiliaryCopy.swift",
+      "size": 8895,
+      "sha256": "59da53bdd3a1b2ec47d1b697c3205e87deffc2c092ed73160171842ba0b7d0e9"
+    },
+    {
+      "path": "source/AuxiliaryPrestage.swift",
+      "size": 6384,
+      "sha256": "cfd992d53f07a8f6c372742c568512116552492e5a6b2e812e4ff0568b44e0ee"
+    },
+    {
+      "path": "source/NativePolicy.swift",
+      "size": 1125,
+      "sha256": "196c75aacdef58fff3769541cadfcbf78bda0e24dcc867884fed8e0998a45bfe"
+    },
+    {
+      "path": "source/VMOwner.swift",
+      "size": 45405,
+      "sha256": "7b173c85d23c53ae0fe6cf87e2922c6f6a0f624a10553a194220fb806d604fd4"
+    },
+    {
+      "path": "source/_metawalk.c",
+      "size": 62160,
+      "sha256": "c4ce6aa08b1e5396db8581564d313720c66cb26cac3c2eb699ab93af0445e68a"
+    },
+    {
+      "path": "source/archive_capsule.py",
+      "size": 9915,
+      "sha256": "171f5fe66894feb6fce39c4b40ff1c299a7133a7a8be97c62efe8a61c1fe7d7d"
+    },
+    {
+      "path": "source/archive_catalog.py",
+      "size": 9114,
+      "sha256": "acf704255cd1c778fa237b6304b7a4f570c78ee01aa01622c603af537c024ddf"
+    },
+    {
+      "path": "source/collection_control.py",
+      "size": 11199,
+      "sha256": "2efa64e7eb37b9454cf558de6732cbc9f3275d45453dd8989de6e53d55360020"
+    },
+    {
+      "path": "source/config.py",
+      "size": 3066,
+      "sha256": "0dc7c77caf83bda6a3e512c2504ae02635ceedfba2b44660fe206d50f0655380"
+    },
+    {
+      "path": "source/finish.sh",
+      "size": 400,
+      "sha256": "5c155744ec32d79dbfa141a47c304dc4d0e6d0055cd81b96508c399d56184701"
+    },
+    {
+      "path": "source/fixture_owner.py",
+      "size": 5914,
+      "sha256": "ba1bd19b94e9db9b713e7bc39bfd318bbda48fe5f85152523c54c8ba8d903304"
+    },
+    {
+      "path": "source/launch.sh",
+      "size": 391,
+      "sha256": "67896d60dd45acaafd61165ea0dc369f3dd03c8fae72037bf915d3f6777e6e6e"
+    },
+    {
+      "path": "source/live_ledger.py",
+      "size": 71189,
+      "sha256": "38970d18ad36aa1b4b133417e9c25152bf74221c73203d91883fd1efd905121a"
+    },
+    {
+      "path": "source/live_protocol.py",
+      "size": 5641,
+      "sha256": "fd3a6f2db1d49b0a0564d3315487aa075b1c773061201c121f602c945ae876c5"
+    },
+    {
+      "path": "source/monitor.py",
+      "size": 18879,
+      "sha256": "ae2bc805333bdee843cec034434377012f8fb595dd5036a40410bc9752d373e0"
+    },
+    {
+      "path": "source/native_config.py",
+      "size": 9855,
+      "sha256": "983749f6f95c7e04bc7b63d290e8b31e6ccca74607b5b10bcff117d3fd00ffd4"
+    },
+    {
+      "path": "source/native_control.py",
+      "size": 93221,
+      "sha256": "5373b425ee4aa4e7839c1f1f50a8ebee03de8ddb3606f9899cc7386b29851797"
+    },
+    {
+      "path": "source/pilot_policy.py",
+      "size": 7629,
+      "sha256": "77de9022d8516b50b2d37a79b9581814fe1ebe44fea106be9605828bfbe0ad05"
+    },
+    {
+      "path": "source/prebegin-finish.sh",
+      "size": 409,
+      "sha256": "b79e64c3e32a5b9152bbcebebc1d2f4b4bfd174b7bddec57246175501aaeb16b"
+    },
+    {
+      "path": "source/prebegin-launch.sh",
+      "size": 452,
+      "sha256": "51a428b91890adf1383e12a08ac0d4ba8228cc0f18eb83a5454182e093ce42dd"
+    },
+    {
+      "path": "source/prebegin-status.sh",
+      "size": 409,
+      "sha256": "49520a9410d31787db82ca5b06320dd50b222448fe0fbe8f61d8195a4a511ec7"
+    },
+    {
+      "path": "source/proof.py",
+      "size": 24168,
+      "sha256": "7b6f28c0df27b0e3763ea0ac3f6016ca698c606198668b08ee7da12015e23f81"
+    },
+    {
+      "path": "source/recorder.py",
+      "size": 4137,
+      "sha256": "1c9c0484699a5fc0262fbdc0373d7498ccc8d9991ad05d06b933eab334654801"
+    },
+    {
+      "path": "source/resource_check.py",
+      "size": 4010,
+      "sha256": "5012259a5c9376196c8b7e848fd04ce98e48da2d6ec9103a042bd87046d3940a"
+    },
+    {
+      "path": "source/resource_ledger.py",
+      "size": 15242,
+      "sha256": "e2c96d3add3f2d47a2d76fb64e6f4224aa3bbd87d496f6df1cadfd09bc6b704f"
+    },
+    {
+      "path": "source/transport.py",
+      "size": 4004,
+      "sha256": "4038c4cabbf8ef51fb9767f9ce808b7698d66fba2c27ebfecb45de35b2acfef4"
+    }
+  ],
+  "test": {
+    "path": "tests/test_r12_minimum.py",
+    "sha256": "02f918d8442345346561c2f160cf41f2e3adb5fda11c3b7715b533196a7bbdfa",
+    "frozenPath": "records/test_r12_minimum.py",
+    "frozenSHA256": "f1aba79a956da0adadddbbae7ee85dbade673c693f83731fcbdb5889bbf2e1cd",
+    "onlyChange": "support/prelaunch_r9.py -> tests/fixtures/retained_roots.py.txt"
+  },
+  "testFixture": {
+    "path": "tests/fixtures/retained_roots.py.txt",
+    "sha256": "589d812111df4d307d92e9e50e7c32e7b6f8638dfb059ce8904f91b75921e082",
+    "origin": "support/prelaunch_r9.py first charged assignment lines 53-55, exact AST source span plus newline",
+    "originSHA256": "91eb69d013fa6b46cbde347aceff5424aa86e5ffa737a5e166b3bebcae92944c"
+  },
+  "testHeartbeat": {
+    "path": "tests/test_heartbeat.py",
+    "size": 2902,
+    "sha256": "ed18b6e009e2a80df6e9c955277889418fc1d0d7a2e45645c43ad464a813a57c",
+    "origin": "w03-vm-performance-final-r15/controls/test_heartbeat.py; copied byte for byte"
+  }
+}
