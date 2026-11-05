@@ -1,0 +1,24 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+# Disposable local services only; ports and password come from the lane env (.env.local).
+services:
+  postgres:
+    # Authoritative coordination memory fallback until I-14 is published (same digest as ws01-ci).
+    image: postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the lane env}
+    ports:
+      - "${MC_WS02_BIND_ADDRESS:-127.0.0.1}:${MC_WS02_PG_PORT:?set MC_WS02_PG_PORT in the lane env}:5432"
+  fake-github:
+    # Only started on request (docker compose --profile fake-github up); the double itself is built by W02-T002.
+    profiles: ["fake-github"]
+    # rust:1.97.1-slim index digest, resolved from the Docker Hub registry API on 2026-11-05 (not pulled locally).
+    image: rust@sha256:8e8cf8f7fd54a2d23d5a743b3a03f56e26b6c774276c33fa0595111704ebb15c
+    working_dir: /workspace/ws02-git-analysis-review
+    volumes:
+      - ..:/workspace:ro
+    environment:
+      CARGO_TARGET_DIR: /tmp/ws02-target
+      MC_FAKE_GITHUB_PORT: ${MC_FAKE_GITHUB_PORT:?set MC_FAKE_GITHUB_PORT in the lane env}
+    command: ["cargo", "run", "--locked", "-p", "fake-github"]
+    ports:
+      - "${MC_WS02_BIND_ADDRESS:-127.0.0.1}:${MC_FAKE_GITHUB_PORT:?set MC_FAKE_GITHUB_PORT in the lane env}:${MC_FAKE_GITHUB_PORT}"
