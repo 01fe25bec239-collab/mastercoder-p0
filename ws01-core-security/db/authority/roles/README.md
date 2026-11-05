@@ -20,9 +20,12 @@ The 22 runtime roles, exactly: `ordinary_api`, `runner_control`, `evidence_inges
 
 Every role is `NOLOGIN NOINHERIT NOBYPASSRLS`, not superuser, no CREATEDB/CREATEROLE/REPLICATION, owns nothing,
 and is **not a member of any other of these roles** (no `SET ROLE` path between runtime roles; the only
-memberships allowed are the offline login roles below). Role names are cluster-global: `0001_roles.sql` creates
-missing roles, re-asserts these attributes on existing ones and revokes any membership between these roles on
-every run, so do not reuse these names for anything else on the cluster.
+memberships allowed are the offline login roles below). Role names are cluster-global: when `0001_roles.sql` is
+actually executed it creates missing roles, re-asserts these attributes on existing ones and revokes any membership
+between these roles, so do not reuse these names for anything else on the cluster. `migrate()` records applied
+files and skips unchanged ones, so re-running the migration runner does NOT repair role drift: it only executes
+`0001_roles.sql` on a database where that file is not yet recorded. Role drift is detected and corrected by the
+operator re-running that file (or the equivalent `ALTER ROLE` / `REVOKE`) under the privileged bootstrap connection.
 
 Login identities are an offline deployment step and are not created here (no secrets in the repo). Each
 workload gets its own login role that is a member of exactly ONE runtime role (`GRANT <runtime_role> TO <login>`)
@@ -45,13 +48,38 @@ and uses it via `SET ROLE`; one login role must never be a member of two runtime
 
 ## Tenant context (INV-15)
 
-A caller-set GUC is not authentication. The policies read `mc_authority.current_tenant()`, which is backed by a
-per-transaction row that only `mc_authority.set_tenant_context(tenant_id, workload_id, assertion_digest)` can
-write. In Rust: authenticate the caller, build a `VerifiedTenantAssertion`, then
+A caller-set GUC is not authentication, and neither is a Rust type, a digest shape or a role label. The policies
+read `mc_authority.current_tenant()`, which is backed by a per-transaction row that only
+`mc_authority.set_tenant_context(tenant_id, workload_id, assertion_digest)` can write. The setter writes it only if
+`mc_authority.tenant_authorization` holds a row binding the **authenticated database session** (`session_user`, the
+login; not `current_user`, which inside a SECURITY DEFINER function is the owner and after `SET ROLE` is the runtime
+role) to exactly that tenant, workload and digest. Unknown login, no row or any disagreement raises SQLSTATE `42501`
+and leaves no context. In Rust: authenticate the caller, build a `VerifiedTenantAssertion`, then
 `mc_authority_db::with_tenant(&mut tx, &TenantContext::from_verified(&assertion))` as the first statement of every
 tenant transaction. A second call in the same transaction with a different assertion fails with `TenantMismatch`
-(SQLSTATE `MCT01`). The context ends with the transaction; a pooled connection never carries a tenant over.
-Without a context every policy denies all rows.
+(SQLSTATE `MCT01`). Without a context every policy denies all rows.
+
+A context is *eligible* only inside the transaction (and backend) that established it: `current_tenant()` matches
+the row on `(backend pid, current transaction id)`, so a later transaction on a pooled connection, or a rolled-back
+transaction/savepoint, has no tenant. This is separate from *storage*: a committed context row is not deleted at
+commit; it stays in the UNLOGGED `tenant_context` table, unusable, until the same backend's next
+`set_tenant_context` call prunes it (or a crash clears the table). No cleanup job exists or is needed.
+
+### Provisioning tenant authorization (trusted, offline)
+
+`tenant_authorization` is owned by `mc_authority_owner`, FORCE RLS, and **no runtime role has any privilege on it**
+(and none can `SET ROLE` to the owner or change its `session_user`). Only the trusted operator / verifier supplies
+rows, on the privileged bootstrap connection, after it has verified the workload (mTLS, enrollment, signed receipt;
+those pipelines are external and are NOT implemented here):
+
+```sql
+SET LOCAL ROLE mc_authority_owner;
+INSERT INTO mc_authority.tenant_authorization (principal, tenant_id, workload_id, assertion_digest)
+VALUES ('<workload login role>', '<tenant uuid>', '<workload uuid>', '<32-byte verified digest>');
+```
+
+One row per login and tuple; remove a row to revoke. There is no default row, no name-derived tenant and no
+fallback. Runtime sessions reach the database only as the login role (member of exactly one runtime role).
 
 ## Grants in this base (doc 07)
 
@@ -71,7 +99,8 @@ Without a context every policy denies all rows.
 
 `ordinary_api` has no privilege on any gate table (and no EXECUTE on any gate transition); all other roles have
 none on these tables (their tables come from other modules). Everyone has USAGE on the schema and EXECUTE on the
-two tenant-context functions; nobody has DELETE or TRUNCATE.
+two tenant-context functions (EXECUTE is not the trust boundary; the session authorization above is); nobody has
+DELETE or TRUNCATE, and nobody but the owner has any privilege on `tenant_context` or `tenant_authorization`.
 
 ## Not in this base
 

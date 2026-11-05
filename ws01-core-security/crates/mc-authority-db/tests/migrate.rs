@@ -63,6 +63,7 @@ async fn modules_applied_in_order_on_empty_db(pool: PgPool) {
             ("base", "0002_tables.sql"),
             ("base", "0003_rls_and_grants.sql"),
             ("base", "0004_tenant_context.sql"),
+            ("base", "0005_tenant_authorization.sql"),
         ]
     );
     // Whatever modules exist, they were applied in MODULES order.

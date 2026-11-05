@@ -99,7 +99,12 @@ async fn matrix_matches_doc07(pool: PgPool) {
     // The oracle must cover exactly the base tables (a new table forces a matrix decision).
     let found: BTreeSet<String> = tables(&pool).await.into_iter().collect();
     let mut expected: BTreeSet<String> = MATRIX.iter().map(|(t, _, _)| t.to_string()).collect();
-    for t in ["tenant_context", "evaluation", "gate_decision"] {
+    for t in [
+        "tenant_context",
+        "tenant_authorization",
+        "evaluation",
+        "gate_decision",
+    ] {
         expected.insert(t.to_owned());
     }
     assert_eq!(found, expected);
@@ -192,7 +197,7 @@ async fn matrix_matches_doc07(pool: PgPool) {
 
 #[sqlx::test(migrations = false)]
 async fn ordinary_api_cannot_insert_gate_decision(pool: PgPool) {
-    migrated(&pool).await;
+    provisioned(&pool).await;
     seed_tenant(&pool, TENANT_A, 1).await;
 
     // ordinary_api, fully authenticated for the tenant, is denied by the database itself.
@@ -222,7 +227,7 @@ async fn ordinary_api_cannot_insert_gate_decision(pool: PgPool) {
 
 #[sqlx::test(migrations = false)]
 async fn insert_only_tables_reject_update_and_delete(pool: PgPool) {
-    migrated(&pool).await;
+    provisioned(&pool).await;
     for (table, role, ops) in MATRIX {
         if !ops.contains(&"INSERT") || ops.contains(&"UPDATE") {
             continue;

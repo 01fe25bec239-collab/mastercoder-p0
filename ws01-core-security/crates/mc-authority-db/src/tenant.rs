@@ -6,7 +6,9 @@ use crate::error::DbError;
 
 /// A tenant/workload assertion that an authenticating caller has already verified
 /// (mutually authenticated workload identity; doc 07). Construct it only after that verification:
-/// this crate cannot check the proof, it only binds the database transaction to the result.
+/// this crate cannot check the proof. The database does not trust these fields either: they take effect only
+/// if the trusted operator provisioned exactly this tuple for the connected session's login
+/// (`mc_authority.tenant_authorization`, db/authority/base/0005); otherwise `with_tenant` fails.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct VerifiedTenantAssertion {
     pub tenant_id: Uuid,
@@ -25,8 +27,10 @@ impl TenantContext {
 }
 
 /// Binds `tx` to the authenticated tenant through the SECURITY DEFINER function
-/// `mc_authority.set_tenant_context`; the binding ends with the transaction (never carried over by a pooled
-/// connection). A different assertion already bound to this transaction yields [`DbError::TenantMismatch`].
+/// `mc_authority.set_tenant_context`, which requires a protected authorization for the session's login
+/// (an unauthorized tuple is a redacted [`DbError::Sqlx`] and establishes nothing). The binding is only
+/// honoured for this transaction (never carried over by a pooled connection). A different assertion already
+/// bound to this transaction yields [`DbError::TenantMismatch`].
 pub async fn with_tenant(
     tx: &mut Transaction<'_, Postgres>,
     ctx: &TenantContext,

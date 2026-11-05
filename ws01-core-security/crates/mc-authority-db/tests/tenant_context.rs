@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 #[sqlx::test(migrations = false)]
 async fn mismatched_assertion_rejected(pool: PgPool) {
-    migrated(&pool).await;
+    provisioned(&pool).await;
     let a = assertion(TENANT_A);
     let ctx = |x: &VerifiedTenantAssertion| TenantContext::from_verified(x);
 
@@ -63,7 +63,7 @@ async fn pooled_connection_does_not_leak_tenant(
         .connect_with(conn_opts)
         .await
         .unwrap();
-    migrated(&pool).await;
+    provisioned(&pool).await;
     seed_tenant(&pool, TENANT_A, 1).await;
     seed_tenant(&pool, TENANT_B, 2).await;
 
@@ -145,6 +145,19 @@ async fn definer_functions_have_fixed_search_path_and_narrow_execute(pool: PgPoo
     let mut want: Vec<String> = RUNTIME_ROLES.iter().map(|r| r.to_string()).collect();
     want.push(OWNER.to_owned());
     want.sort();
+    // EXECUTE reaching all runtime roles is NOT the trust boundary (r0 treated it as one, which was finding F-1):
+    // the boundary is the setter's session_user check against the owner-only tenant_authorization state
+    // (behaviour: tenant_authority.rs). Here we only pin that the setter really consults it.
+    let setter: String = sqlx::query_scalar(
+        "SELECT prosrc FROM pg_proc WHERE pronamespace = 'mc_authority'::regnamespace AND proname = 'set_tenant_context'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert!(
+        setter.contains("tenant_authorization") && setter.contains("session_user"),
+        "the setter must authorize the authenticated session"
+    );
     for (name, definer, config, execute) in funcs {
         assert!(definer, "{name} must be SECURITY DEFINER");
         assert!(

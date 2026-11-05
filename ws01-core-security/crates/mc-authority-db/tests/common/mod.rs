@@ -49,6 +49,41 @@ pub async fn migrated(pool: &PgPool) {
     migrate(pool, &modules_file()).await.expect("migrate");
 }
 
+/// Trusted provisioning, run on the privileged bootstrap connection BEFORE any untrusted session runs: binds the
+/// authenticated session `principal` to exactly this assertion (what the operator/verifier does; see roles/README.md).
+/// It grants only what the caller names explicitly; nothing here reacts to an assertion an attack later supplies.
+pub async fn authorize(pool: &PgPool, principal: &str, a: &VerifiedTenantAssertion) {
+    let mut tx = pool.begin().await.expect("begin");
+    sqlx::query(sqlx::AssertSqlSafe(format!("SET LOCAL ROLE {OWNER}")))
+        .execute(&mut *tx)
+        .await
+        .expect("set role owner");
+    sqlx::query(
+        "INSERT INTO mc_authority.tenant_authorization (principal, tenant_id, workload_id, assertion_digest) \
+         VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+    )
+    .bind(principal)
+    .bind(a.tenant_id)
+    .bind(a.workload_id)
+    .bind(&a.assertion_digest[..])
+    .execute(&mut *tx)
+    .await
+    .expect("authorize");
+    tx.commit().await.expect("commit");
+}
+
+/// Migrates, then authorizes every runtime role (as itself, i.e. `SET SESSION AUTHORIZATION role`) for the two
+/// canonical tenants A and B with their canonical `assertion()`. For the pre-existing RLS/grant tests only: any
+/// other tuple (invented tenant/workload/digest) stays unauthorized.
+pub async fn provisioned(pool: &PgPool) {
+    migrated(pool).await;
+    for role in RUNTIME_ROLES {
+        for tenant in [TENANT_A, TENANT_B] {
+            authorize(pool, role, &assertion(tenant)).await;
+        }
+    }
+}
+
 pub fn assertion(tenant_id: Uuid) -> VerifiedTenantAssertion {
     VerifiedTenantAssertion {
         tenant_id,

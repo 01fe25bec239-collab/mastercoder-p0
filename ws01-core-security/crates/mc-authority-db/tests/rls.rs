@@ -36,7 +36,7 @@ async fn force_rls_on_every_base_table(pool: PgPool) {
 
 #[sqlx::test(migrations = false)]
 async fn runtime_role_cannot_disable_rls(pool: PgPool) {
-    migrated(&pool).await;
+    provisioned(&pool).await;
     let all = tables(&pool).await;
     for role in RUNTIME_ROLES {
         for table in &all {
@@ -87,7 +87,7 @@ async fn runtime_role_cannot_disable_rls(pool: PgPool) {
 
 #[sqlx::test(migrations = false)]
 async fn cross_tenant_select_returns_zero(pool: PgPool) {
-    migrated(&pool).await;
+    provisioned(&pool).await;
     seed_tenant(&pool, TENANT_A, 1).await;
     seed_tenant(&pool, TENANT_B, 2).await;
 
@@ -122,7 +122,7 @@ async fn cross_tenant_select_returns_zero(pool: PgPool) {
     // No authenticated context: every table is empty for every readable role.
     for table in tables(&pool).await {
         let mut tx = begin_as(&pool, "readonly").await;
-        if table == "tenant_context" {
+        if table == "tenant_context" || table == "tenant_authorization" {
             continue; // not readable by runtime roles at all (see grants::matrix_matches_doc07)
         }
         let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -163,7 +163,7 @@ async fn cross_tenant_select_returns_zero(pool: PgPool) {
 
 #[sqlx::test(migrations = false)]
 async fn cross_tenant_fk_rejected(pool: PgPool) {
-    migrated(&pool).await;
+    provisioned(&pool).await;
     seed_tenant(&pool, TENANT_A, 1).await; // manifest 1 + evaluation 1 belong to tenant A
 
     // Tenant B pins tenant A's manifest digest: the composite (tenant_id, ..., manifest_digest) FK rejects it,
