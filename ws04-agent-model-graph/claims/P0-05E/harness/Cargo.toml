@@ -1,0 +1,22 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "p0-05e-harness"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+clap.workspace = true
+mc-acquisition-dialer.workspace = true
+mc-contracts.workspace = true
+mc-dependency-authority.workspace = true
+mc-dependency-resolver.workspace = true
+mc-graph-envelope.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+lease-double.workspace = true
+mc-model-test-support.workspace = true

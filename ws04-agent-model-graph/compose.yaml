@@ -1,0 +1,11 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+# Disposable local test database only; no reusable or sensitive data.
+services:
+  postgres:
+    # Same digest as ws01-core-security/compose.yaml (coordination fallback until I-14 is published).
+    image: postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the lane env}
+    ports:
+      # Loopback only: this dev service must never be reachable from the network.
+      - "127.0.0.1:${MC_WS04_PG_PORT:?set MC_WS04_PG_PORT in the lane env}:5432"
