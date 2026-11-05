@@ -85,7 +85,7 @@ T004 owns `src/api.rs` in the ten crates that have one (all except mc-git-test-s
 
 | Crate | Imports | Dependencies | Dev-dependencies |
 |---|---|---|---|
-| mc-git-test-support | mc_contracts (fixtures); sqlx `PgPool` in its API; W01 role SQL `ws01-core-security/db/authority/roles/*.sql` (applied by tests, not a crate) | mc-contracts, thiserror, serde, serde_json, uuid, sqlx, tokio | proptest |
+| mc-git-test-support | mc_contracts (fixtures); sqlx `PgPool` in its API; W01 role SQL `ws01-core-security/db/authority/roles/*.sql` (applied by tests, not a crate) | mc-contracts, thiserror, serde, serde_json, uuid, sqlx, tokio, sha2 | proptest |
 | mc-github | mc_contracts: GitOidV1, TreeEntryV1 | mc-contracts, thiserror, serde, serde_json, uuid, reqwest, jsonwebtoken, hmac, sha2, tokio, async-trait | proptest, mc-git-test-support, fake-github |
 | mc-provider-normalizer | mc_contracts: ProviderEventV2, MergeSubjectV2, CurrentCandidateV1; mc_github::api: ProviderError, RepoRef; mc_wire | mc-contracts, thiserror, serde, serde_json, uuid, sqlx, tokio, async-trait, mc-wire, mc-github | proptest, mc-git-test-support, fake-github |
 | mc-review-broker | mc_contracts: GateProofV2, RevocationRecordV1; mc_github::api: ProviderError; mc_effects (effects journal); mc_wire | mc-contracts, thiserror, serde, serde_json, uuid, sqlx, tokio, async-trait, mc-wire, mc-github, mc-effects | proptest, mc-git-test-support, effects-journal-double, gate-authority-double, fake-github |
@@ -102,7 +102,7 @@ Doubles:
 
 | Double | Dependencies |
 |---|---|
-| fake-github | axum, tokio, serde_json |
+| fake-github | axum, tokio, serde_json, hmac, sha2, reqwest |
 | reducer-table | serde_json, mc-contracts, mc-gate-reducer |
 | checkout-grant | mc-contracts, mc-checkout-grant, ed25519-dalek, async-trait, tokio |
 
@@ -125,7 +125,7 @@ Harnesses (each also gets clap, serde_json, tokio, mc-contracts):
 
 ## Dependency rule (AGENTS.md §3a)
 
-Only the scaffold edits `Cargo.toml`/`Cargo.lock` files and `lib.rs`. A task that needs a crate or dependency not listed above returns `DEPENDENCY_REQUEST` to A1 instead of editing a Cargo file. Purity rules enforced by construction: `mc-gate-reducer` depends only on mc-contracts, thiserror, serde, serde_json and uuid (no tokio/sqlx/reqwest, normal or dev); no `mc-model-*`/`mc-graph-*` crate appears anywhere in ws02. Scaffold stub-check finding: the T004 signatures compile against these dependency lists unchanged; `UnitExecutionSpec`/`UnitExecutionResult` did not yet exist in `mc_sandbox_core::unit` on the scaffold base (W03-T003 provides them before T004 starts).
+Only the scaffold edits `Cargo.toml`/`Cargo.lock` files and `lib.rs`. A task that needs a crate or dependency not listed above returns `DEPENDENCY_REQUEST` to A1 instead of editing a Cargo file. Purity rules enforced by construction: `mc-gate-reducer` depends only on mc-contracts, thiserror, serde, serde_json and uuid (no tokio/sqlx/reqwest, normal or dev); no `mc-model-*`/`mc-graph-*` crate appears anywhere in ws02. Scaffold stub-check finding: the T004 signatures compiled against these dependency lists using local I-17 stand-ins for the types that do not yet exist, which proves partial compatibility only; the real W03 types remain pending W03-T003 and are not yet verified. `UnitExecutionSpec`/`UnitExecutionResult` did not yet exist in `mc_sandbox_core::unit` on the scaffold base (W03-T003 provides them before T004 starts).
 
 ## Pinned versions (`[workspace.dependencies]`, exact `=x.y.z`)
 
