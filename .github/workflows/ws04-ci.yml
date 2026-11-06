@@ -155,7 +155,7 @@ jobs:
             echo "::error::The default workspace build enables mc-secret-dialer's server feature (feature unification), linking reqwest into its credential-free consumers."
             exit 1
           fi
-          out="$(deps mc-dependency-resolver; wdeps mc-dependency-resolver)"
+          out="$(deps mc-dependency-resolver || exit; wdeps mc-dependency-resolver)"
           if grep -E 'reqwest|hyper|rustls' <<<"$out"; then
             echo "::error::mc-dependency-resolver must have no reqwest, hyper or rustls (alone or in the default workspace build)."
             exit 1
@@ -168,7 +168,7 @@ jobs:
           checked=0
           for member in $members; do
             [[ "$allow" == *" $member "* ]] && continue
-            out="$(deps "$member"; wdeps "$member")"
+            out="$(deps "$member" || exit; wdeps "$member")"
             if grep -Ex 'reqwest|hyper-rustls|hyper-tls|native-tls|openssl|ureq|isahc|attohttpc|surf|curl' <<<"$out"; then
               echo "::error::$member must not depend on an HTTP client crate (alone or in the default workspace build)."
               exit 1
