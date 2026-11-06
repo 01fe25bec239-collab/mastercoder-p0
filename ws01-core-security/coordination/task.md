@@ -36,7 +36,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T004-CONTRACT-TYPES-CODEGEN | BUILD | INTEGRATED | r2 | ae25048f83bc66d0e7d31f3d6d01fd3756bf92ec | ae25048f83bc66d0e7d31f3d6d01fd3756bf92ec | 3b3507fe52025c23f1b335dd93f68dd41d09e99b | Independent local SATISFACTORY plus owner A1 remaining CI disposition; normal PR7 merge, all8 PR/7 main checks and exact source/provenance verified; I-01@v1 published |
 | W01-T005-CBOR-CORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T007-DB-ROLES-SCHEMA | BUILD | RETURNED | r1 | 0f7301593d0b82576999250f8bfa8c457708c18c | NONE | NONE | tenant-authority repair local82PASS; RoottargetedspotPASS; fresh sourceA3prepared/not launched; CI pending |
+| W01-T007-DB-ROLES-SCHEMA | BUILD | RETURNED | r1 | 0f7301593d0b82576999250f8bfa8c457708c18c | NONE | NONE | source A3 PASS_WITH_NOTES; F1/N1 CLOSED; PR #11 open; remote CI/final review pending |
 | W01-T008-TEST-SUPPORT | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T009-WEBAUTHN-VERIFY | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T010-CUSTODY-MANIFEST-STORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
