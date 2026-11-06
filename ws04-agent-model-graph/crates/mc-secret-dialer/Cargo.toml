@@ -1,0 +1,32 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "mc-secret-dialer"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[features]
+# `server` is the only path to reqwest/rustls and is OFF by default: no workspace member enables it, so workspace builds,
+# tests and every consumer (mc-model-broker, ...) compile the client-side API only. Build the binary with `--features server`.
+default = []
+server = ["dep:reqwest", "dep:rustls", "dep:tokio", "dep:tracing"]
+
+[[bin]]
+name = "mc-secret-dialer"
+path = "src/main.rs"
+required-features = ["server"]
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+futures.workspace = true
+reqwest = { workspace = true, optional = true }
+rustls = { workspace = true, optional = true }
+thiserror.workspace = true
+tokio = { workspace = true, optional = true }
+tracing = { workspace = true, optional = true }
+
+[dev-dependencies]
+fake-model-provider.workspace = true
+proptest.workspace = true
+tokio.workspace = true

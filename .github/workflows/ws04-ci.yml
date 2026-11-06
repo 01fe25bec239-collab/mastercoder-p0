@@ -1,6 +1,12 @@
-# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Placeholder for lane 04 CI, created by bootstrap_repo.sh.
-# `ws04-ci` is a REQUIRED check on main, so it must report on every PR (auto-merge waits for it).
-# The lane's scaffold task replaces this file with the real workflow and keeps the job name `ws04-ci`.
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+# CI for the W04 Rust workspace (agent, model and graph). This workflow holds no provider credential:
+# BUILD uses the fake provider only; the live driver runs in W04-RUN-P0-01A after G2 + G3 and never here.
+# The database below is an isolated, disposable test service; it contains no reusable or sensitive data.
+#
+# `ws04-ci` is a REQUIRED check on main, so it triggers on every pull request to main and every push to main
+# (deliberately no workflow-level `paths:` filter) and always reports. The first step decides from
+# `git diff --name-only <merge-base> HEAD` whether this lane or an upstream path it depends on changed;
+# if not, every later step is skipped by `if:` and the job still succeeds.
 name: ws04-ci
 on:
   pull_request:
@@ -13,6 +19,173 @@ jobs:
   ws04-ci:
     name: ws04-ci
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: postgres
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - name: Placeholder (lane 04 scaffold not merged yet)
-        run: echo "ws04 workspace not scaffolded yet; nothing to test."
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Decide whether W04 checks are required
+        id: change_gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed_paths="$RUNNER_TEMP/ws04-ci-changed-paths"
+          if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+            # No usable base (first push): treat everything as changed so the checks run.
+            empty_tree="$(git hash-object -t tree /dev/null)"
+            git diff --name-only --no-renames -z "$empty_tree" HEAD > "$changed_paths"
+          else
+            [[ "$BASE_SHA" =~ ^[0-9a-fA-F]{40}$ ]]
+            git cat-file -e "${BASE_SHA}^{commit}"
+            merge_base="$(git merge-base "$BASE_SHA" HEAD)"
+            git diff --name-only --no-renames -z "$merge_base" HEAD > "$changed_paths"
+          fi
+          # The lane, this workflow, and every upstream path the workspace path-depends on
+          # (W01 crates and doubles, W03 fake-sandbox / mc-sandbox-core / mc-checkout-broker and the W03
+          # manifest they inherit from). Cargo drift in any of them is also caught by `--locked` below.
+          relevant=false
+          while IFS= read -r -d '' path; do
+            case "$path" in
+              ws04-agent-model-graph|ws04-agent-model-graph/*|.github/workflows/ws04-ci.yml|ws01-core-security/crates/*|ws01-core-security/doubles/*|ws01-core-security/Cargo.toml|ws03-runner-sandbox-acquisition/doubles/fake-sandbox/*|ws03-runner-sandbox-acquisition/crates/mc-sandbox-core/*|ws03-runner-sandbox-acquisition/crates/mc-checkout-broker/*|ws03-runner-sandbox-acquisition/Cargo.toml|rust-toolchain.toml)
+                relevant=true
+                echo "W04 CI input changed: $path"
+                break
+                ;;
+            esac
+          done < "$changed_paths"
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+          if [[ "$relevant" == false ]]; then
+            echo "No W04 or upstream CI inputs changed; remaining checks are skipped."
+          fi
+      - name: Configure the ephemeral PostgreSQL URL
+        if: steps.change_gate.outputs.relevant == 'true'
+        env:
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$POSTGRES_PORT" =~ ^[0-9]+$ ]]; then
+            echo "::error::GitHub Actions did not provide the PostgreSQL service port."
+            exit 1
+          fi
+          printf 'DATABASE_URL=postgresql://postgres@127.0.0.1:%s/postgres\n' "$POSTGRES_PORT" >> "$GITHUB_ENV"
+      - name: Check formatting
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws04-agent-model-graph
+        # cargo fmt does not support --locked; it does not resolve or modify dependencies.
+        run: cargo fmt --all --check
+      - name: Build workspace
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws04-agent-model-graph
+        run: |
+          cargo build --locked --workspace
+          # The dialer binary (and its HTTPS client) builds only with the `server` feature, which no other member enables.
+          cargo build --locked -p mc-secret-dialer --features server
+      - name: Run Clippy
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws04-agent-model-graph
+        run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+      - name: Run workspace tests
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws04-agent-model-graph
+        run: cargo test --locked --workspace
+      - name: Check workspace members (13 crates + 2 doubles + 10 harnesses)
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws04-agent-model-graph
+        run: |
+          set -euo pipefail
+          count="$(cargo metadata --locked --no-deps --format-version 1 | jq '.workspace_members | length')"
+          if [[ "$count" != "25" ]]; then
+            echo "::error::Expected exactly 25 workspace members, found $count."
+            exit 1
+          fi
+      - name: Check that only the secret dialer can reach a provider
+        if: steps.change_gate.outputs.relevant == 'true'
+        working-directory: ws04-agent-model-graph
+        run: |
+          set -euo pipefail
+          deps() { cargo tree --locked -p "$1" -e normal --prefix none "${@:2}" | awk '{print $1}' | sort -u; }
+          # The default workspace build unifies features across all members, so a feature one member requests
+          # (e.g. the dialer's `server`) also applies to every other member sharing that dependency. `cargo tree --workspace`
+          # resolves that same selection but prints each shared subtree only once, so wdeps rebuilds a member's
+          # reachable set from the depth-prefixed edges (merging by package name, which can only over-report).
+          wtree="$(cargo tree --locked --workspace -e normal --prefix depth)"
+          wdeps() {
+            awk -v root="$1" '
+              { d = $1; sub(/[^0-9].*/, "", d); name = substr($1, length(d) + 1); at[d + 0] = name
+                if (d + 0 > 0) kids[at[d - 1]] = kids[at[d - 1]] " " name }
+              END { seen[root] = 1; todo = root
+                while (todo != "") { n = split(todo, q, " "); todo = ""
+                  for (i = 1; i <= n; i++) { print q[i]; m = split(kids[q[i]], k, " ")
+                    for (j = 1; j <= m; j++) if (!(k[j] in seen)) { seen[k[j]] = 1; todo = todo " " k[j] } } } }
+            ' <<<"$wtree" | sort -u
+          }
+          # Positive control: the dialer built with `server` must list reqwest, so an empty result below cannot be a broken command.
+          out="$(deps mc-secret-dialer --features server)"
+          grep -qx reqwest <<<"$out"
+          # Positive control for wdeps: an allowlisted harness reaches reqwest transitively through the registry dialer.
+          out="$(wdeps p0-05e-harness)"
+          grep -qx mc-acquisition-dialer <<<"$out"
+          grep -qx reqwest <<<"$out"
+          # Without `server` the dialer is client-side API only.
+          out="$(deps mc-secret-dialer)"
+          if grep -x reqwest <<<"$out"; then
+            echo "::error::mc-secret-dialer must not enable reqwest without the server feature."
+            exit 1
+          fi
+          # No member may switch `server` on for the shared dialer in the default workspace build.
+          out="$(wdeps mc-secret-dialer)"
+          if grep -x reqwest <<<"$out"; then
+            echo "::error::The default workspace build enables mc-secret-dialer's server feature (feature unification), linking reqwest into its credential-free consumers."
+            exit 1
+          fi
+          out="$(deps mc-dependency-resolver || exit; wdeps mc-dependency-resolver)"
+          if grep -E 'reqwest|hyper|rustls' <<<"$out"; then
+            echo "::error::mc-dependency-resolver must have no reqwest, hyper or rustls (alone or in the default workspace build)."
+            exit 1
+          fi
+          # Every member except the allowlist: no HTTP client crate in the normal tree. The allowlist is HTTPS-capable by design:
+          # the secret dialer (checked above), the registry dialer, and the harnesses that depend on the registry dialer
+          # (P0-05E/F) or on the W03 checkout broker (P0-05G).
+          allow=" mc-secret-dialer mc-acquisition-dialer p0-05e-harness p0-05f-harness p0-05g-harness "
+          members="$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[].name')"
+          checked=0
+          for member in $members; do
+            [[ "$allow" == *" $member "* ]] && continue
+            out="$(deps "$member" || exit; wdeps "$member")"
+            if grep -Ex 'reqwest|hyper-rustls|hyper-tls|native-tls|openssl|ureq|isahc|attohttpc|surf|curl' <<<"$out"; then
+              echo "::error::$member must not depend on an HTTP client crate (alone or in the default workspace build)."
+              exit 1
+            fi
+            checked=$((checked + 1))
+          done
+          if [[ "$checked" != "20" ]]; then
+            echo "::error::Expected to check 20 non-allowlisted members, checked $checked."
+            exit 1
+          fi
+      - name: Check that this workflow references no provider credential
+        if: steps.change_gate.outputs.relevant == 'true'
+        run: |
+          # The character classes keep these patterns from matching this very file.
+          file=.github/workflows/ws04-ci.yml
+          [[ -f "$file" ]]
+          if grep -nEi '([s]ecrets[.[]|toJSON[(]secrets|[a]pi[_ -]?key|MC_TEST_MODEL_[A]PI|[A]NTHROPIC_|[O]PENAI_|[D]EEPSEEK_)' "$file"; then
+            echo "::error::ws04-ci must not reference any provider credential."
+            exit 1
+          fi
