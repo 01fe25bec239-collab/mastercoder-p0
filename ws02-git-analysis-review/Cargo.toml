@@ -1,0 +1,71 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[workspace]
+resolver = "2"
+members = [
+    "crates/*",
+    "doubles/fake-github/v1",
+    "doubles/reducer-table/v1",
+    "doubles/checkout-grant/v1",
+    "claims/*/harness",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Exact pins. Crates that ws01-core-security also pins copy W01's version verbatim
+# (path dependencies fail to resolve if two workspaces pin different exact versions);
+# jsonwebtoken and hmac are chosen fresh (latest stable on 2026-11-05). See docs/MODULES.md.
+[workspace.dependencies]
+tokio = { version = "=1.53.2", features = ["rt-multi-thread", "macros", "time", "sync", "net"] }
+axum = { version = "=0.8.9" }
+sqlx = { version = "=0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "uuid", "macros", "migrate"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154" }
+uuid = { version = "=1.28.0", features = ["v4", "serde"] }
+sha2 = { version = "=0.11.0" }
+hex = { version = "=0.4.3" }
+hmac = { version = "=0.13.0" }
+ed25519-dalek = { version = "=3.0.0" }
+# GitHub App JWT (RS256). rust_crypto = pure-Rust backend (no C toolchain); default use_pem for PEM keys.
+jsonwebtoken = { version = "=11.1.0", features = ["rust_crypto"] }
+reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "json"] }
+thiserror = { version = "=2.0.21" }
+tracing = { version = "=0.1.44" }
+async-trait = { version = "=0.1.92" }
+clap = { version = "=4.6.7", features = ["derive"] }
+tempfile = { version = "=3.27.0" }
+proptest = { version = "=1.12.0" }
+
+# W02 crates
+mc-git-test-support = { path = "crates/mc-git-test-support" }
+mc-github = { path = "crates/mc-github" }
+mc-provider-normalizer = { path = "crates/mc-provider-normalizer" }
+mc-review-broker = { path = "crates/mc-review-broker" }
+mc-eligibility = { path = "crates/mc-eligibility" }
+mc-analysis-planner = { path = "crates/mc-analysis-planner" }
+mc-analyzers = { path = "crates/mc-analyzers" }
+mc-findings = { path = "crates/mc-findings" }
+mc-gate-reducer = { path = "crates/mc-gate-reducer" }
+mc-verification = { path = "crates/mc-verification" }
+mc-checkout-grant = { path = "crates/mc-checkout-grant" }
+mc-fast-smoke = { path = "crates/mc-fast-smoke" }
+
+# W02 doubles
+fake-github = { path = "doubles/fake-github/v1" }
+reducer-table = { path = "doubles/reducer-table/v1" }
+checkout-grant = { path = "doubles/checkout-grant/v1" }
+
+# W01 (read-only upstream)
+mc-contracts = { path = "../ws01-core-security/crates/mc-contracts" }
+mc-wire = { path = "../ws01-core-security/crates/mc-wire" }
+mc-lease = { path = "../ws01-core-security/crates/mc-lease" }
+mc-effects = { path = "../ws01-core-security/crates/mc-effects" }
+lease-double = { path = "../ws01-core-security/doubles/lease/v1" }
+effects-journal-double = { path = "../ws01-core-security/doubles/effects-journal/v1" }
+gate-authority-double = { path = "../ws01-core-security/doubles/gate-authority/v1" }
+
+# W03 (read-only upstream)
+mc-sandbox-core = { path = "../ws03-runner-sandbox-acquisition/crates/mc-sandbox-core" }
+fake-sandbox = { path = "../ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1" }

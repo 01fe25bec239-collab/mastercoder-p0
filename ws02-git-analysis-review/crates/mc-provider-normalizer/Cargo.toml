@@ -1,0 +1,23 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "mc-provider-normalizer"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+mc-contracts.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+async-trait.workspace = true
+mc-wire.workspace = true
+mc-github.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+mc-git-test-support.workspace = true
+fake-github.workspace = true
