@@ -121,8 +121,27 @@ jobs:
         run: |
           set -euo pipefail
           deps() { cargo tree --locked -p "$1" -e normal --prefix none "${@:2}" | awk '{print $1}' | sort -u; }
+          # The default workspace build unifies features across all members, so a feature one member requests
+          # (e.g. the dialer's `server`) also applies to every other member sharing that dependency. `cargo tree --workspace`
+          # resolves that same selection but prints each shared subtree only once, so wdeps rebuilds a member's
+          # reachable set from the depth-prefixed edges (merging by package name, which can only over-report).
+          wtree="$(cargo tree --locked --workspace -e normal --prefix depth)"
+          wdeps() {
+            awk -v root="$1" '
+              { d = $1; sub(/[^0-9].*/, "", d); name = substr($1, length(d) + 1); at[d + 0] = name
+                if (d + 0 > 0) kids[at[d - 1]] = kids[at[d - 1]] " " name }
+              END { seen[root] = 1; todo = root
+                while (todo != "") { n = split(todo, q, " "); todo = ""
+                  for (i = 1; i <= n; i++) { print q[i]; m = split(kids[q[i]], k, " ")
+                    for (j = 1; j <= m; j++) if (!(k[j] in seen)) { seen[k[j]] = 1; todo = todo " " k[j] } } } }
+            ' <<<"$wtree" | sort -u
+          }
           # Positive control: the dialer built with `server` must list reqwest, so an empty result below cannot be a broken command.
           out="$(deps mc-secret-dialer --features server)"
+          grep -qx reqwest <<<"$out"
+          # Positive control for wdeps: an allowlisted harness reaches reqwest transitively through the registry dialer.
+          out="$(wdeps p0-05e-harness)"
+          grep -qx mc-acquisition-dialer <<<"$out"
           grep -qx reqwest <<<"$out"
           # Without `server` the dialer is client-side API only.
           out="$(deps mc-secret-dialer)"
@@ -130,9 +149,15 @@ jobs:
             echo "::error::mc-secret-dialer must not enable reqwest without the server feature."
             exit 1
           fi
-          out="$(deps mc-dependency-resolver)"
+          # No member may switch `server` on for the shared dialer in the default workspace build.
+          out="$(wdeps mc-secret-dialer)"
+          if grep -x reqwest <<<"$out"; then
+            echo "::error::The default workspace build enables mc-secret-dialer's server feature (feature unification), linking reqwest into its credential-free consumers."
+            exit 1
+          fi
+          out="$(deps mc-dependency-resolver; wdeps mc-dependency-resolver)"
           if grep -E 'reqwest|hyper|rustls' <<<"$out"; then
-            echo "::error::mc-dependency-resolver must have no reqwest, hyper or rustls."
+            echo "::error::mc-dependency-resolver must have no reqwest, hyper or rustls (alone or in the default workspace build)."
             exit 1
           fi
           # Every member except the allowlist: no HTTP client crate in the normal tree. The allowlist is HTTPS-capable by design:
@@ -143,9 +168,9 @@ jobs:
           checked=0
           for member in $members; do
             [[ "$allow" == *" $member "* ]] && continue
-            out="$(deps "$member")"
+            out="$(deps "$member"; wdeps "$member")"
             if grep -Ex 'reqwest|hyper-rustls|hyper-tls|native-tls|openssl|ureq|isahc|attohttpc|surf|curl' <<<"$out"; then
-              echo "::error::$member must not depend on an HTTP client crate."
+              echo "::error::$member must not depend on an HTTP client crate (alone or in the default workspace build)."
               exit 1
             fi
             checked=$((checked + 1))
