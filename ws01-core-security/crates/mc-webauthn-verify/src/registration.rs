@@ -1,6 +1,8 @@
 // PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
 
-use p256::ecdsa::VerifyingKey;
+use p256::ecdsa::signature::Verifier;
+use p256::ecdsa::{Signature, VerifyingKey};
+use sha2::{Digest, Sha256};
 
 use crate::{WebAuthnError, auth_data, client_data};
 
@@ -26,8 +28,9 @@ pub struct VerifiedRegistration {
     pub public_key_sec1: Vec<u8>,
 }
 
-/// Order: type → challenge → origin → crossOrigin → attestation "none" →
-/// rpIdHash → UP → UV → attested credential ID and ES256 key.
+/// Order: type → challenge → origin → crossOrigin → packed self statement →
+/// rpIdHash → UP → UV → attested credential ID and ES256 key → self signature
+/// by that new key over the exact authenticatorData || SHA-256(exact clientDataJSON).
 pub fn verify_registration(
     e: &ExpectedRegistration,
     raw: &RawRegistration,
@@ -38,7 +41,7 @@ pub fn verify_registration(
         &e.challenge,
         e.origin,
     )?;
-    let auth_bytes = none_attestation_auth_data(&raw.attestation_object)?;
+    let (signature, auth_bytes) = packed_self_attestation(&raw.attestation_object)?;
     let auth = auth_data::parse(auth_bytes, e.rp_id)?;
     if auth.flags & auth_data::AT == 0 {
         return Err(WebAuthnError::Format);
@@ -56,29 +59,51 @@ pub fn verify_registration(
     if !c.done() {
         return Err(WebAuthnError::Format);
     }
-    VerifyingKey::from_sec1_bytes(&public_key_sec1).map_err(|_| WebAuthnError::Format)?;
+    let key = VerifyingKey::from_sec1_bytes(&public_key_sec1).map_err(|_| WebAuthnError::Format)?;
+    // W3C WebAuthn L3 §8.2 self attestation: the new credential key signs
+    // authenticatorData || clientDataHash. Exact received bytes, no re-encoding.
+    let signature = Signature::from_der(signature).map_err(|_| WebAuthnError::Signature)?;
+    let mut signed = auth_bytes.to_vec();
+    signed.extend_from_slice(&Sha256::digest(&raw.client_data_json));
+    key.verify(&signed, &signature)
+        .map_err(|_| WebAuthnError::Signature)?;
     Ok(VerifiedRegistration {
         credential_id: credential_id.to_vec(),
         public_key_sec1,
     })
 }
 
-/// attestationObject in CTAP2 canonical key order {"fmt", "attStmt", "authData"};
-/// only fmt "none" with an empty attStmt is supported.
-fn none_attestation_auth_data(bytes: &[u8]) -> Result<&[u8], WebAuthnError> {
+/// attestationObject in CTAP2 canonical key order {"fmt", "attStmt", "authData"}.
+/// Only the owner-adopted packed self profile (CCR-W01-002) is supported:
+/// fmt "packed", attStmt exactly {"alg": -7, "sig": bstr}. Returns (sig, authData).
+/// "none", other formats, other algorithms and certificate-backed statements
+/// (x5c) are `Attestation`; a missing sig is `Signature`.
+fn packed_self_attestation(bytes: &[u8]) -> Result<(&[u8], &[u8]), WebAuthnError> {
     let mut c = Cbor::new(bytes);
     if c.expect(MAP)? != 3 || c.text()? != "fmt" {
         return Err(WebAuthnError::Format);
     }
-    if c.text()? != "none" {
+    if c.text()? != "packed" {
         return Err(WebAuthnError::Attestation);
     }
     if c.text()? != "attStmt" {
         return Err(WebAuthnError::Format);
     }
-    if c.expect(MAP)? != 0 {
+    let entries = c.expect(MAP)?;
+    if entries == 0 || entries > 2 || c.text()? != "alg" {
         return Err(WebAuthnError::Attestation);
     }
+    // COSE ES256 (RFC 9053 §2.1); the credential key is required to be -7 below.
+    if c.int()? != -7 {
+        return Err(WebAuthnError::Attestation);
+    }
+    if entries == 1 {
+        return Err(WebAuthnError::Signature);
+    }
+    if c.text()? != "sig" {
+        return Err(WebAuthnError::Attestation);
+    }
+    let signature = c.bytes()?;
     if c.text()? != "authData" {
         return Err(WebAuthnError::Format);
     }
@@ -86,7 +111,7 @@ fn none_attestation_auth_data(bytes: &[u8]) -> Result<&[u8], WebAuthnError> {
     if !c.done() {
         return Err(WebAuthnError::Format);
     }
-    Ok(auth)
+    Ok((signature, auth))
 }
 
 /// COSE_Key EC2 / ES256 / P-256 in CTAP2 canonical order:
