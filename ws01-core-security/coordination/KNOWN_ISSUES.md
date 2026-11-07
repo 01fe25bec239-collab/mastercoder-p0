@@ -4,6 +4,7 @@ Living log of problems already solved in this workstream. **Agents read this bef
 
 | ID | Date | Class | Symptom (exact error) | Root cause | Fix (commands / commit SHA) | Prevention | Found by |
 |---|---|---|---|---|---|---|---|
+| KI-001 | 2026-11-07 | CONTRACT | T009 unsigned none yields Ok while doc52 requires new-key proof | Missing proof/profile boundary; current actor consent is different | UNRESOLVED; CCR-W01-002 FILED; source held, no patch | Resolve proof route before repair; never equate unsigned flags/point validity with proof | independent T009 r0-a A3 |
 | KI-000 | 2026-10-04 | — | (example) `DATABASE_URL must be set` when running tests in a new worktree | `.env.local` symlink is only created in the main clone | `ln -s <LANE>/.env <worktree>/ws01-core-security/.env.local` (now part of every CREATE command) | CREATE commands include the symlink | program setup |
 
 ## KI-001 — password grep matches its own baseline task (TEST)
