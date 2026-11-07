@@ -38,7 +38,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | RETURNED | r1 | 0f7301593d0b82576999250f8bfa8c457708c18c | NONE | 0ed316f35e1cde00563067132e1b9726a0ddcadb | Physically merged PR11; source PASS/F1-N1 closed; final CI-inclusive review remains unrecorded; no retrospective acceptance |
 | W01-T008-TEST-SUPPORT | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T009-WEBAUTHN-VERIFY | BUILD | NOT_STARTED | r1 | NONE | NONE | NONE | Owner adopted CCR-W01-002 restricted profile; clean repair at r0 305cbfd838776a9b894fdd44a2687ad542a59eff; human A2 prepared, source/activation held |
+| W01-T009-WEBAUTHN-VERIFY | BUILD | RETURNED | r1 | b9af738fd9779be0f3e02351a4cfba863db2711a | NONE | NONE | Signed four-file proof repair verified; author20crate/102workspace/1ignored; fresh independent source A3 prepared; no source acceptance/activation |
 | W01-T010-CUSTODY-MANIFEST-STORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T011-API-FREEZE | BUILD | BLOCKED | — | NONE | NONE | NONE | Formal T004 prerequisite met; preflight required RawAssertion export absent in WebAuthn scaffold; T009 dispatched first; no temporary duplicate |
 | W01-T012-WIRE-CANONICAL | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
