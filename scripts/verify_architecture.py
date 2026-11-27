@@ -199,14 +199,14 @@ def self_test(source):
                 raise AssertionError(name + ": " + repr(outcome["mismatches"]))
         names.append(name)
 
-    document = "SCHEMAS/REGISTRY.json"
+    document = "TEST_VECTORS/wire-vectors.json"
 
     def change_byte(copy):
         path = copy / document
         original = path.read_bytes()
         path.write_bytes(bytes([original[0] ^ 1]) + original[1:])
 
-    run("one_byte", change_byte, "PINNED:" + document)
+    run("one_byte", change_byte, "HASH:" + document)
     for extra in ("extra.txt", ".DS_Store"):
         run("extra_" + extra, lambda copy, path=extra: (copy / path).write_bytes(b"extra"), "EXTRA:" + extra)
     run("missing", lambda copy: (copy / document).unlink(), "MISSING:" + document)
