@@ -38,7 +38,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T006-WIRE-VECTOR-DOUBLE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T007-DB-ROLES-SCHEMA | BUILD | RETURNED | r1 | 0f7301593d0b82576999250f8bfa8c457708c18c | NONE | 0ed316f35e1cde00563067132e1b9726a0ddcadb | Physically merged PR11; source PASS/F1-N1 closed; final CI-inclusive review remains unrecorded; no retrospective acceptance |
 | W01-T008-TEST-SUPPORT | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
-| W01-T009-WEBAUTHN-VERIFY | BUILD | ACCEPTED | r1 | b9af738fd9779be0f3e02351a4cfba863db2711a | b9af738fd9779be0f3e02351a4cfba863db2711a | NONE | Independent SOURCE_ONLY PASS_WITH_NOTES; F1 closed; PR14 open at exact reviewed SHA; remote CI in progress, W05 ignored; no integration/activation |
+| W01-T009-WEBAUTHN-VERIFY | BUILD | ACCEPTED | r1 | b9af738fd9779be0f3e02351a4cfba863db2711a | b9af738fd9779be0f3e02351a4cfba863db2711a | 603640c870e4470fda9fd3cd0e5011bf5f28771b | PR14 physical merge verified during Nov27 cleanup; scoped source PASS retained; CI/main acceptance not reassessed here, W05/device/authority gates remain |
 | W01-T010-CUSTODY-MANIFEST-STORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T011-API-FREEZE | BUILD | BLOCKED | — | NONE | NONE | NONE | Formal T004 prerequisite met; preflight required RawAssertion export absent in WebAuthn scaffold; T009 dispatched first; no temporary duplicate |
 | W01-T012-WIRE-CANONICAL | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
