@@ -228,6 +228,9 @@ def scratch_self_test():
             shutil.copytree(source / directory, trusted / directory)
         (trusted / ".gitignore").write_bytes(git("show", "HEAD:.gitignore", cwd=source))
         git("add", ".")
+        # Keep migration controls meaningful after the real documentation is gone.
+        (trusted / "README.md").write_bytes(b"synthetic documentation fixture\n")
+        git("add", "-f", "--", "README.md")
         env = dict(os.environ, GIT_AUTHOR_NAME="Synthetic", GIT_AUTHOR_EMAIL="fixture@example.test",
                    GIT_COMMITTER_NAME="Synthetic", GIT_COMMITTER_EMAIL="fixture@example.test")
         def commit(parent=None):
