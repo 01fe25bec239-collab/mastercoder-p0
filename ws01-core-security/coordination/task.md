@@ -40,6 +40,7 @@ A wave can start when every task in the earlier waves that it depends on is INTE
 | W01-T008-TEST-SUPPORT | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T009-WEBAUTHN-VERIFY | BUILD | ACCEPTED | r1 | b9af738fd9779be0f3e02351a4cfba863db2711a | b9af738fd9779be0f3e02351a4cfba863db2711a | 603640c870e4470fda9fd3cd0e5011bf5f28771b | PR14 physical merge verified during Nov27 cleanup; scoped source PASS retained; CI/main acceptance not reassessed here, W05/device/authority gates remain |
 | W01-T010-CUSTODY-MANIFEST-STORE | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
+| W01-LANE-COMPLETION | BUILD | NOT_STARTED | r0 | NONE | NONE | NONE |49-task owner campaign; scope registration pending; initial12task batch; no role launched or security/peer gate waived |
 | W01-T011-API-FREEZE | BUILD | BLOCKED | — | NONE | NONE | NONE | Formal T004 prerequisite met; preflight required RawAssertion export absent in WebAuthn scaffold; T009 dispatched first; no temporary duplicate |
 | W01-T012-WIRE-CANONICAL | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
 | W01-T013-P0-10A-HARNESS | BUILD | NOT_STARTED | — | NONE | NONE | NONE |  |
@@ -1594,3 +1595,26 @@ States: NOT_STARTED · DISPATCHED · RETURNED · IN_REVIEW · REPAIR · ACCEPTED
 - **OUT-OF-SCOPE:** All Rust source and new production behavior; generating contract types; CBOR; semantics; other manifests or lanes; coordination edits except this RETURN; paid API/cloud/security keys; outward actions.
 - **BLOCKERS:** Preserve and return NOT_READY if dependency synchronization needs scope expansion/unrelated changes, required tool/check fails, source ambiguity, foreign dirt, cap violation, or secret/provider/claim action. Remote push/PR/CI/merge authorization is not granted for this new task.
 - **A3 REVIEW FOCUS:** Exact minimal direct dependency and lock closure; no source/API changes or drift; pinned normalization library accessible to mc-contracts; scope/signature/base/clean status; real local validation with no invented NFC/product/remote results.
+
+
+### W01-LANE-COMPLETION
+- **TASK_ID:** W01-LANE-COMPLETION
+- **OBJECTIVE:** Owner-requested combined source campaign for the49remaining numbered W01 BUILD tasks, dependency ordered; preserve completed source and all exact per-task requirements.
+- **WHY IT EXISTS:** Reduce repeated manual redispatch while preserving dependency, independent-review and protected-scope boundaries.
+- **ARCHITECTURE REQUIREMENTS:** All original requirements in DISPATCHES/W01-LANE-COMPLETION-r0-TASKS.json; no frozen architecture amendments.
+- **P0 CLAIMS:** Supporting BUILD only; all claims stay NOT_RUN until separately authorized.
+- **INPUT CONTRACTS:** Original per-task contracts/peer gates in the task snapshot and live architecture.
+- **OUTPUT CONTRACTS:** Original per-task implementations/tests/interfaces plus exact task/receipt matrix; no new wire format.
+- **EXACT WRITE SCOPE:** W01-LANE-COMPLETION entry in WRITE_SCOPES.json, effective union of49remaining scopes with original per-phase exclusions. RUN cells excluded; T052 four-file exception only.
+- **READ-ONLY DEPENDENCIES:** Original task dependencies and live peer ledgers; never invent unpublished counterparts.
+- **PRECONDITIONS:** G0/G1; trusted-main scope registration and owner campaign rule merged; clean source base;20GiB admission; all external per-task gates before that task starts. Internal predecessor milestones may use SOURCE_VALIDATED_IN_BATCH under this owner exception.
+- **IMPLEMENTATION STEPS:** Complete dispatch W01-LANE-COMPLETION-r0-DISPATCH.md; topological order and full task snapshot SHA2562a988f4150a8ade5b98397cf3ddd335aed0baa185ee0bfd30d9d025dece9bcf3.
+- **SECURITY INVARIANTS:** Every original invariant, fail-closed parser/authority/tenant/race semantics and independent review remain binding.
+- **FAILURE CASES:** Missing peer contracts, claim activation, broadened manifest authority, unchecked predecessors or fabricated completion.
+- **TESTS REQUIRED:** All per-task required commands and negative tests; focused per change, full exact final milestone validation and trusted-main scope check.
+- **NEGATIVE TESTS:** All original security controls and restored positives; no guard weakening.
+- **ACCEPTANCE CRITERIA:** Root accepts only exact independently reviewed SHA after actual CI; per-task49row completion/deferred matrix. Source batch may be complete while full campaign remains externally blocked.
+- **EVIDENCE TO RETURN:** Own A2 RETURN, exact task/command/log/resource pins and PR URL/head; formal fresh human A3 remains separate.
+- **OUT-OF-SCOPE:** RUN/production/activation, peer edits, remote/provider mutations other than explicit branch push/PR, merge/auto-merge, new cleanup or gate waivers.
+- **BLOCKERS:** Trusted registration pending; conservative first batch12tasks, remaining37held on source/peer/acceptance gates until resolved.
+- **A3 REVIEW FOCUS:** Aggregate regression and all completed task criteria, phase scopes, security boundaries, truthful partial completion, unchanged external contracts, exact CI/review pins.
