@@ -83,6 +83,32 @@ def pattern(glob):
     return re.compile(re.escape(glob).replace(r"\*\*", ".*").replace(r"\*", "[^/]*") + r"\Z")
 
 
+DOC_IGNORE = """# Documentation and agent state stay local
+*.md
+*.mdc
+**/coordination/*
+!**/coordination/WRITE_SCOPES.json
+**/.claude/
+**/.cursor/
+/.agents/
+/.claude/
+/.cursor/
+/ARCHITECTURE/V2_1/TRACEABILITY/V2_TO_V2_1_FILE_CHANGES.json
+/ARCHITECTURE/V2_1/TRACEABILITY/finding-resolution.json
+"""
+
+
+def documentation_path(path):
+    parts = PurePosixPath(path).parts
+    if re.fullmatch(r"ws0[1-6]-[a-z0-9-]+/coordination/WRITE_SCOPES\.json", path):
+        return False
+    return (path.lower().endswith((".md", ".mdc"))
+            or parts[0] in (".agents", ".claude", ".cursor")
+            or any(part in ("coordination", ".claude", ".cursor") for part in parts)
+            or path in ("ARCHITECTURE/V2_1/TRACEABILITY/V2_TO_V2_1_FILE_CHANGES.json",
+                        "ARCHITECTURE/V2_1/TRACEABILITY/finding-resolution.json"))
+
+
 def check(branch, revision, files, title=None):
     match = re.fullmatch(r"ws(0[1-6])/([a-z0-9][a-z0-9-]*)", branch)
     if not match:
@@ -102,7 +128,13 @@ def check(branch, revision, files, title=None):
             reject("PR title must contain [" + label + "]")
         if any(re.match(r"W0[1-6]-", t, re.I) and t.casefold() != label.casefold() for t in tokens):
             reject("PR title names another task")
-    if slug == "coordination":
+    migration = branch == "ws06/w06-docs-local-only-r0"
+    if migration:
+        # Owner-authorized deletion only, enumerated from protected HEAD, never the PR.
+        documents = {p.decode() for p in git("ls-tree", "-rz", "--name-only", "HEAD").split(b"\0")
+                     if p and documentation_path(p.decode())}
+        allow, deny = [pattern(p) for p in sorted(documents | {".gitignore"})], []
+    elif slug == "coordination":
         allow, deny = [pattern(root + "coordination/**")], []
     elif architecture_import:
         allow, deny = [pattern("ARCHITECTURE/**")], []
@@ -132,7 +164,11 @@ def check(branch, revision, files, title=None):
             reject("control character in changed path")
         if str(PurePosixPath(path)) != path or path.startswith("/") or ".." in path.split("/"):
             reject("noncanonical changed path")
-        if path.startswith("ARCHITECTURE/"):
+        if migration:
+            owned = path in documents or path == ".gitignore"
+            if path in documents and path in entries:
+                reject("documentation migration is deletion-only: " + repr(path))
+        elif path.startswith("ARCHITECTURE/"):
             owned = architecture_import
         elif path.startswith(root + "coordination/"):
             owned = slug == "coordination"
@@ -142,6 +178,8 @@ def check(branch, revision, files, title=None):
             owned = lane == "06" and not re.match(r"ws0[1-5]-|\.github/workflows/ws0[1-5]-", path)
         if not owned or not any(p.fullmatch(path) for p in allow) or any(p.fullmatch(path) for p in deny):
             reject("files outside the write set: " + repr(path))
+        if path in entries and documentation_path(path):
+            reject("documentation and agent state must remain local: " + repr(path))
         if re.search(r"(^|/)(\.env(?:\..*)?|[^/]*\.(pem|key|p12|pfx)|id_rsa[^/]*|id_ed25519[^/]*)$", path) and not path.endswith("/.env.example"):
             reject("secret-like path: " + repr(path))
         if path in entries:
@@ -151,6 +189,17 @@ def check(branch, revision, files, title=None):
             # Retain bootstrap guard's 5 MiB committed-blob ceiling (WRITE_OWNERSHIP_MATRIX).
             if int(git("cat-file", "-s", oid.decode())) > 5242880:
                 reject("changed blob exceeds 5 MiB: " + repr(path))
+
+    if migration:
+        if any(documentation_path(path) for path in entries):
+            reject("documentation migration must remove all tracked documents")
+        if ".gitignore" not in entries or git("cat-file", "blob", entries[".gitignore"][1].decode()) != git("show", "HEAD:.gitignore") + DOC_IGNORE.encode():
+            reject("unexpected documentation ignore rules")
+        for path in git("ls-tree", "-rz", "--name-only", "HEAD").split(b"\0"):
+            if path.endswith(b"/coordination/WRITE_SCOPES.json"):
+                name = path.decode()
+                if name not in entries or git("cat-file", "blob", entries[name][1].decode()) != git("show", "HEAD:" + name):
+                    reject("trusted scope registries must remain unchanged")
 
 
 def pr(base, head, branch, title):
@@ -177,6 +226,7 @@ def scratch_self_test():
             shutil.copyfile(path, dest)
         for directory in ("scripts", ".github/workflows", "ARCHITECTURE"):
             shutil.copytree(source / directory, trusted / directory)
+        (trusted / ".gitignore").write_bytes(git("show", "HEAD:.gitignore", cwd=source))
         git("add", ".")
         env = dict(os.environ, GIT_AUTHOR_NAME="Synthetic", GIT_AUTHOR_EMAIL="fixture@example.test",
                    GIT_COMMITTER_NAME="Synthetic", GIT_COMMITTER_EMAIL="fixture@example.test")
@@ -226,7 +276,7 @@ def scratch_self_test():
         changes = {"scripts/check_write_set.sh": b"exit 0\n", "scripts/verify_architecture.py": b"raise SystemExit(0)\n",
                    ".github/workflows/common-arch-check.yml": b"name: weakened\n",
                    ".github/workflows/common-write-set-guard.yml": b"name: weakened\n",
-                   "ARCHITECTURE/V2_1/00F_TECHNOLOGY_STACK.md": b"tampered\n",
+                   "ARCHITECTURE/V2_1/SCHEMAS/REGISTRY.json": b"tampered\n",
                    "ws01-core-security/foreign.rs": b"x"}
         for path, content in changes.items():
             oid = git("hash-object", "-w", "--stdin", data=content).decode().strip()
@@ -246,8 +296,40 @@ def scratch_self_test():
             tar.extractall(candidate, filter="data")
         assert archive.wait() == 0
         result = subprocess.run([sys.executable, str(source / "scripts/verify_architecture.py"), str(candidate / "ARCHITECTURE/V2_1")], capture_output=True, text=True)
-        assert result.returncode == 1 and "00F_TECHNOLOGY_STACK.md" in result.stdout, result.stdout + result.stderr
+        assert result.returncode == 1 and "SCHEMAS/REGISTRY.json" in result.stdout, result.stdout + result.stderr
         print("PASS: self-weakened candidate plus architecture/foreign path => both checks red")
+        documents = [p.decode() for p in git("ls-tree", "-rz", "--name-only", base).split(b"\0")
+                     if p and documentation_path(p.decode())]
+        ignore = git("show", base + ":.gitignore") + DOC_IGNORE.encode()
+        cases = [
+            ("documentation deletion", {}, None),
+            ("modified document", {documents[0]: b"modified"}, "deletion-only"),
+            ("new document", {"NEW.md": b"new"}, "outside the write set"),
+            ("source modification", {"scripts/verify_architecture.py": b"changed"}, "outside the write set"),
+            ("source deletion", {"scripts/verify_architecture.py": None}, "outside the write set"),
+            ("registry modification", {"ws01-core-security/coordination/WRITE_SCOPES.json": b"{}"}, "outside the write set"),
+            ("registry deletion", {"ws01-core-security/coordination/WRITE_SCOPES.json": None}, "outside the write set"),
+            ("unexpected ignore rules", {".gitignore": ignore + b"*.rs\n"}, "unexpected documentation ignore rules"),
+        ]
+        for name, mutation, reason in cases:
+            git("read-tree", base)
+            changes = dict.fromkeys(documents)
+            changes[".gitignore"] = ignore
+            changes.update(mutation)
+            for path, content in changes.items():
+                if content is None:
+                    git("update-index", "--force-remove", "--", path)
+                else:
+                    oid = git("hash-object", "-w", "--stdin", data=content).decode().strip()
+                    git("update-index", "--add", "--cacheinfo", "100644," + oid + "," + path)
+            head = commit(base)
+            try:
+                pr(base, head, "ws06/w06-docs-local-only-r0", "[W06-DOCS-LOCAL-ONLY] Keep documents local")
+            except ValueError as error:
+                assert reason and reason in str(error), (name, str(error))
+            else:
+                assert reason is None, name
+            print("PASS: " + name)
         print("PASS: temporary scratch repository removed on exit")
 
 

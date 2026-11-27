@@ -134,6 +134,15 @@ def verify(root):
                 bad.append("DUPLICATE:" + path)
                 continue
             listed[path] = entry
+        # Keep the full frozen manifest/pins; a source checkout ships only machine inputs.
+        if not any(path.endswith(".md") for path in contents):
+            listed = {path: entry for path, entry in listed.items()
+                      if not path.endswith(".md") and path not in (
+                          "TRACEABILITY/V2_TO_V2_1_FILE_CHANGES.json",
+                          "TRACEABILITY/finding-resolution.json")}
+            result["scope"] = "MACHINE_INPUTS_ONLY"
+        else:
+            result["scope"] = "FULL_LOCAL_PACKAGE"
         result["files_checked"] = len(listed)
         for path, entry in listed.items():
             if path not in contents:
@@ -166,6 +175,19 @@ def self_test(source):
     if positive["mismatches"]:
         raise AssertionError("positive control: " + repr(positive["mismatches"]))
     names = ["positive"]
+    with tempfile.TemporaryDirectory(prefix="architecture-machine-inputs-") as temporary:
+        copy = Path(temporary) / "package"
+        shutil.copytree(source, copy, symlinks=True)
+        for path in list(copy.rglob("*.md")) + [copy / "TRACEABILITY/V2_TO_V2_1_FILE_CHANGES.json", copy / "TRACEABILITY/finding-resolution.json"]:
+            if path.is_file():
+                path.unlink()
+        for path in sorted(copy.rglob("*"), reverse=True):
+            if path.is_dir() and not any(path.iterdir()):
+                path.rmdir()
+        outcome = verify(copy)
+        if outcome["mismatches"] or outcome["scope"] != "MACHINE_INPUTS_ONLY":
+            raise AssertionError("machine inputs: " + repr(outcome))
+    names.append("machine_inputs_only")
 
     def run(name, mutation, expected):
         with tempfile.TemporaryDirectory(prefix="architecture-verifier-") as temporary:
@@ -177,14 +199,14 @@ def self_test(source):
                 raise AssertionError(name + ": " + repr(outcome["mismatches"]))
         names.append(name)
 
-    document = "00F_ATOMIC_PROTOTYPE_STATUS.md"
+    document = "SCHEMAS/REGISTRY.json"
 
     def change_byte(copy):
         path = copy / document
         original = path.read_bytes()
         path.write_bytes(bytes([original[0] ^ 1]) + original[1:])
 
-    run("one_byte", change_byte, "HASH:" + document)
+    run("one_byte", change_byte, "PINNED:" + document)
     for extra in ("extra.txt", ".DS_Store"):
         run("extra_" + extra, lambda copy, path=extra: (copy / path).write_bytes(b"extra"), "EXTRA:" + extra)
     run("missing", lambda copy: (copy / document).unlink(), "MISSING:" + document)
@@ -212,10 +234,9 @@ def self_test(source):
     run("extra_directory", lambda copy: (copy / "extra-directory").mkdir(), "EXTRA_DIRECTORY:extra-directory")
 
     def mark_executed(copy):
-        path = copy / "TRACEABILITY/DOCUMENT_VALIDATION_REPORT.md"
-        path.write_bytes(path.read_bytes().replace(b'"p0_executed": false', b'"p0_executed": true'))
+        (copy / "executed.json").write_bytes(b'{"p0_executed": true}')
 
-    run("p0_executed_true", mark_executed, "P0_EXECUTED:TRACEABILITY/DOCUMENT_VALIDATION_REPORT.md")
+    run("p0_executed_true", mark_executed, "P0_EXECUTED:executed.json")
     run(
         "p0_executed_json_escaped_key",
         lambda copy: (copy / "extra.json").write_bytes(b'{"p0_\\u0065xecuted": true}'),
