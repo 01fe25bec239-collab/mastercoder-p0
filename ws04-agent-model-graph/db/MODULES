@@ -1,0 +1,7 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+# One module per line: `<directory under db/>` or `<directory>: <contents>`.
+# Migrations live in db/<module>/NNNN_<name>.sql and are owned by the task that creates them.
+model: intents, ledger
+graph: nodes, edges, events, envelope
+dependency_grants
+dependency_cache

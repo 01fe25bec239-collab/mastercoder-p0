@@ -1,0 +1,20 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "p0-01a-harness"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+clap.workspace = true
+mc-adapter-openai-compat.workspace = true
+mc-contracts.workspace = true
+mc-graph-runtime.workspace = true
+mc-model-broker.workspace = true
+mc-model-turn.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+fake-model-provider.workspace = true
+mc-model-test-support.workspace = true

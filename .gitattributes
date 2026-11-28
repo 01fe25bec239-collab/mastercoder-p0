@@ -1,3 +1,4 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure).
 # Normalize text to LF on every OS (including the Windows lab host); scripts must stay LF to run.
 * text=auto eol=lf
 *.sh text eol=lf

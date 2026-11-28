@@ -1,0 +1,4 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+/target/
+.env
+.env.local

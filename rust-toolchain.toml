@@ -1,4 +1,6 @@
-# Pinned at bootstrap from the bootstrap machine (rustc 1.97.1). Owner: W06. Change only with 48 h notice to all A1s.
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure).
+# W06-T000 / architecture 36: exact stable release; A1 notifies all lanes before merge.
+# Official release: https://blog.rust-lang.org/2026/07/16/Rust-1.97.1/ (checked 2026-10-13).
 [toolchain]
 channel = "1.97.1"
 components = ["rustfmt", "clippy"]

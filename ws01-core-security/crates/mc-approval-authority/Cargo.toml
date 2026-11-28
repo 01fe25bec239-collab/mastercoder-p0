@@ -1,0 +1,29 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "mc-approval-authority"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+ed25519-dalek.workspace = true
+async-trait.workspace = true
+axum.workspace = true
+mc-authority-db.workspace = true
+mc-contracts.workspace = true
+mc-credential-lifecycle.workspace = true
+mc-custody.workspace = true
+mc-webauthn-verify.workspace = true
+mc-wire.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+custody-double.workspace = true
+mc-test-support.workspace = true
+proptest.workspace = true

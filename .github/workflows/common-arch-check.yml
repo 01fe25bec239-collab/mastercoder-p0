@@ -1,13 +1,10 @@
-# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Owner: W06.
-# Verifies the read-only V2.1 architecture snapshot (all package checksums, no extra files, pinned registry/claims hashes)
-# and runs the architecture checker, which must still report p0_executed:false.
-# Trust model (audit F-2): on PRs, `pull_request_target` loads this workflow, the verifier and the checker from the
-# protected base revision; the candidate's ARCHITECTURE/ tree is extracted as DATA and verified, never executed.
-# Read-only token, no secrets, no third-party actions.
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure).
+# Audit F-2: workflow, verifier, pin lint and checker run from protected base; candidate is data only.
 name: arch-check
 on:
   pull_request_target:
     branches: [main]
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 permissions:
@@ -17,21 +14,57 @@ jobs:
     name: arch-check
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the trusted revision (git only)
+      - name: Check out the protected revision only
         env:
           GH_TOKEN: ${{ github.token }}
           TRUSTED_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
           CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
+          set -euo pipefail
           git init -q .
-          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git fetch -q --no-tags --depth=1 origin "$TRUSTED_SHA" "$CANDIDATE_SHA"
-          git checkout -q "$TRUSTED_SHA"
-          mkdir -p "$RUNNER_TEMP/candidate"
-          git archive "$CANDIDATE_SHA" ARCHITECTURE | tar -x -C "$RUNNER_TEMP/candidate"
-      - name: Verify the candidate's architecture snapshot with the trusted verifier
-        run: python3 scripts/verify_architecture.py "$RUNNER_TEMP/candidate/ARCHITECTURE/V2_1"
-      - name: Architecture checker from the trusted tree (no P0 executed)
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch -q --no-tags --depth=1 origin "$TRUSTED_SHA" "$CANDIDATE_SHA"
+          git checkout -q --detach "$TRUSTED_SHA"
+      - name: Reject unpinned candidate Actions with the trusted lint
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 scripts/check_action_pins.py --revision "$CANDIDATE_SHA"
+      - name: Extract candidate architecture as regular files only
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          python3 ARCHITECTURE/V2_1/TEST_VECTORS/check_spec.py | tee /tmp/spec.txt
-          grep -q '"p0_executed": false' /tmp/spec.txt
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, subprocess
+          entries = subprocess.check_output(['git', 'ls-tree', '-rz', os.environ['CANDIDATE_SHA'], '--', 'ARCHITECTURE'])
+          for entry in entries.split(b'\0'):
+              if not entry:
+                  continue
+              meta, path = entry.split(b'\t', 1)
+              if meta.split()[0] not in (b'100644', b'100755') or not path.startswith(b'ARCHITECTURE/V2_1/'):
+                  raise SystemExit('BLOCKED: nonregular or unexpected architecture path: ' + repr(path))
+          PY
+          mkdir -p "$RUNNER_TEMP/candidate"
+          # Trusted worktree attributes prevent candidate export-ignore/export-subst from hiding/changing data.
+          git archive --worktree-attributes "$CANDIDATE_SHA" ARCHITECTURE | tar --no-same-owner --no-same-permissions -x -C "$RUNNER_TEMP/candidate"
+      - name: Verify every candidate architecture byte with the trusted verifier
+        run: python3 scripts/verify_architecture.py "$RUNNER_TEMP/candidate/ARCHITECTURE/V2_1"
+      - name: Run trusted specification checker against verified candidate data
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee "$RUNNER_TEMP/spec.json"
+          import os
+          from pathlib import Path
+          trusted = Path('ARCHITECTURE/V2_1/TEST_VECTORS/check_spec.py')
+          candidate = Path(os.environ['RUNNER_TEMP']) / 'candidate/ARCHITECTURE/V2_1/TEST_VECTORS/check_spec.py'
+          # Compile only base bytes. __file__ selects candidate data; no candidate code is imported.
+          exec(compile(trusted.read_bytes(), str(trusted), 'exec'), {'__name__': '__main__', '__file__': str(candidate)})
+          PY
+          python3 - "$RUNNER_TEMP/spec.json" <<'PY'
+          import json, sys
+          # The trusted checker follows its JSON report with a semantic-case summary.
+          report, _ = json.JSONDecoder().raw_decode(open(sys.argv[1]).read())
+          if report['p0_executed'] is not False:
+              raise SystemExit('BLOCKED: specification checker must report p0_executed:false')
+          PY

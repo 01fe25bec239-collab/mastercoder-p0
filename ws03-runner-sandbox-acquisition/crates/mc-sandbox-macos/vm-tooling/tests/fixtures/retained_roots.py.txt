@@ -1,0 +1,3 @@
+charged = sum(alloc(W / d) for d in ('w03-vm-start-performance-r1', 'w03-vm-start-performance-r1-independent-review-a',
+                                     'w03-vm-start-performance-r1-operational-admission', 'w03-vm-start-performance-r1-root-processing',
+                                     'w03-vm-start-performance-r1-operational', 'w03-vm-start-performance-r2', 'w03-vm-start-performance-r3', 'w03-vm-operational-r10-repair', 'w03-vm-operational-r11-python-repair', 'w03-vm-operational-r12-minimum-corrections', 'w03-vmstart-fix1', 'w03-vmstart-fix2', 'w03-vmstart-fix3') if (W / d).exists())

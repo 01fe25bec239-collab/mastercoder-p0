@@ -18,3 +18,15 @@ coverage/
 # local
 .DS_Store
 worktrees/
+# Documentation and agent state stay local
+*.md
+*.mdc
+**/coordination/*
+!**/coordination/WRITE_SCOPES.json
+**/.claude/
+**/.cursor/
+/.agents/
+/.claude/
+/.cursor/
+/ARCHITECTURE/V2_1/TRACEABILITY/V2_TO_V2_1_FILE_CHANGES.json
+/ARCHITECTURE/V2_1/TRACEABILITY/finding-resolution.json

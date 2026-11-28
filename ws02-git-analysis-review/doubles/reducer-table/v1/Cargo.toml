@@ -1,0 +1,11 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "reducer-table"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde_json.workspace = true
+mc-contracts.workspace = true
+mc-gate-reducer.workspace = true

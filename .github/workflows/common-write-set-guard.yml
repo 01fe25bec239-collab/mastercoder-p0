@@ -1,8 +1,6 @@
-# PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Owner: W06. Server-side write-set enforcement (audit F-1/F-2).
-# Trust model: `pull_request_target` loads THIS workflow and scripts/check_write_set.sh from the protected base branch,
-# so a PR cannot weaken the check that polices it. PR content is only ever read as git data (file names + blob sizes);
-# it is never checked out or executed. Read-only token, no secrets, no third-party actions.
-# This is the single allowed use of pull_request_target in the repo (W06 SEC rule); CODEOWNERS on .github/ and scripts/.
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure).
+# Audit F-1/F-2: only protected-base code/scopes execute; PR branch/title and tree are untrusted data.
+# Only this guard and common-arch-check.yml may use pull_request_target. Read-only token, no secrets.
 name: write-set-guard
 on:
   pull_request_target:
@@ -15,26 +13,22 @@ jobs:
     name: write-set-guard
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the trusted base revision only (git only)
+      - name: Check out the protected base revision only
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          set -euo pipefail
           git init -q .
-          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git fetch -q --no-tags origin "$BASE_SHA" "$HEAD_SHA"
-          git checkout -q "$BASE_SHA"
-      - name: Changed files must match the dispatched task's exact write scope
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch -q --no-tags origin "$BASE_SHA" "$HEAD_SHA"
+          git checkout -q --detach "$BASE_SHA"
+      - name: Enforce ownership, exact scope, exclusions and matching task title
         env:
           HEAD_REF: ${{ github.head_ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          # PR title must name the same task as the branch (forged-branch check); coordination PRs say [coordination].
-          want=$(printf '%s' "${HEAD_REF#*/}" | sed -E 's/-r[0-9]+$//' | tr '[:lower:]' '[:upper:]')
-          case "$want" in COORDINATION) want=coordination ;; ARCH-IMPORT-*) want=arch-import ;; esac
-          printf '%s' "$PR_TITLE" | grep -qiF "[$want]" || { echo "BLOCKED: PR title must contain [$want] (the task the branch is for)"; exit 1; }
-          MB=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
-          git diff --name-only --no-renames "$MB" "$HEAD_SHA" | bash scripts/check_write_set.sh "$HEAD_REF" "$HEAD_SHA"
+        run: bash scripts/check_write_set.sh --pr "$BASE_SHA" "$HEAD_SHA" "$HEAD_REF" "$PR_TITLE"

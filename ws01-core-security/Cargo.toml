@@ -1,0 +1,72 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[workspace]
+resolver = "2"
+members = [
+    "crates/*",
+    "doubles/wire-vector-table/v1",
+    "doubles/lease/v1",
+    "doubles/effects-journal/v1",
+    "doubles/gate-authority/v1",
+    "doubles/custody/v1",
+    "doubles/runner-control/v1",
+    "claims/*/harness",
+    "tools/*",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+sha1 = { version = "=0.11.0" }
+tokio = { version = "=1.53.2", features = ["rt-multi-thread", "macros", "time", "sync", "net"] }
+axum = { version = "=0.8.9" }
+sqlx = { version = "=0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "uuid", "macros", "migrate"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154" }
+uuid = { version = "=1.28.0", features = ["v4", "serde"] }
+sha2 = { version = "=0.11.0" }
+hex = { version = "=0.4.3" }
+ed25519-dalek = { version = "=3.0.0" }
+p256 = { version = "=0.14.0", features = ["ecdsa"] }
+base64 = { version = "=0.23.1" }
+unicode-normalization = { version = "=0.1.25" }
+thiserror = { version = "=2.0.21" }
+tracing = { version = "=0.1.44" }
+tracing-subscriber = { version = "=0.3.23" }
+rustls = { version = "=0.23.45" }
+tokio-rustls = { version = "=0.26.6" }
+rcgen = { version = "=0.14.10" }
+reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "json"] }
+clap = { version = "=4.6.7", features = ["derive"] }
+tempfile = { version = "=3.27.0" }
+proptest = { version = "=1.12.0" }
+async-trait = { version = "=0.1.92" }
+mc-approval-authority = { path = "crates/mc-approval-authority" }
+mc-authority-db = { path = "crates/mc-authority-db" }
+mc-bootstrap = { path = "crates/mc-bootstrap" }
+mc-cbor = { path = "crates/mc-cbor" }
+mc-contracts = { path = "crates/mc-contracts" }
+mc-credential-lifecycle = { path = "crates/mc-credential-lifecycle" }
+mc-custody = { path = "crates/mc-custody" }
+mc-effects = { path = "crates/mc-effects" }
+mc-gate-authority = { path = "crates/mc-gate-authority" }
+mc-git-gateway = { path = "crates/mc-git-gateway" }
+mc-ingestion = { path = "crates/mc-ingestion" }
+mc-journal = { path = "crates/mc-journal" }
+mc-lease = { path = "crates/mc-lease" }
+mc-negotiation = { path = "crates/mc-negotiation" }
+mc-plan-verifier = { path = "crates/mc-plan-verifier" }
+mc-publication-planner = { path = "crates/mc-publication-planner" }
+mc-resolution = { path = "crates/mc-resolution" }
+mc-runner-control = { path = "crates/mc-runner-control" }
+mc-test-support = { path = "crates/mc-test-support" }
+mc-webauthn-verify = { path = "crates/mc-webauthn-verify" }
+mc-wire = { path = "crates/mc-wire" }
+wire-vector-table = { path = "doubles/wire-vector-table/v1" }
+lease-double = { path = "doubles/lease/v1" }
+effects-journal-double = { path = "doubles/effects-journal/v1" }
+gate-authority-double = { path = "doubles/gate-authority/v1" }
+custody-double = { path = "doubles/custody/v1" }
+runner-control-double = { path = "doubles/runner-control/v1" }

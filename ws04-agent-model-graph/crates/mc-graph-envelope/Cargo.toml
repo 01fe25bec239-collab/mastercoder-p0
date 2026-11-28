@@ -1,0 +1,20 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "mc-graph-envelope"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+mc-contracts.workspace = true
+mc-lease.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+lease-double.workspace = true
+mc-model-test-support.workspace = true
+proptest.workspace = true

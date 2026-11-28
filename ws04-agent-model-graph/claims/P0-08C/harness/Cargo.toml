@@ -1,0 +1,20 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[package]
+name = "p0-08c-harness"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+clap.workspace = true
+mc-contracts.workspace = true
+mc-ledger.workspace = true
+mc-model-broker.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+fake-model-provider.workspace = true
+mc-model-test-support.workspace = true

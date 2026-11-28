@@ -1,0 +1,61 @@
+# PROTOTYPE — DISPOSABLE — NOT PRODUCTION (Mastercoder freeze-closure)
+[workspace]
+resolver = "2"
+members = ["crates/*", "doubles/fake-model-provider/v1", "doubles/model-broker/v1", "claims/*/harness"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Exact pins (`=x.y.z`). Crates that ws01-core-security also pins use W01's exact version (and W03's for flate2/tar);
+# path dependencies fail to resolve if two workspaces pin different exact versions of one crate.
+[workspace.dependencies]
+tokio = { version = "=1.53.2", features = ["rt-multi-thread", "macros", "time", "sync", "net"] }
+axum = { version = "=0.8.9" }
+sqlx = { version = "=0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "uuid", "macros", "migrate"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154" }
+uuid = { version = "=1.28.0", features = ["v4", "serde"] }
+sha2 = { version = "=0.11.0" }
+hex = { version = "=0.4.3" }
+ed25519-dalek = { version = "=3.0.0" }
+reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "json", "stream"] }
+rustls = { version = "=0.23.45" }
+hickory-resolver = { version = "=0.26.3" }
+ipnet = { version = "=2.12.2" }
+flate2 = { version = "=1.1.10" }
+tar = { version = "=0.4.46" }
+eventsource-stream = { version = "=0.2.3" }
+futures = { version = "=0.3.34" }
+bytes = { version = "=1.12.1" }
+thiserror = { version = "=2.0.21" }
+tracing = { version = "=0.1.44" }
+async-trait = { version = "=0.1.92" }
+clap = { version = "=4.6.7", features = ["derive"] }
+toml = { version = "=1.2.0" }
+tempfile = { version = "=3.27.0" }
+proptest = { version = "=1.12.0" }
+mc-acquisition-dialer = { path = "crates/mc-acquisition-dialer" }
+mc-adapter-openai-compat = { path = "crates/mc-adapter-openai-compat" }
+mc-dependency-authority = { path = "crates/mc-dependency-authority" }
+mc-dependency-resolver = { path = "crates/mc-dependency-resolver" }
+mc-graph = { path = "crates/mc-graph" }
+mc-graph-envelope = { path = "crates/mc-graph-envelope" }
+mc-graph-replay = { path = "crates/mc-graph-replay" }
+mc-graph-runtime = { path = "crates/mc-graph-runtime" }
+mc-ledger = { path = "crates/mc-ledger" }
+mc-model-broker = { path = "crates/mc-model-broker" }
+mc-model-test-support = { path = "crates/mc-model-test-support" }
+mc-model-turn = { path = "crates/mc-model-turn" }
+mc-secret-dialer = { path = "crates/mc-secret-dialer", default-features = false }
+fake-model-provider = { path = "doubles/fake-model-provider/v1" }
+model-broker-double = { path = "doubles/model-broker/v1" }
+mc-contracts = { path = "../ws01-core-security/crates/mc-contracts" }
+mc-wire = { path = "../ws01-core-security/crates/mc-wire" }
+mc-lease = { path = "../ws01-core-security/crates/mc-lease" }
+mc-effects = { path = "../ws01-core-security/crates/mc-effects" }
+lease-double = { path = "../ws01-core-security/doubles/lease/v1" }
+effects-journal-double = { path = "../ws01-core-security/doubles/effects-journal/v1" }
+fake-sandbox = { path = "../ws03-runner-sandbox-acquisition/doubles/fake-sandbox/v1" }
+mc-checkout-broker = { path = "../ws03-runner-sandbox-acquisition/crates/mc-checkout-broker" }
