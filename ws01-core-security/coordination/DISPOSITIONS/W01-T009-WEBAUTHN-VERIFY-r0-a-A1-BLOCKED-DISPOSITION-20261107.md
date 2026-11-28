@@ -1,9 +1,0 @@
-# T009 r0-a BLOCKED — proof contract boundary
-
-PROTOTYPE — DISPOSABLE — NOT PRODUCTION. Root remains A1. Class CONTRACT.
-
-Report SHA2564db4abf79472c9e7760fa9db3099b2863d0e1eb7a6ad3f62f5c99af514fca9ec; source305cbfd838776a9b894fdd44a2687ad542a59eff/treebf5535a9036fdf35f659d43eb3f7c549d0e858b5 unchanged/clean. Root verified6receipt/logpins; fmt/crate14pass/1ignored retained. Unsigned create control/origin denial corroborated without rerun. Generator control shows no signature requirement, not unknowable private scalar. Remaining workspace/Clippy/spec/scans stopped; independent validation incomplete. Historical missing author receipts,816nonzero scan findings and absent W05 retained.
-
-No explicit new-key caller proof found in bounded doc52/T009/T028/T036/T046/schema/vector search. Existing actor consent differs. Root cannot waive proof or invent a missing ceremony. Filed /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/COORD-ws01/ws01-core-security/coordination/CONTRACT_CHANGE_REQUESTS/CCR-W01-002.md, SHA256f55eee3e4906b73cbbd9a8cbf3cc6c4c97da0d08af3d11ac65b18e99ee154701. Proposed signed-self profile and none-plus-assertion alternative are NOT adopted or implemented. If frozen amendment needed, follow original-preserving CCR release process.
-
-Fresh human W04-playbook review request /Users/omkar/Documents/A1_Mastercoder/MASTERCODER_6_WORKSTREAM_PROGRAM/WORKSPACE/worktrees/COORD-ws04/ws04-agent-model-graph/coordination/REVIEWS/CCR-W01-002-A3_REQUEST.md, SHA2567595a06f06508be336c3e291537d40d24f32ca04a7cf8a59b716fd0bc96d7bf0; existing clean folder /Users/omkar/.codex/worktrees/w01-webauthn-r0-review-a/repo/ws04-agent-model-graph. PREPARED_NOT_LAUNCHED; human selects settings. No source acceptance/automatic continuation. Owner adjudicates after review with SINGLE_OPERATOR_DECISION. ACCEPTED/MERGED NONE; T009/T011 and activation held. No source/operational/remote action.
